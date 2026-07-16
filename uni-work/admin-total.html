@@ -2,31 +2,36 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>YUNY_ERP - 관리자 마스터 정산표</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; }
-        .content { padding: 30px; }
+        .content { padding: 15px; }
         
+        /* 📐 제어 콘솔 카드의 한 행 정렬 규격을 상하 중앙정렬로 엄격히 통일 */
         .flex-form-row { 
             display: flex; 
             flex-wrap: wrap; 
-            align-items: flex-end; 
+            align-items: center; 
             gap: 12px; 
             margin-bottom: 15px;
         }
         
-        .card { background-color: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        .form-group { display: flex; flex-direction: column; }
+        .card { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .form-group { display: flex; flex-direction: column; justify-content: center; }
         .form-group label { margin-bottom: 6px; font-weight: bold; font-size: 14px; color: #333; }
         
-        .form-group input, .form-group select { 
+        /* 🔒 [치명적 불일치 완벽 해결] 입력창과 선택창의 모든 폰트 및 높이를 14px / 38px로 완벽 락킹 */
+        .form-group input, .form-group select, .flex-form-row select { 
             padding: 0 10px; 
             border: 1px solid #ccc; 
             border-radius: 4px; 
             width: 160px; 
             height: 38px; 
             box-sizing: border-box; 
-            font-size: 14px;
+            font-size: 14px !important;
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
         }
         
         .btn { 
@@ -56,27 +61,27 @@
         .btn-gray { background-color: #7f8c8d !important; }
         .btn-gray:hover { background-color: #95a5a6 !important; }
 
-        /* 📐 가로 세로 스크롤 뷰포트 인프라 */
         .table-container { 
             width: 100%; 
-            max-height: 72vh; 
+            max-height: 75vh; 
             overflow: auto !important; 
             border: 1px solid #ccc; 
             border-radius: 6px; 
             background: white; 
+            -webkit-overflow-scrolling: touch;
         }
         
         table { 
             border-collapse: separate !important; 
             border-spacing: 0 !important; 
-            font-size: 14px; 
+            font-size: 13px; 
             width: auto; 
             min-width: 100%; 
             table-layout: fixed; 
         }
         
         th, td { 
-            padding: 10px 8px; 
+            padding: 10px 6px; 
             text-align: center; 
             white-space: nowrap; 
             box-sizing: border-box; 
@@ -86,7 +91,6 @@
             border-top: none !important;
         }
         
-        /* 📅 상단 날짜 무한 고정 */
         th { 
             background-color: #f8f9fa !important; 
             font-weight: bold; 
@@ -96,17 +100,16 @@
             border-top: 1px solid #ccc !important;
         }
         
-        /* 📌 좌측 1~7열 정보 격벽 틀 고정 기둥 (가로 스크롤용) */
-        .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 80px; max-width: 80px; background: #ffffff !important; z-index: 10; border-left: 1px solid #ccc !important; }
-        .fix-col-2 { position: sticky !important; left: 80px !important; min-width: 85px; max-width: 85px; background: #ffffff !important; z-index: 10; }
-        .fix-col-3 { position: sticky !important; left: 165px !important; min-width: 130px; max-width: 130px; background: #ffffff !important; z-index: 10; }
-        .fix-col-4 { position: sticky !important; left: 295px !important; min-width: 75px; max-width: 75px; background: #ffffff !important; z-index: 10; }
-        .fix-col-5 { position: sticky !important; left: 370px !important; min-width: 95px; max-width: 95px; background: #fafafa !important; z-index: 10; }
-        .fix-col-6 { position: sticky !important; left: 465px !important; min-width: 125px; max-width: 125px; background: #ffffff !important; z-index: 10; }
+        .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 65px; max-width: 65px; background: #ffffff !important; z-index: 10; border-left: 1px solid #ccc !important; }
+        .fix-col-2 { position: sticky !important; left: 65px !important; min-width: 65px; max-width: 65px; background: #ffffff !important; z-index: 10; }
+        .fix-col-3 { position: sticky !important; left: 130px !important; min-width: 105px; max-width: 130px; background: #ffffff !important; z-index: 10; }
+        .fix-col-4 { position: sticky !important; left: 235px !important; min-width: 60px; max-width: 75px; background: #ffffff !important; z-index: 10; }
+        .fix-col-5 { position: sticky !important; left: 295px !important; min-width: 75px; max-width: 95px; background: #fafafa !important; z-index: 10; }
+        .fix-col-6 { position: sticky !important; left: 370px !important; min-width: 100px; max-width: 125px; background: #ffffff !important; z-index: 10; }
         .fix-col-7 { 
             position: sticky !important; 
-            left: 590px !important; 
-            min-width: 120px; 
+            left: 470px !important; 
+            min-width: 100px; 
             max-width: 120px; 
             background: #f4fce3 !important; 
             z-index: 10; 
@@ -128,7 +131,6 @@
         .subtotal-row { background-color: #fff9db !important; font-weight: bold !important; color: #d9480f !important; }
         .subtotal-row td { background-color: #fff9db !important; }
 
-        /* 📊 품목별 소계 디자인 세팅 (스크롤 자연 연동) */
         tfoot tr.bg-total-item-sub td {
             background: #f1f3f5 !important;
             font-weight: bold !important;
@@ -136,21 +138,14 @@
             border-top: 1px solid #ccc !important;
         }
         
-        /* 📊 [버그 대박멸 핵심 수술 부위] 
-           최종 합계 행들의 상하 sticky 강제 고정 명령을 전격 폐기하여, 
-           처음부터 화면에 튀어나오지 않고 엑 장부처럼 맨 밑바닥에서만 나오도록 정렬 세팅 */
         tfoot tr.bg-total-row-1 td, 
         tfoot tr.bg-total-row-2 td { 
             background: #e9ecef !important; 
             font-weight: bold !important; 
             white-space: nowrap !important;
         }
-        
-        tfoot tr.bg-total-row-1 td {
-            border-top: 2px solid #888 !important; 
-        }
+        tfoot tr.bg-total-row-1 td { border-top: 2px solid #888 !important; }
 
-        /* 가로 스크롤 이동 시 하단 마감 기둥 영역 투과 비침 방지용 좌측 기둥 인프라 고정 */
         tfoot tr td.fix-col-1, tfoot tr td.fix-col-2, tfoot tr td.fix-col-3, tfoot tr td.fix-col-4, tfoot tr td.fix-col-5, tfoot tr td.fix-col-6 {
             position: sticky !important;
             z-index: 11 !important;
@@ -174,27 +169,27 @@
             align-items: center;
             justify-content: center;
             gap: 2px;
-            font-size: 13px;
+            font-size: 12px;
             line-height: 1.3;
         }
         .total-split-box .val-qty { color: #0b7285; font-weight: bold; }
         .total-split-box .val-hours { color: #2b6cb0; font-weight: bold; }
 
         .diff-warning { background-color: #ffcccc !important; color: #b91c1c !important; font-weight: bold; }
-        .sub-section { margin-top: 20px; padding-top: 20px; border-top: 1px dashed #ddd; }
-        .divider { color: #ccc; align-self: flex-end; padding-bottom: 10px; font-size: 18px; margin: 0 5px; }
+        .sub-section { margin-top: 20px; padding-top: 20px; border-top: 1px dashed #ddd; width: 100%; }
+        .divider { color: #ccc; font-size: 18px; margin: 0 5px; align-self: center; }
 
         .inline-edit-input { width: 95%; height: 26px; text-align: center; border: 2px solid #2980b9; border-radius: 4px; box-sizing: border-box; font-weight: bold; }
-        .editable-cell { cursor: pointer; min-width: 65px; }
+        .editable-cell { cursor: pointer; min-width: 50px; }
         .editable-cell:hover { background-color: #e8f4fd !important; color: #2980b9; font-weight: bold; }
         
-        .editable-time-cell { cursor: pointer; font-size: 12px !important; min-width: 230px; background: #edf2ff !important; color: #364fc7 !important; padding: 6px 10px !important; }
+        .editable-time-cell { cursor: pointer; font-size: 11px !important; min-width: 210px; background: #edf2ff !important; color: #364fc7 !important; padding: 6px 6px !important; }
         .editable-time-cell:hover { background-color: #dbe4ff !important; }
         
-        .time-cell-wrap { display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 8px; width: 100%; text-align: center; }
+        .time-cell-wrap { display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 4px; width: 100%; text-align: center; }
         .time-display-span { display: inline-block; min-height: 18px; line-height: 18px; }
         
-        .btn-toggle-apply { padding: 2px 6px; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 3px; border: 1px solid #ccc; flex-shrink: 0; line-height: 12px; }
+        .btn-toggle-apply { padding: 2px 4px; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 3px; border: 1px solid #ccc; flex-shrink: 0; line-height: 12px; }
         .rate-on { background-color: #2bc891 !important; color: white !important; border-color: #20a373 !important; }
         .rate-off { background-color: #e74c3c !important; color: white !important; border-color: #c0392b !important; }
     </style>
@@ -207,98 +202,91 @@
 
 <div class="content">
     <div class="card" style="background-color: #fff9db; border: 2px solid #fab005; padding: 15px 25px;">
-        <div class="flex-form-row" style="margin-bottom: 0; align-items: center;">
+        <div class="flex-form-row" style="margin-bottom: 0;">
             <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px;">
-                <label style="color: #e67e22; margin-bottom: 0; font-size: 15px; font-weight: bold;">📅 정산 조회 원장 기준 연월 선택 :</label>
-                <select id="filterYear" style="width: 110px; height:36px;"></select>
-                <select id="filterMonth" style="width: 90px; height:36px;"></select>
-                <label style="color: #555; margin-bottom: 0; font-size: 14px; font-weight: bold; margin-left: 20px;">일일 데이터 전송용 날짜 :</label>
-                <input type="date" id="globalWorkDate" style="width: 160px; height:36px;">
+                <label style="color: #e67e22; margin-bottom: 0; font-size: 14px; font-weight: bold;">📅 원장 연월 :</label>
+                <select id="filterYear" style="width: 95px; height:36px;"></select>
+                <select id="filterMonth" style="width: 75px; height:36px;"></select>
+                <input type="date" id="globalWorkDate" style="width: 140px; height:36px; margin-left:10px;">
             </div>
-            <span id="loadingStatus" style="font-weight: bold; color: #e67e22; margin-left: 15px;">🔄 데이터 동기화 중...</span>
+            <span id="loadingStatus" style="font-weight: bold; color: #e67e22; font-size:13px; margin-left:10px;">🔄 데이터 동기화 중...</span>
         </div>
     </div>
 
     <div class="card">
-        <h2>⚙️ 관리자 제어 콘솔 (명단·품목·시급 및 권한 설정)</h2>
+        <h2 style="font-size:18px; margin-top:0;">⚙️ 마스터 제어 콘솔</h2>
         <div class="flex-form-row">
             <div class="form-group">
-                <label>새 작업자 이름 등록</label>
-                <input type="text" id="newWorkerName" placeholder="이름 입력">
+                <label>새 작업자</label>
+                <input type="text" id="newWorkerName" placeholder="이름 입력" style="width:130px;">
             </div>
-            <button class="btn" onclick="addNewWorker()">장부 명단 추가</button>
+            <button class="btn" onclick="addNewWorker()">명단 추가</button>
             <div class="divider">|</div>
             <div class="form-group">
-                <label>새 품목명 등록 <span style="color:#e67e22; font-size:11px;">(색상 구분시 괄호 입력)</span></label>
-                <input type="text" id="newItemName" placeholder="예: 스포이드(핑크)">
+                <label>새 품목명</label>
+                <input type="text" id="newItemName" placeholder="예: 스포이드(핑크)" style="width:140px;">
             </div>
             <div class="form-group">
                 <label>기본 단가</label>
-                <input type="number" id="newItemCost" placeholder="원 단위">
+                <input type="number" id="newItemCost" placeholder="원 단위" style="width:100px;">
             </div>
             <button class="btn" onclick="addNewItem()">품목 추가</button>
         </div>
 
         <div class="sub-section">
-            <h4 style="margin: 0 0 15px 0; color: #2980b9; font-size: 15px;">💰 인원별 시간당 금액(시급) 및 마스터 일괄 정산 통제</h4>
+            <h4 style="margin: 0 0 12px 0; color: #2980b9; font-size: 14px;">💰 시급 및 일괄 정산</h4>
             <div class="flex-form-row">
                 <div class="form-group">
-                    <label>대상 작업자</label>
-                    <select id="rateWorkerSelect" onchange="updateRateSettingHint()"></select>
+                    <label>대상자</label>
+                    <select id="rateWorkerSelect" onchange="updateRateSettingHint()" style="width:120px;"></select>
                 </div>
                 <div class="form-group">
-                    <label>시간당 금액 (시급)</label>
-                    <input type="number" id="hourlyRateInput">
+                    <label>시급 설정</label>
+                    <input type="number" id="hourlyRateInput" style="width:110px;">
                 </div>
-                <button class="btn" onclick="saveHourlyRateSetting()">시급 금액 원장 저장</button>
-                <button class="btn btn-orange" onclick="toggleAllRatesForWorker(true)">⚡ 당월 전체 날짜 반영 변경</button>
-                <button class="btn btn-gray" onclick="toggleAllRatesForWorker(false)">❌ 당월 전체 날짜 미반영 변경</button>
+                <button class="btn" onclick="saveHourlyRateSetting()">원장 저장</button>
+                <button class="btn btn-orange" onclick="toggleAllRatesForWorker(true)">⚡당월전체반영</button>
+                <button class="btn btn-gray" onclick="toggleAllRatesForWorker(false)">❌당월전체제외</button>
             </div>
         </div>
         
         <div class="sub-section">
-            <h4 style="margin: 0 0 15px 0; color: #c0392b; font-size: 15px;">🗑️ 데이터 삭제 기능</h4>
+            <h4 style="margin: 0 0 12px 0; color: #2980b9; font-size: 14px;">🗑️ 명단/품목 삭제</h4>
             <div class="flex-form-row">
-                <div class="form-group">
-                    <label>작업자 삭제</label>
-                    <select id="delWorkerSelect"></select>
-                </div>
-                <button class="btn btn-danger" onclick="deleteWorker()">명단에서 제거</button>
+                <select id="delWorkerSelect" style="width:130px; height:38px;"></select>
+                <button class="btn btn-danger" onclick="deleteWorker()">명단 제거</button>
                 <div class="divider">|</div>
-                <div class="form-group">
-                    <label>품목 삭제</label>
-                    <select id="delItemSelect"></select>
-                </div>
-                <button class="btn btn-danger" onclick="deleteItem()">품목에서 제거</button>
+                <select id="delItemSelect" style="width:140px; height:38px;"></select>
+                <button class="btn btn-danger" onclick="deleteItem()">품목 제거</button>
             </div>
         </div>
     </div>
 
     <div class="card">
-        <h2>📥 일일 작업 데이터 입력 (유니입력)</h2>
+        <h2 style="font-size:18px; margin-top:0;">📥 일일 데이터 입력</h2>
         <div class="flex-form-row">
             <div class="form-group">
-                <label>작업자 선택</label>
-                <select id="admNameSelect"></select>
+                <label>작업자</label>
+                <select id="admNameSelect" style="width:110px; height:38px;"></select>
             </div>
             <div class="form-group">
                 <label>품목</label>
-                <select id="admItemSelect" onchange="updateAdminCostHint()"></select>
+                <select id="admItemSelect" onchange="updateAdminCostHint()" style="width:140px; height:38px;"></select>
             </div>
             <div class="form-group">
-                <label style="color: #2980b9; font-weight: bold;">지정 단가</label>
-                <input type="number" id="admCost">
+                <label>지정단가</label>
+                <input type="number" id="admCost" style="width:100px;">
             </div>
             <div class="form-group">
-                <label>수량 (유니입력)</label>
-                <input type="number" id="admQty" value="100">
+                <label>수량</label>
+                <input type="number" id="admQty" value="100" style="width:90px;">
             </div>
-            <button class="btn btn-dark-verify" onclick="addWorkRowData()">관리자 기록 등록</button>
+            <button class="btn btn-dark-verify" onclick="addWorkRowData()">관리자기록등록</button>
         </div>
     </div>
 
     <div class="card">
-        <h2>🛠️ 유니 작업관리 - 개인별 작업수량, 근무시간 및 비용 정산표</h2>
+        <h2 style="font-size:18px; margin-top:0;">🛠️ 유니 종합 마스터 정산 원장표</h2>
         <div class="table-container">
             <table id="pivotTable"></table>
         </div>
@@ -328,7 +316,7 @@
             rawEntries = data.rawEntries || []; hourlyRates = data.hourlyRates || {};
             userList = data.userList || [];
             renderDropdowns(); buildPivotTable();
-            document.getElementById('loadingStatus').innerText = "✅ 시스템 실시간 동기화 완료";
+            document.getElementById('loadingStatus').innerText = "✅ 실시간 동기화 완료";
         });
     }
 
@@ -362,7 +350,7 @@
             dateSet.push(strMonth + "/" + strDay);
         }
         
-        var headerHtml = `<thead><tr><th class="fix-col-1">이름</th><th class="fix-col-2">구분</th><th class="fix-col-3">품목</th><th class="fix-col-4">단가</th><th class="fix-col-5">📦 금액</th><th class="fix-col-6">총수량 및 시간</th><th class="fix-col-7">📊 최종 합산 총액</th>${dateSet.map(d => `<th style="min-width:70px;">${d}</th>`).join('')}</tr></thead>`;
+        var headerHtml = `<thead><tr><th class="fix-col-1">이름</th><th class="fix-col-2">구분</th><th class="fix-col-3">품목</th><th class="fix-col-4">단가</th><th class="fix-col-5">📦 금액</th><th class="fix-col-6">총수량 및 시간</th><th class="fix-col-7">📊 최종 합산 총액</th>${dateSet.map(d => `<th style="min-width:65px;">${d}</th>`).join('')}</tr></thead>`;
         var bodyHtml = "<tbody>";
         
         var totalAdminCost = 0, totalAdminQty = 0, totalWorkerQty = 0, totalWorkHours = 0, totalHourlyPaySum = 0, totalFinalGrandSum = 0;
