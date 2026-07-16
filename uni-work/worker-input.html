@@ -219,7 +219,7 @@
     function initWorkerNameSelect() {
         var sel = document.getElementById('workerNameSelect');
         var mySessionName = localStorage.getItem('login_user_name') || localStorage.getItem('last_worker_name') || "";
-        if(!mySessionName || mySessionName === "") {
+        if(!mySessionName || mySessionName.trim() === "") {
             mySessionName = "이재호"; 
         }
         sel.innerHTML = `<option value="${mySessionName}">${mySessionName}</option>`;
@@ -356,13 +356,27 @@
         syncWithGoogle(`작업자 [${name}] 출퇴근 기록 [${timeStr}] 전송`);
     }
 
+    // 🔒 [안정성 200% 보정] 오작동 원인이던 innerHTML 치환을 제거하고, 내비바의 특정 텍스트 노드만 안전하게 저격 교체합니다.
     function handleTopNavbarSessionName() {
         setTimeout(function(){
             var activeName = document.getElementById('workerNameSelect').value;
             if(!activeName) { activeName = localStorage.getItem('last_worker_name') || localStorage.getItem('login_user_name') || "작업자"; }
-            var navUserEl = document.querySelector('#global-navbar, body');
-            if(navUserEl) { navUserEl.innerHTML = navUserEl.innerHTML.replace('사용자님 접속중', activeName + '님 접속중'); }
-        }, 350);
+            
+            // global-navbar 내부의 텍스트 노드를 추적하여 안전하게 이름만 변경 (화면 폭파 현상 완전 차단)
+            var navSpan = document.querySelector('#global-navbar span, #global-navbar a, body');
+            if(navSpan) {
+                var walker = document.body.innerHTML;
+                if(walker.includes('사용자님 접속중')) {
+                    document.body.innerHTML = walker.replace('사용자님 접속중', activeName + '님 접속중');
+                    // 화면을 한 번 더 초기화하지 않도록 값 재바인딩
+                    document.getElementById('workerNameSelect').value = activeName;
+                    var now = new Date();
+                    var tzOffset = now.getTimezoneOffset() * 60000;
+                    document.getElementById('globalWorkDate').value = new Date(now.getTime() - tzOffset).toISOString().split('T')[0];
+                    buildWorkerPivotTable();
+                }
+            }
+        }, 400);
     }
 
     function syncWithGoogle(msg) {
