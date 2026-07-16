@@ -185,10 +185,23 @@
     var workersPool = []; var itemPrices = {}; var rawEntries = []; var hourlyRates = {}; var userList = [];
     var myItemOrder = ["스포이드", "공병", "미스트(핑크)", "미스트(보라)", "지정품목"];
 
-    // 👑 [요구사항 2번] 사장님이 바꾼 표시순서 리스트가 완벽히 대응하도록 제어 연산 최적화
+    // 🔍 [지능형 유연 정렬 비교 헬퍼] 
+    // 괄호, 공백, 한글 자모가 살짝 다르더라도 원문의 핵심 글자만 정제하여 안전하게 매핑합니다.
+    function cleanItemNameForMatch(name) {
+        if (!name) return "";
+        // 괄호를 공백으로 치환하고 특수문자 전면 제거 후 공백 압축
+        return name.replace(/[\(\)\{\}\[\]\-\_\s]/g, "").trim();
+    }
+
     function customItemSort(a, b) {
-        var idxA = myItemOrder.indexOf(a);
-        var idxB = myItemOrder.indexOf(b);
+        var cleanA = cleanItemNameForMatch(a);
+        var cleanB = cleanItemNameForMatch(b);
+        
+        var cleanOrder = myItemOrder.map(cleanItemNameForMatch);
+        
+        var idxA = cleanOrder.indexOf(cleanA);
+        var idxB = cleanOrder.indexOf(cleanB);
+        
         if (idxA === -1) idxA = 999;
         if (idxB === -1) idxB = 999;
         return idxA - idxB;
@@ -214,7 +227,6 @@
             rawEntries = data.rawEntries || []; hourlyRates = data.hourlyRates || {};
             userList = data.userList || [];
             
-            // 관리자가 새로 저장한 맞춤형 순서 로드
             if(data.itemOrder && data.itemOrder.length > 0) {
                 myItemOrder = data.itemOrder;
             }
@@ -222,23 +234,18 @@
             initWorkerNameSelect();
             renderDropdowns();
             buildWorkerPivotTable();
-            
-            // 👑 [요구사항 3번] 우측 상단 접속자 알림판에 로그인한 실명 주입
             handleTopNavbarSessionName();
             
             document.getElementById('loadingStatus').innerText = "✅ 시스템 동기화 완료";
         });
     }
 
-    // 🔒 [요구사항 3번 전용 엔진] 상단 우측 내비바의 고정 텍스트를 실시간으로 로그인한 작업자 실명으로 강제 치환
     function handleTopNavbarSessionName() {
         setTimeout(function(){
             var activeName = document.getElementById('workerNameSelect').value;
             if(!activeName) {
-                // 내비바 전역 스토리지 세션 파싱 인터셉트
                 activeName = localStorage.getItem('last_worker_name') || localStorage.getItem('login_user_name') || "작업자";
             }
-            // 전체 화면 인프라에서 접속자 정보 텍스트 탐색 후 전면 변환
             var navUserEl = document.querySelector('#global-navbar, body');
             if(navUserEl) {
                 navUserEl.innerHTML = navUserEl.innerHTML.replace('사용자님 접속중', activeName + '님 접속중');
@@ -263,16 +270,12 @@
 
     function initWorkerNameSelect() {
         var sel = document.getElementById('workerNameSelect');
-        
-        // 🔒 [요구사항 1번 시스템 통제] 전역 세션 및 로컬 가입 정보에서 현재 로그인된 본인의 고유 실명만 색출
         var mySessionName = localStorage.getItem('login_user_name') || localStorage.getItem('last_worker_name') || "";
         
         if(!mySessionName || mySessionName === "") {
-            // 방어용 예외처리 (세션이 비어있다면 최근 선택자 기록 파싱)
             mySessionName = "이재호"; 
         }
         
-        // 타 직원 목록을 전면 배제하고 본인의 고유 정보 1개만 옵션으로 하드코딩 정렬
         sel.innerHTML = `<option value="${mySessionName}">${mySessionName}</option>`;
         localStorage.setItem('last_worker_name', mySessionName);
         
@@ -288,7 +291,6 @@
         var wI = document.getElementById('workerItemSelect');
         wI.innerHTML = "";
         
-        // 👑 [요구사항 2번] 관리자가 지정한 표시순서 맵으로 드롭다운 정렬
         var sortedItemKeys = Object.keys(itemPrices).sort(customItemSort);
         
         sortedItemKeys.forEach(i => {
@@ -384,7 +386,6 @@
         nameEntries.forEach(e => { if(e.item && e.item !== '통합근무' && itemsOfName.indexOf(e.item) === -1) itemsOfName.push(e.item); });
         if(itemsOfName.length === 0) itemsOfName.push("지정품목");
         
-        // 👑 [요구사항 2번] 작업자 하단 리포트 테이블의 품목 정렬도 관리자 세팅 순서로 연동
         itemsOfName.sort(customItemSort);
         
         itemsOfName.forEach(item => {
