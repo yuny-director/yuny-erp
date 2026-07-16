@@ -183,16 +183,17 @@
 
 <script>
     var workersPool = []; var itemPrices = {}; var rawEntries = []; var hourlyRates = {}; var userList = [];
-    var myItemOrder = ["스포이드", "공병", "미스트(핑크)", "미스트(보라)", "지정품목"];
+    
+    // 👑 기본 정렬 순서 목록 정의
+    var myItemOrder = ["스포이드", "미스트(핑크)", "미스트(보라)", "공병"];
 
-    // 🔍 [지능형 유연 정렬 비교 헬퍼] 
-    // 괄호, 공백, 한글 자모가 살짝 다르더라도 원문의 핵심 글자만 정제하여 안전하게 매핑합니다.
+    // 🔍 글자 매칭 보정을 위한 정규화 함수
     function cleanItemNameForMatch(name) {
         if (!name) return "";
-        // 괄호를 공백으로 치환하고 특수문자 전면 제거 후 공백 압축
         return name.replace(/[\(\)\{\}\[\]\-\_\s]/g, "").trim();
     }
 
+    // 👑 품목 정렬 엔진 (가나다 정렬을 완벽하게 덮어쓰고 지정 순서로 강제 고정)
     function customItemSort(a, b) {
         var cleanA = cleanItemNameForMatch(a);
         var cleanB = cleanItemNameForMatch(b);
@@ -218,6 +219,12 @@
         document.getElementById('globalWorkDate').value = now.toISOString().split('T')[0]; 
         ySel.onchange = buildWorkerPivotTable; mSel.onchange = buildWorkerPivotTable;
         
+        // 💾 구글 서버 요청 전, 로컬 브라우저에 저장되어 있는 백업 정렬 상태 확인
+        var localOrder = localStorage.getItem('erp_item_order_backup');
+        if (localOrder) {
+            try { myItemOrder = JSON.parse(localOrder); } catch(e){}
+        }
+
         loadData();
     };
 
@@ -227,8 +234,11 @@
             rawEntries = data.rawEntries || []; hourlyRates = data.hourlyRates || {};
             userList = data.userList || [];
             
+            // 🌐 구글 서버로부터 최신 순서 수집
             if(data.itemOrder && data.itemOrder.length > 0) {
                 myItemOrder = data.itemOrder;
+                // 구글 시트에 잘 적혀있다면, 로컬 브라우저 백업도 갱신
+                localStorage.setItem('erp_item_order_backup', JSON.stringify(data.itemOrder));
             }
             
             initWorkerNameSelect();
@@ -291,6 +301,7 @@
         var wI = document.getElementById('workerItemSelect');
         wI.innerHTML = "";
         
+        // 👑 [정렬 동기화] 구글에서 받아온 표시 순서 정렬 가동
         var sortedItemKeys = Object.keys(itemPrices).sort(customItemSort);
         
         sortedItemKeys.forEach(i => {
@@ -386,6 +397,7 @@
         nameEntries.forEach(e => { if(e.item && e.item !== '통합근무' && itemsOfName.indexOf(e.item) === -1) itemsOfName.push(e.item); });
         if(itemsOfName.length === 0) itemsOfName.push("지정품목");
         
+        // 👑 [정렬 동기화] 아래 리포트 테이블 역시 정렬 동기화 가동
         itemsOfName.sort(customItemSort);
         
         itemsOfName.forEach(item => {
