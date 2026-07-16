@@ -183,7 +183,8 @@
 
 <script>
     var workersPool = []; var itemPrices = {}; var rawEntries = []; var hourlyRates = {}; var userList = [];
-    var myItemOrder = ["스포이드", "공병", "미스트(핑크)", "미스트(보라)", "지정품목"];
+    // 3. 서버에서 읽어온 순서를 즉시 대입할 수 있도록 배열로 동적 초기화 처리
+    var myItemOrder = [];
 
     window.onload = function() {
         var now = new Date(); var currentYear = now.getFullYear(); var currentMonth = now.getMonth() + 1;
@@ -192,6 +193,7 @@
         var mSel = document.getElementById("filterMonth");
         for(var m = 1; m <= 12; m++) { mSel.innerHTML += `<option value="${m}" ${m===currentMonth?'selected':''}>${m}월</option>`; }
         
+        // 📅 [날짜 기본값 복구] 기기 타임존 오차 없이 오늘 날짜를 달력에 깔끔하게 바인딩
         var tzOffset = now.getTimezoneOffset() * 60000;
         document.getElementById('globalWorkDate').value = new Date(now.getTime() - tzOffset).toISOString().split('T')[0]; 
         ySel.onchange = buildWorkerPivotTable; mSel.onchange = buildWorkerPivotTable;
@@ -204,13 +206,18 @@
             rawEntries = data.rawEntries || []; hourlyRates = data.hourlyRates || {};
             userList = data.userList || [];
             
+            // 🔄 [동적 정렬 반영] 관리자가 순서를 바꾸고 새로고침하면 구글에서 즉시 순서를 긁어와 반영하도록 락 해제
             if(data.itemOrder && Array.isArray(data.itemOrder) && data.itemOrder.length > 0) {
                 myItemOrder = data.itemOrder;
+            } else {
+                myItemOrder = ["스포이드", "공병", "미스트(핑크)", "미스트(보라)", "지정품목"];
             }
             
             initWorkerNameSelect();
             renderDropdowns();
             buildWorkerPivotTable();
+            
+            // 기존의 순수했던 내비바 세션 이름 셋업 함수만 안전하게 호출 (HTML을 깨뜨리는 무한 루프 요소를 전면 배제)
             handleTopNavbarSessionName();
             document.getElementById('loadingStatus').innerText = "✅ 시스템 동기화 완료";
         });
@@ -356,27 +363,17 @@
         syncWithGoogle(`작업자 [${name}] 출퇴근 기록 [${timeStr}] 전송`);
     }
 
-    // 🔒 [안정성 200% 보정] 오작동 원인이던 innerHTML 치환을 제거하고, 내비바의 특정 텍스트 노드만 안전하게 저격 교체합니다.
+    // 🔒 [기존 정상 기능 100% 보존] 화면 구성요소를 파괴하지 않고 이름 표기만 살짝 바꾸어 정상 로그아웃 처리가 무조건 작동되도록 완전 롤백
     function handleTopNavbarSessionName() {
         setTimeout(function(){
             var activeName = document.getElementById('workerNameSelect').value;
             if(!activeName) { activeName = localStorage.getItem('last_worker_name') || localStorage.getItem('login_user_name') || "작업자"; }
             
-            // global-navbar 내부의 텍스트 노드를 추적하여 안전하게 이름만 변경 (화면 폭파 현상 완전 차단)
-            var navSpan = document.querySelector('#global-navbar span, #global-navbar a, body');
-            if(navSpan) {
-                var walker = document.body.innerHTML;
-                if(walker.includes('사용자님 접속중')) {
-                    document.body.innerHTML = walker.replace('사용자님 접속중', activeName + '님 접속중');
-                    // 화면을 한 번 더 초기화하지 않도록 값 재바인딩
-                    document.getElementById('workerNameSelect').value = activeName;
-                    var now = new Date();
-                    var tzOffset = now.getTimezoneOffset() * 60000;
-                    document.getElementById('globalWorkDate').value = new Date(now.getTime() - tzOffset).toISOString().split('T')[0];
-                    buildWorkerPivotTable();
-                }
+            var navUserEl = document.getElementById('navbar-user-name');
+            if(navUserEl) {
+                navUserEl.innerText = activeName + '님 접속중';
             }
-        }, 400);
+        }, 350);
     }
 
     function syncWithGoogle(msg) {
