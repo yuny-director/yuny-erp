@@ -8,7 +8,6 @@
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; }
         .content { padding: 15px; }
         
-        /* 📐 [철벽 대칭] 모든 콘솔 요소를 바닥 정렬(flex-end)로 묶어 일직선 배열 구축 */
         .flex-form-row { 
             display: flex; 
             flex-wrap: wrap; 
@@ -21,7 +20,6 @@
         .form-group { display: flex; flex-direction: column; }
         .form-group label { margin-bottom: 6px; font-weight: bold; font-size: 14px; color: #333; height: 16px; line-height: 16px; }
         
-        /* 🔒 입력창, 선택창 규격 100% 락킹 */
         .form-group input, .form-group select, .flex-form-row select { 
             padding: 0 10px; 
             border: 1px solid #ccc; 
@@ -34,12 +32,8 @@
             background-color: #ffffff;
         }
         
-        /* 🔒 라벨이 없는 독립형 select 박스(삭제 메뉴용)의 바닥 정렬 균형을 맞추기 위한 마진 보정 */
-        .flex-form-row > select {
-            margin-bottom: 0px;
-        }
+        .flex-form-row > select { margin-bottom: 0px; }
         
-        /* 🔒 모든 버튼의 높이와 서체를 입력창과 자를 댄 듯 일치시킴 */
         .btn { 
             padding: 0 18px; 
             background-color: #1abc9c; 
@@ -67,6 +61,54 @@
         .btn-orange:hover { background-color: #d35400 !important; }
         .btn-gray { background-color: #7f8c8d !important; }
         .btn-gray:hover { background-color: #95a5a6 !important; }
+        .btn-purple { background-color: #9b59b6 !important; }
+        .btn-purple:hover { background-color: #8e44ad !important; }
+
+        /* 드래그앤드롭 정렬 UI 모달 스타일 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .sortable-list {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0;
+        }
+        .sortable-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            cursor: grab;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+        .sortable-item.dragging {
+            opacity: 0.5;
+            background: #e8f4fd;
+            border: 1px dashed #2980b9;
+        }
+        .sortable-item::after {
+            content: '☰';
+            color: #aaa;
+            font-size: 16px;
+        }
 
         .table-container { 
             width: 100%; 
@@ -221,7 +263,10 @@
     </div>
 
     <div class="card">
-        <h2 style="font-size:18px; margin-top:0;">⚙️ 마스터 제어 콘솔</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0; margin-bottom: 15px;">
+            <h2 style="font-size:18px; margin: 0;">⚙️ 마스터 제어 콘솔</h2>
+            <button class="btn btn-purple" onclick="openSortModal()">📊 품목 표시순서 관리</button>
+        </div>
         <div class="flex-form-row">
             <div class="form-group">
                 <label>새 작업자</label>
@@ -276,7 +321,7 @@
     </div>
 
     <div class="card">
-        <h2 style="font-size:18px; margin-top:0;">📥 일일 데이터 입력</h2>
+        <h2>📥 일일 데이터 입력</h2>
         <div class="flex-form-row">
             <div class="form-group">
                 <label>작업자</label>
@@ -299,15 +344,39 @@
     </div>
 
     <div class="card">
-        <h2 style="font-size:18px; margin-top:0;">🛠️ 유니 종합 마스터 정산 원장표</h2>
+        <h2>🛠️ 유니 종합 마스터 정산 원장표</h2>
         <div class="table-container">
             <table id="pivotTable"></table>
         </div>
     </div>
 </div>
 
+<div id="sortModal" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-top:0; color: #2c3e50;">↕️ 품목 순서 임의 조정</h3>
+        <p style="font-size:12px; color:#7f8c8d; margin-bottom:15px;">품목을 드래그해서 원하는 순서로 이동한 뒤 저장 버튼을 누르세요.</p>
+        <ul class="sortable-list" id="sortableList"></ul>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+            <button class="btn btn-gray" onclick="closeSortModal()" style="height:34px; font-size:13px;">취소</button>
+            <button class="btn" onclick="saveItemOrder()" style="height:34px; font-size:13px;">순서 저장</button>
+        </div>
+    </div>
+</div>
+
 <script>
     var workersPool = []; var itemPrices = {}; var rawEntries = []; var hourlyRates = {}; var userList = [];
+    
+    // 👑 [화면 제어형 커스텀 품목 순서 저장소]
+    // 💡 초기 정렬 기준 (구글 원장 저장값이 없거나 빈 배열일 때의 기본 디폴트값)
+    var myItemOrder = ["스포이드", "공병", "미스트(핑크)", "미스트(보라)", "지정품목"];
+
+    function customItemSort(a, b) {
+        var idxA = myItemOrder.indexOf(a);
+        var idxB = myItemOrder.indexOf(b);
+        if (idxA === -1) idxA = 999;
+        if (idxB === -1) idxB = 999;
+        return idxA - idxB;
+    }
 
     window.onload = function() { 
         if(typeof checkPageAuth === "function") { if(!checkPageAuth('admin')) return; } 
@@ -328,14 +397,30 @@
             workersPool = data.workersPool || []; itemPrices = data.itemPrices || {};
             rawEntries = data.rawEntries || []; hourlyRates = data.hourlyRates || {};
             userList = data.userList || [];
+            
+            // 💡 구글 원장에서 저장된 정렬 순서 목록(itemOrder)이 존재한다면 가져와서 사용합니다.
+            if(data.itemOrder && data.itemOrder.length > 0) {
+                myItemOrder = data.itemOrder;
+            }
+            
             renderDropdowns(); buildPivotTable();
             document.getElementById('loadingStatus').innerText = "✅ 실시간 동기화 완료";
         });
     }
 
+    // 🌐 [구글 동기화] 저장할 때 정렬배열인 myItemOrder 도 함께 깃허브 원장/시트에 저장하도록 매핑
     function syncWithGoogle(msg, skipReload) {
         document.getElementById('loadingStatus').innerText = "📤 원장 자동 저장 중...";
-        var payload = { action: "syncAll", updater: "관리자", summary: msg, workersPool: workersPool, itemPrices: itemPrices, rawEntries: rawEntries, hourlyRates: hourlyRates };
+        var payload = { 
+            action: "syncAll", 
+            updater: "관리자", 
+            summary: msg, 
+            workersPool: workersPool, 
+            itemPrices: itemPrices, 
+            rawEntries: rawEntries, 
+            hourlyRates: hourlyRates,
+            itemOrder: myItemOrder  // 💡 정렬 상태 전송
+        };
         fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }).then(() => loadData());
     }
 
@@ -348,6 +433,61 @@
             return { main: parts[0].trim(), option: parts[1].replace(")", "").trim() };
         }
         return { main: fullName, option: "" };
+    }
+
+    // 💡 [화면 조작 드래그앤드롭 모달 컨트롤러]
+    function openSortModal() {
+        var listContainer = document.getElementById("sortableList");
+        listContainer.innerHTML = "";
+        
+        // 원장에 등록된 모든 고유 품목 가져오기
+        var allItems = Object.keys(itemPrices);
+        
+        // 현재 설정된 정렬 기준(myItemOrder)을 기반으로 순서 맞춰서 목록 뿌려주기
+        allItems.sort(customItemSort);
+        
+        allItems.forEach(item => {
+            var li = document.createElement("li");
+            li.className = "sortable-item";
+            li.draggable = true;
+            li.innerText = item;
+            
+            // 드래그앤드롭 이벤트 리스너 세팅
+            li.addEventListener("dragstart", () => { li.classList.add("dragging"); });
+            li.addEventListener("dragend", () => { li.classList.remove("dragging"); });
+            
+            listContainer.appendChild(li);
+        });
+
+        // 리스트 내 드래그 오버 정렬 계산식
+        listContainer.addEventListener("dragover", e => {
+            e.preventDefault();
+            var draggingItem = document.querySelector(".dragging");
+            var siblings = [...listContainer.querySelectorAll(".sortable-item:not(.dragging)")];
+            var nextSibling = siblings.find(sibling => {
+                return e.clientY <= sibling.getBoundingClientRect().top + sibling.getBoundingClientRect().height / 2;
+            });
+            listContainer.insertBefore(draggingItem, nextSibling);
+        });
+
+        document.getElementById("sortModal").style.display = "flex";
+    }
+
+    function closeSortModal() {
+        document.getElementById("sortModal").style.display = "none";
+    }
+
+    // 💡 순서 저장 버튼 클릭 시 실서버 데이터 전송
+    function saveItemOrder() {
+        var items = [...document.querySelectorAll("#sortableList .sortable-item")];
+        myItemOrder = items.map(li => li.innerText); // 드래그 정렬된 텍스트 수집
+        
+        closeSortModal();
+        buildPivotTable();
+        renderDropdowns();
+        
+        // 깃허브 원장 및 구글 스프레드시트에 저장 요청
+        syncWithGoogle("화면에서 직접 품목 정렬 순서 수정 저장", false);
     }
 
     function buildPivotTable() {
@@ -381,6 +521,8 @@
             nameEntries.forEach(e => { if(e.item && e.item !== '통합근무' && itemsOfName.indexOf(e.item) === -1) itemsOfName.push(e.item); });
             if(itemsOfName.length === 0) itemsOfName.push("지정품목");
             
+            itemsOfName.sort(customItemSort);
+
             var rateConfig = hourlyRates[name] || { rate: 9620, customDays: {} }; 
             if(!rateConfig.customDays) rateConfig.customDays = {};
             var nameTotalHours = 0; var nameHourlyPay = 0; var dayAttendanceMap = {};
@@ -418,8 +560,9 @@
             for(var groupName in parentGroups) {
                 var groupedItems = parentGroups[groupName];
                 var groupAdminSums = {};
+                var groupTotalAdminQty = 0;
+                var groupTotalAdminCost = 0;
                 dateSet.forEach(d => { groupAdminSums[d] = 0; });
-                var groupTotalAdminQty = 0; var groupTotalAdminCost = 0;
 
                 groupedItems.forEach(item => {
                     var lastAdminEntry = nameEntries.find(e => e.item === item && e.type === 'admin');
@@ -511,7 +654,9 @@
         bodyHtml += "</tbody>";
 
         var footerHtml = "<tfoot>";
-        var activeItems = Object.keys(globalItemAdminQty).sort();
+        var activeItems = Object.keys(globalItemAdminQty);
+        
+        activeItems.sort(customItemSort);
         
         var isFirstSubRow = true;
         activeItems.forEach(item => {
@@ -597,7 +742,21 @@
     function saveHourlyRateSetting() { var name = document.getElementById('rateWorkerSelect').value; if(!hourlyRates[name]) hourlyRates[name] = { rate: 9620, customDays: {} }; hourlyRates[name].rate = Number(document.getElementById('hourlyRateInput').value)||0; buildPivotTable(); syncWithGoogle(`[${name}] 시급원장 금액 변경`, true); }
     function updateRateSettingHint() { var name = document.getElementById('rateWorkerSelect').value; var config = hourlyRates[name] || { rate: 9620, customDays: {} }; document.getElementById('hourlyRateInput').value = config.rate || 9620; }
     function updateAdminCostHint() { var s = document.getElementById('admItemSelect'); if(s.options.length) document.getElementById('admCost').value = s.options[s.selectedIndex].getAttribute('data-cost'); }
-    function renderDropdowns() { var aN = document.getElementById('admNameSelect'), rN = document.getElementById('rateWorkerSelect'), aI = document.getElementById('admItemSelect'), dW = document.getElementById('delWorkerSelect'), dI = document.getElementById('delItemSelect'); aN.innerHTML = ""; rN.innerHTML = ""; aI.innerHTML = ""; dW.innerHTML = ""; dI.innerHTML = ""; workersPool.forEach(n => { var o = `<option value="${n}">${n}</option>`; aN.innerHTML += o; rN.innerHTML += o; dW.innerHTML += o; }); for (var i in itemPrices) { aI.innerHTML += `<option value="${i}" data-cost="${itemPrices[i]}">${i}</option>`; dI.innerHTML += `<option value="${i}">${i}</option>`; } updateAdminCostHint(); updateRateSettingHint(); }
+    
+    function renderDropdowns() { 
+        var aN = document.getElementById('admNameSelect'), rN = document.getElementById('rateWorkerSelect'), aI = document.getElementById('admItemSelect'), dW = document.getElementById('delWorkerSelect'), dI = document.getElementById('delItemSelect'); 
+        aN.innerHTML = ""; rN.innerHTML = ""; aI.innerHTML = ""; dW.innerHTML = ""; dI.innerHTML = ""; 
+        
+        workersPool.forEach(n => { var o = `<option value="${n}">${n}</option>`; aN.innerHTML += o; rN.innerHTML += o; dW.innerHTML += o; }); 
+        
+        var sortedItemKeys = Object.keys(itemPrices).sort(customItemSort);
+        
+        sortedItemKeys.forEach(i => { 
+            aI.innerHTML += `<option value="${i}" data-cost="${itemPrices[i]}">${i}</option>`; 
+            dI.innerHTML += `<option value="${i}">${i}</option>`; 
+        }); 
+        updateAdminCostHint(); updateRateSettingHint(); 
+    }
 </script>
 </body>
 </html>
