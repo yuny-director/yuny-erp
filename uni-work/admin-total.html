@@ -164,7 +164,7 @@
     </div>
 
     <div class="card">
-        <h2>📥 일일 데이터 입력</h2>
+        <h2>🛠️ 일일 데이터 입력</h2>
         <div class="flex-form-row">
             <div class="form-group">
                 <label>작업자</label>
@@ -187,7 +187,7 @@
     </div>
 
     <div class="card">
-        <h2>🛠️ 유니 종합 마스터 정산 원장표</h2>
+        <h2>📊 유니 종합 마스터 정산 원장표</h2>
         <div class="table-container">
             <table id="pivotTable"></table>
         </div>
@@ -209,7 +209,9 @@
     var workersPool = []; var itemPrices = {}; var rawEntries = []; var hourlyRates = {}; var userList = [];
     var myItemOrder = ["스포이드", "공병", "미스트(핑크)", "미스트(보라)", "지정품목"];
 
+    // 🔒 [방어 안전장치 장착] myItemOrder 리스트나 비교값이 빈 값(null/undefined)이어도 시스템 에러 유발 원천 차단
     function customItemSort(a, b) {
+        if (!myItemOrder || !Array.isArray(myItemOrder)) return 0;
         var idxA = myItemOrder.indexOf(a); var idxB = myItemOrder.indexOf(b);
         if (idxA === -1) idxA = 999; if (idxB === -1) idxB = 999;
         return idxA - idxB;
@@ -232,16 +234,19 @@
             workersPool = data.workersPool || []; itemPrices = data.itemPrices || {};
             rawEntries = data.rawEntries || []; hourlyRates = data.hourlyRates || {};
             userList = data.userList || [];
-            if(data.itemOrder && data.itemOrder.length > 0) {
+            if(data.itemOrder && Array.isArray(data.itemOrder) && data.itemOrder.length > 0) {
                 myItemOrder = data.itemOrder;
             }
             renderDropdowns();
             buildPivotTable();
             document.getElementById('loadingStatus').innerText = "✅ 실시간 동기화 완료";
+        }).catch(err => {
+            console.error("동기화 에러: ", err);
+            document.getElementById('loadingStatus').innerText = "❌ 데이터 갱신 오류";
         });
     }
 
-    function syncWithGoogle(msg) {
+    function syncWithGoogle(msg, silent) {
         document.getElementById('loadingStatus').innerText = "📤 원장 자동 저장 중...";
         var payload = { action: "syncAll", updater: "관리자", summary: msg, workersPool: workersPool, itemPrices: itemPrices, rawEntries: rawEntries, hourlyRates: hourlyRates, itemOrder: myItemOrder };
         fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }).then(() => loadData());
@@ -249,7 +254,9 @@
 
     function openSortModal() {
         var listContainer = document.getElementById("sortableList"); listContainer.innerHTML = "";
-        var allItems = Object.keys(itemPrices).sort(customItemSort);
+        // 🔒 [에러방어] 단가표(itemPrices) 가 정상 수집되지 않았을 경우를 위한 백업 처리
+        var targetPrices = itemPrices || {};
+        var allItems = Object.keys(targetPrices).sort(customItemSort);
         allItems.forEach(item => {
             var li = document.createElement("li"); li.className = "sortable-item"; li.draggable = true; li.innerText = item;
             li.addEventListener("dragstart", () => { li.classList.add("dragging"); });
@@ -297,12 +304,15 @@
         var dayAdminSums = {}; var dayWorkerSums = {}; dateSet.forEach(d => { dayAdminSums[d] = 0; dayWorkerSums[d] = 0; });
         var globalItemAdminQty = {}; var globalItemCost = {}; var workerGrandTotalsMap = {};
         
+        // 🔒 [에러방어] 단가표(itemPrices) 안전하게 예외처리
+        var safeItemPrices = itemPrices || {};
+
         workersPool.forEach(name => {
             var nameEntries = rawEntries.filter(e => e.name === name); var itemsOfName = [];
             nameEntries.forEach(e => { if(e.item && e.item !== '통합근무' && itemsOfName.indexOf(e.item) === -1) itemsOfName.push(e.item); });
             if(itemsOfName.length === 0) itemsOfName.push("지정품목");
             
-            // 👑 [대성공 보정] 정산 원장표 본문의 각 이름별 품목 정렬도 관리자 마스터 지정 순서로 강제 고정!!
+            // 👑 정산 원장표 본문의 각 이름별 품목 정렬 강제 고정
             itemsOfName.sort(customItemSort);
             
             var rateConfig = hourlyRates[name] || { rate: 9620, customDays: {} }; 
@@ -341,7 +351,7 @@
 
                 groupedItems.forEach(item => {
                     var lastAdminEntry = nameEntries.find(e => e.item === item && e.type === 'admin');
-                    var cost = (lastAdminEntry ? Number(lastAdminEntry.cost) : (itemPrices[item] || 0));
+                    var cost = (lastAdminEntry ? Number(lastAdminEntry.cost) : (safeItemPrices[item] || 0));
                     var sumAdminQty = 0, sumWorkerQty = 0;
                     
                     if (!globalItemAdminQty[item]) {
@@ -458,14 +468,17 @@
     function deleteItem() { var i = document.getElementById('delItemSelect').value; if(!i) return; if(confirm(`[${i}] 품목 단가표에서 삭제하시겠습니까?`)) { delete itemPrices[i]; buildPivotTable(); syncWithGoogle(`품목 제거: ${i}`, false); } }
     function saveHourlyRateSetting() { var name = document.getElementById('rateWorkerSelect').value; if(!hourlyRates[name]) hourlyRates[name] = { rate: 9620, customDays: {} }; hourlyRates[name].rate = Number(document.getElementById('hourlyRateInput').value)||0; buildPivotTable(); syncWithGoogle(`[${name}] 시급원장 금액 변경`, true); }
     function updateRateSettingHint() { var name = document.getElementById('rateWorkerSelect').value; var config = hourlyRates[name] || { rate: 9620, customDays: {} }; document.getElementById('hourlyRateInput').value = config.rate || 9620; }
-    function updateAdminCostHint() { var s = document.getElementById('admItemSelect'); if(s.options.length) document.getElementById('admCost').value = s.options[s.selectedIndex].getAttribute('data-cost'); }
+    function updateAdminCostHint() { var s = document.getElementById('admItemSelect'); if(s && s.options.length) document.getElementById('admCost').value = s.options[s.selectedIndex].getAttribute('data-cost'); }
     
     function renderDropdowns() { 
         var aN = document.getElementById('admNameSelect'), rN = document.getElementById('rateWorkerSelect'), aI = document.getElementById('admItemSelect'), dW = document.getElementById('delWorkerSelect'), dI = document.getElementById('delItemSelect'); 
+        if(!aN || !rN || !aI || !dW || !dI) return;
         aN.innerHTML = ""; rN.innerHTML = ""; aI.innerHTML = ""; dW.innerHTML = ""; dI.innerHTML = ""; 
         workersPool.forEach(n => { var o = `<option value="${n}">${n}</option>`; aN.innerHTML += o; rN.innerHTML += o; dW.innerHTML += o; }); 
-        var sortedItemKeys = Object.keys(itemPrices).sort(customItemSort);
-        sortedItemKeys.forEach(i => { aI.innerHTML += `<option value="${i}" data-cost="${itemPrices[i]}">${i}</option>`; dI.innerHTML += `<option value="${i}">${i}</option>`; }); 
+        
+        var safeItemPrices = itemPrices || {};
+        var sortedItemKeys = Object.keys(safeItemPrices).sort(customItemSort);
+        sortedItemKeys.forEach(i => { aI.innerHTML += `<option value="${i}" data-cost="${safeItemPrices[i]}">${i}</option>`; dI.innerHTML += `<option value="${i}">${i}</option>`; }); 
         updateAdminCostHint(); updateRateSettingHint(); 
     }
 </script>
