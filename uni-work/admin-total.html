@@ -7,56 +7,18 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; }
         .content { padding: 15px; }
-        
-        .flex-form-row { 
-            display: flex; 
-            flex-wrap: wrap; 
-            align-items: flex-end; 
-            gap: 12px; 
-            margin-bottom: 15px;
-        }
-        
+        .flex-form-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 15px; }
         .card { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 25px; }
         .form-group { display: flex; flex-direction: column; }
         .form-group label { margin-bottom: 6px; font-weight: bold; font-size: 14px; color: #333; height: 16px; line-height: 16px; }
-        
-        .form-group input, .form-group select, .flex-form-row select { 
-            padding: 0 10px; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
-            width: 160px; 
-            height: 38px; 
-            box-sizing: border-box; 
-            font-size: 14px !important;
-            font-family: Arial, sans-serif;
-            background-color: #ffffff;
-        }
-        
+        .form-group input, .form-group select, .flex-form-row select { padding: 0 10px; border: 1px solid #ccc; border-radius: 4px; width: 160px; height: 38px; box-sizing: border-box; font-size: 14px !important; font-family: Arial, sans-serif; background-color: #ffffff; }
         .flex-form-row > select { margin-bottom: 0px; }
-        
-        .btn { 
-            padding: 0 18px; 
-            background-color: #1abc9c; 
-            color: white; 
-            border: none; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            height: 38px; 
-            font-size: 14px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
-            box-sizing: border-box;
-            margin-bottom: 0px;
-        }
+        .btn { padding: 0 18px; background-color: #1abc9c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; height: 38px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s; box-sizing: border-box; margin-bottom: 0px; }
         .btn:hover { background-color: #16a085; }
         .btn-dark-verify { background-color: #2c3e50; }
         .btn-dark-verify:hover { background-color: #34495e; }
         .btn-danger { background-color: #e74c3c !important; }
         .btn-danger:hover { background-color: #c0392b !important; }
-        
         .btn-orange { background-color: #e67e22 !important; }
         .btn-orange:hover { background-color: #d35400 !important; }
         .btn-gray { background-color: #7f8c8d !important; }
@@ -64,90 +26,17 @@
         .btn-purple { background-color: #9b59b6 !important; }
         .btn-purple:hover { background-color: #8e44ad !important; }
 
-        /* 드래그앤드롭 정렬 UI 모달 스타일 */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 100;
-            left: 0; top: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.4);
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-content {
-            background-color: #fff;
-            padding: 25px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        .sortable-list {
-            list-style: none;
-            padding: 0;
-            margin: 15px 0;
-        }
-        .sortable-item {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            padding: 10px 15px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            cursor: grab;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            user-select: none;
-        }
-        .sortable-item.dragging {
-            opacity: 0.5;
-            background: #e8f4fd;
-            border: 1px dashed #2980b9;
-        }
-        .sortable-item::after {
-            content: '☰';
-            color: #aaa;
-            font-size: 16px;
-        }
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); align-items: center; justify-content: center; }
+        .modal-content { background-color: #fff; padding: 25px; border-radius: 8px; width: 90%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .sortable-list { list-style: none; padding: 0; margin: 15px 0; }
+        .sortable-item { background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px 15px; margin-bottom: 8px; border-radius: 4px; cursor: grab; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+        .sortable-item.dragging { opacity: 0.5; background: #e8f4fd; border: 1px dashed #2980b9; }
+        .sortable-item::after { content: '☰'; color: #aaa; font-size: 16px; }
 
-        .table-container { 
-            width: 100%; 
-            max-height: 75vh; 
-            overflow: auto !important; 
-            border: 1px solid #ccc; 
-            border-radius: 6px; 
-            background: white; 
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        table { 
-            border-collapse: separate !important; 
-            border-spacing: 0 !important; 
-            font-size: 13px; 
-            width: auto; 
-            min-width: 100%; 
-            table-layout: fixed; 
-        }
-        
-        th, td { 
-            padding: 10px 6px; 
-            text-align: center; 
-            white-space: nowrap; 
-            box-sizing: border-box; 
-            border-right: 1px solid #ccc !important;
-            border-bottom: 1px solid #ccc !important;
-            border-left: none !important;
-            border-top: none !important;
-        }
-        
-        th { 
-            background-color: #f8f9fa !important; 
-            font-weight: bold; 
-            position: sticky !important; 
-            top: 0 !important; 
-            z-index: 30 !important; 
-            border-top: 1px solid #ccc !important;
-        }
+        .table-container { width: 100%; max-height: 75vh; overflow: auto !important; border: 1px solid #ccc; border-radius: 6px; background: white; -webkit-overflow-scrolling: touch; }
+        table { border-collapse: separate !important; border-spacing: 0 !important; font-size: 13px; width: auto; min-width: 100%; table-layout: fixed; }
+        th, td { padding: 10px 6px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; border-left: none !important; border-top: none !important; }
+        th { background-color: #f8f9fa !important; font-weight: bold; position: sticky !important; top: 0 !important; z-index: 30 !important; border-top: 1px solid #ccc !important; }
         
         .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 65px; max-width: 65px; background: #ffffff !important; z-index: 10; border-left: 1px solid #ccc !important; }
         .fix-col-2 { position: sticky !important; left: 65px !important; min-width: 65px; max-width: 65px; background: #ffffff !important; z-index: 10; }
@@ -155,20 +44,10 @@
         .fix-col-4 { position: sticky !important; left: 235px !important; min-width: 60px; max-width: 75px; background: #ffffff !important; z-index: 10; }
         .fix-col-5 { position: sticky !important; left: 295px !important; min-width: 75px; max-width: 95px; background: #fafafa !important; z-index: 10; }
         .fix-col-6 { position: sticky !important; left: 370px !important; min-width: 100px; max-width: 125px; background: #ffffff !important; z-index: 10; }
-        .fix-col-7 { 
-            position: sticky !important; 
-            left: 470px !important; 
-            min-width: 100px; 
-            max-width: 120px; 
-            background: #f4fce3 !important; 
-            z-index: 10; 
-            font-weight: bold; 
-            border-right: 2px solid #999 !important; 
-        }
+        .fix-col-7 { position: sticky !important; left: 470px !important; min-width: 100px; max-width: 120px; background: #f4fce3 !important; z-index: 10; font-weight: bold; border-right: 2px solid #999 !important; }
         
         th.fix-col-1, th.fix-col-2, th.fix-col-3, th.fix-col-4, th.fix-col-5, th.fix-col-6, th.fix-col-7 { z-index: 40 !important; }
         th.fix-col-7 { border-right: 2px solid #999 !important; }
-        
         .admin-text { color: #2c3e50; font-weight: bold; }
         .worker-text { color: #27ae60; font-weight: bold; }
         
@@ -176,68 +55,32 @@
         tbody tr:hover td.fix-col-1, tbody tr:hover td.fix-col-2, tbody tr:hover td.fix-col-3, tbody tr:hover td.fix-col-4, tbody tr:hover td.fix-col-5, tbody tr:hover td.fix-col-6 { background-color: #e8f4fd !important; }
         tbody tr:hover td.fix-col-7 { background-color: #d3f9d8 !important; }
         tbody tr.subtotal-row:hover td { background-color: #fff3bf !important; }
-
         .subtotal-row { background-color: #fff9db !important; font-weight: bold !important; color: #d9480f !important; }
         .subtotal-row td { background-color: #fff9db !important; }
-
-        tfoot tr.bg-total-item-sub td {
-            background: #f1f3f5 !important;
-            font-weight: bold !important;
-            color: #495057 !important;
-            border-top: 1px solid #ccc !important;
-        }
-        
-        tfoot tr.bg-total-row-1 td, 
-        tfoot tr.bg-total-row-2 td { 
-            background: #e9ecef !important; 
-            font-weight: bold !important; 
-            white-space: nowrap !important;
-        }
+        tfoot tr.bg-total-item-sub td { background: #f1f3f5 !important; font-weight: bold !important; color: #495057 !important; border-top: 1px solid #ccc !important; }
+        tfoot tr.bg-total-row-1 td, tfoot tr.bg-total-row-2 td { background: #e9ecef !important; font-weight: bold !important; white-space: nowrap !important; }
         tfoot tr.bg-total-row-1 td { border-top: 2px solid #888 !important; }
-
-        tfoot tr td.fix-col-1, tfoot tr td.fix-col-2, tfoot tr td.fix-col-3, tfoot tr td.fix-col-4, tfoot tr td.fix-col-5, tfoot tr td.fix-col-6 {
-            position: sticky !important;
-            z-index: 11 !important;
-        }
+        tfoot tr td.fix-col-1, tfoot tr td.fix-col-2, tfoot tr td.fix-col-3, tfoot tr td.fix-col-4, tfoot tr td.fix-col-5, tfoot tr td.fix-col-6 { position: sticky !important; z-index: 11 !important; }
         tfoot tr.bg-total-item-sub td.fix-col-1, tfoot tr.bg-total-item-sub td.fix-col-2, tfoot tr.bg-total-item-sub td.fix-col-3, tfoot tr.bg-total-item-sub td.fix-col-4, tfoot tr.bg-total-item-sub td.fix-col-5, tfoot tr.bg-total-item-sub td.fix-col-6 { background: #f1f3f5 !important; }
-        tfoot tr.bg-total-row-1 td.fix-col-1, tfoot tr.bg-total-row-1 td.fix-col-2, tfoot tr.bg-total-row-1 td.fix-col-3, tfoot tr.bg-total-row-1 td.fix-col-4, tfoot tr.bg-total-row-1 td.fix-col-5, tfoot tr.bg-total-row-1 td.fix-col-6,
-        tfoot tr.bg-total-row-2 td.fix-col-1, tfoot tr.bg-total-row-2 td.fix-col-2, tfoot tr.bg-total-row-2 td.fix-col-3, tfoot tr.bg-total-row-2 td.fix-col-4, tfoot tr.bg-total-row-2 td.fix-col-5, tfoot tr.bg-total-row-2 td.fix-col-6 { background: #e9ecef !important; }
-
-        tfoot tr td.fix-col-7 { 
-            position: sticky !important;
-            z-index: 11 !important; 
-            border-right: 2px solid #999 !important;
-        }
+        tfoot tr.bg-total-row-1 td.fix-col-1, tfoot tr.bg-total-row-1 td.fix-col-2, tfoot tr.bg-total-row-1 td.fix-col-3, tfoot tr.bg-total-row-1 td.fix-col-4, tfoot tr.bg-total-row-1 td.fix-col-5, tfoot tr.bg-total-row-1 td.fix-col-6, tfoot tr.bg-total-row-2 td.fix-col-1, tfoot tr.bg-total-row-2 td.fix-col-2, tfoot tr.bg-total-row-2 td.fix-col-3, tfoot tr.bg-total-row-2 td.fix-col-4, tfoot tr.bg-total-row-2 td.fix-col-5, tfoot tr.bg-total-row-2 td.fix-col-6 { background: #e9ecef !important; }
+        tfoot tr td.fix-col-7 { position: sticky !important; z-index: 11 !important; border-right: 2px solid #999 !important; }
         tfoot tr.bg-total-item-sub td.fix-col-7 { background: #f1f3f5 !important; }
         tfoot tr.bg-total-row-1 td.fix-col-7 { background-color: #d3f9d8 !important; }
         tfoot tr.bg-total-row-2 td.fix-col-7 { background-color: #e9ecef !important; }
         
-        .total-split-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 2px;
-            font-size: 12px;
-            line-height: 1.3;
-        }
+        .total-split-box { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; line-height: 1.3; }
         .total-split-box .val-qty { color: #0b7285; font-weight: bold; }
         .total-split-box .val-hours { color: #2b6cb0; font-weight: bold; }
-
         .diff-warning { background-color: #ffcccc !important; color: #b91c1c !important; font-weight: bold; }
         .sub-section { margin-top: 20px; padding-top: 20px; border-top: 1px dashed #ddd; width: 100%; }
         .divider { color: #ccc; font-size: 18px; margin: 0 5px; align-self: flex-end; padding-bottom: 10px; }
-
         .inline-edit-input { width: 95%; height: 26px; text-align: center; border: 2px solid #2980b9; border-radius: 4px; box-sizing: border-box; font-weight: bold; }
         .editable-cell { cursor: pointer; min-width: 50px; }
         .editable-cell:hover { background-color: #e8f4fd !important; color: #2980b9; font-weight: bold; }
-        
         .editable-time-cell { cursor: pointer; font-size: 11px !important; min-width: 210px; background: #edf2ff !important; color: #364fc7 !important; padding: 6px 6px !important; }
         .editable-time-cell:hover { background-color: #dbe4ff !important; }
-        
         .time-cell-wrap { display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 4px; width: 100%; text-align: center; }
         .time-display-span { display: inline-block; min-height: 18px; line-height: 18px; }
-        
         .btn-toggle-apply { padding: 2px 4px; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 3px; border: 1px solid #ccc; flex-shrink: 0; line-height: 12px; }
         .rate-on { background-color: #2bc891 !important; color: white !important; border-color: #20a373 !important; }
         .rate-off { background-color: #e74c3c !important; color: white !important; border-color: #c0392b !important; }
@@ -263,7 +106,7 @@
     </div>
 
     <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0; margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h2 style="font-size:18px; margin: 0;">⚙️ 마스터 제어 콘솔</h2>
             <button class="btn btn-purple" onclick="openSortModal()">📊 품목 표시순서 관리</button>
         </div>
@@ -354,141 +197,88 @@
 <div id="sortModal" class="modal">
     <div class="modal-content">
         <h3 style="margin-top:0; color: #2c3e50;">↕️ 품목 순서 임의 조정</h3>
-        <p style="font-size:12px; color:#7f8c8d; margin-bottom:15px;">품목을 드래그해서 원하는 순서로 이동한 뒤 저장 버튼을 누르세요.</p>
         <ul class="sortable-list" id="sortableList"></ul>
         <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
-            <button class="btn btn-gray" onclick="closeSortModal()" style="height:34px; font-size:13px;">취소</button>
-            <button class="btn" onclick="saveItemOrder()" style="height:34px; font-size:13px;">순서 저장</button>
+            <button class="btn btn-gray" onclick="closeSortModal()">취소</button>
+            <button class="btn" onclick="saveItemOrder()">순서 저장</button>
         </div>
     </div>
 </div>
 
 <script>
     var workersPool = []; var itemPrices = {}; var rawEntries = []; var hourlyRates = {}; var userList = [];
-    
-    // 👑 [화면 제어형 커스텀 품목 순서 저장소]
-    // 💡 초기 정렬 기준 (구글 원장 저장값이 없거나 빈 배열일 때의 기본 디폴트값)
     var myItemOrder = ["스포이드", "공병", "미스트(핑크)", "미스트(보라)", "지정품목"];
 
     function customItemSort(a, b) {
-        var idxA = myItemOrder.indexOf(a);
-        var idxB = myItemOrder.indexOf(b);
-        if (idxA === -1) idxA = 999;
-        if (idxB === -1) idxB = 999;
+        var idxA = myItemOrder.indexOf(a); var idxB = myItemOrder.indexOf(b);
+        if (idxA === -1) idxA = 999; if (idxB === -1) idxB = 999;
         return idxA - idxB;
     }
 
-    window.onload = function() { 
-        if(typeof checkPageAuth === "function") { if(!checkPageAuth('admin')) return; } 
+    window.onload = function() {
         var now = new Date(); var currentYear = now.getFullYear(); var currentMonth = now.getMonth() + 1;
-        
         var ySel = document.getElementById("filterYear");
         for(var y = currentYear - 2; y <= currentYear + 1; y++) { ySel.innerHTML += `<option value="${y}" ${y===currentYear?'selected':''}>${y}년</option>`; }
         var mSel = document.getElementById("filterMonth");
         for(var m = 1; m <= 12; m++) { mSel.innerHTML += `<option value="${m}" ${m===currentMonth?'selected':''}>${m}월</option>`; }
-        
-        document.getElementById('globalWorkDate').value = now.toISOString().split('T')[0]; 
+        document.getElementById('globalWorkDate').value = now.toISOString().split('T')[0];
         ySel.onchange = buildPivotTable; mSel.onchange = buildPivotTable;
-        loadData(); 
+        loadData();
     };
-    
+
     function loadData() {
-        fetch(GOOGLE_SCRIPT_URL).then(r => r.json()).then(data => {
+        var cacheUrl = GOOGLE_SCRIPT_URL + (GOOGLE_SCRIPT_URL.indexOf('?') > -1 ? '&' : '?') + 't=' + new Date().getTime();
+        fetch(cacheUrl).then(r => r.json()).then(data => {
             workersPool = data.workersPool || []; itemPrices = data.itemPrices || {};
             rawEntries = data.rawEntries || []; hourlyRates = data.hourlyRates || {};
             userList = data.userList || [];
-            
-            // 💡 구글 원장에서 저장된 정렬 순서 목록(itemOrder)이 존재한다면 가져와서 사용합니다.
             if(data.itemOrder && data.itemOrder.length > 0) {
                 myItemOrder = data.itemOrder;
             }
-            
-            renderDropdowns(); buildPivotTable();
+            renderDropdowns();
+            buildPivotTable();
             document.getElementById('loadingStatus').innerText = "✅ 실시간 동기화 완료";
         });
     }
 
-    // 🌐 [구글 동기화] 저장할 때 정렬배열인 myItemOrder 도 함께 깃허브 원장/시트에 저장하도록 매핑
-    function syncWithGoogle(msg, skipReload) {
+    function syncWithGoogle(msg) {
         document.getElementById('loadingStatus').innerText = "📤 원장 자동 저장 중...";
-        var payload = { 
-            action: "syncAll", 
-            updater: "관리자", 
-            summary: msg, 
-            workersPool: workersPool, 
-            itemPrices: itemPrices, 
-            rawEntries: rawEntries, 
-            hourlyRates: hourlyRates,
-            itemOrder: myItemOrder  // 💡 정렬 상태 전송
-        };
+        var payload = { action: "syncAll", updater: "관리자", summary: msg, workersPool: workersPool, itemPrices: itemPrices, rawEntries: rawEntries, hourlyRates: hourlyRates, itemOrder: myItemOrder };
         fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }).then(() => loadData());
+    }
+
+    function openSortModal() {
+        var listContainer = document.getElementById("sortableList"); listContainer.innerHTML = "";
+        var allItems = Object.keys(itemPrices).sort(customItemSort);
+        allItems.forEach(item => {
+            var li = document.createElement("li"); li.className = "sortable-item"; li.draggable = true; li.innerText = item;
+            li.addEventListener("dragstart", () => { li.classList.add("dragging"); });
+            li.addEventListener("dragend", () => { li.classList.remove("dragging"); });
+            listContainer.appendChild(li);
+        });
+        listContainer.addEventListener("dragover", e => {
+            e.preventDefault(); var draggingItem = document.querySelector(".dragging");
+            var siblings = [...listContainer.querySelectorAll(".sortable-item:not(.dragging)")];
+            var nextSibling = siblings.find(sibling => e.clientY <= sibling.getBoundingClientRect().top + sibling.getBoundingClientRect().height / 2);
+            listContainer.insertBefore(draggingItem, nextSibling);
+        });
+        document.getElementById("sortModal").style.display = "flex";
+    }
+
+    function closeSortModal() { document.getElementById("sortModal").style.display = "none"; }
+
+    function saveItemOrder() {
+        var items = [...document.querySelectorAll("#sortableList .sortable-item")];
+        myItemOrder = items.map(li => li.innerText);
+        closeSortModal();
+        buildPivotTable();
+        renderDropdowns();
+        syncWithGoogle("화면에서 직접 품목 정렬 순서 수정 저장");
     }
 
     function formatDateToMd(dateStr) { if (!dateStr) return ""; var parts = dateStr.replace(/\//g, '-').split('-'); if (parts.length < 3) return dateStr; return (parseInt(parts[1],10)<10?'0'+parseInt(parts[1],10):parseInt(parts[1],10)) + '/' + (parseInt(parts[2],10)<10?'0'+parseInt(parts[2],10):parseInt(parts[2],10)); }
     function calculateHours(timeStr) { if(!timeStr || timeStr === "-" || timeStr.indexOf("~") === -1 || timeStr.indexOf("미입력") > -1) return 0; try { var parts = timeStr.split("~"); var parseTime = function(t) { t = t.trim(); var isPm = t.indexOf("오후") > -1; var clean = t.replace("오전","").replace("오후","").trim(); var hm = clean.split(":"); var h = Number(hm[0]); var m = Number(hm[1]) || 0; if(isPm && h < 12) h += 12; if(!isPm && h === 12) h = 0; return h + (m / 60); }; var diff = parseTime(parts[1]) - parseTime(parts[0]); return diff > 0 ? Number(diff.toFixed(1)) : 0; } catch(e) { return 0; } }
-    
-    function parseMainItemAndOption(fullName) {
-        if(fullName.indexOf("(") > -1 && fullName.indexOf(")") > -1) {
-            var parts = fullName.split("(");
-            return { main: parts[0].trim(), option: parts[1].replace(")", "").trim() };
-        }
-        return { main: fullName, option: "" };
-    }
-
-    // 💡 [화면 조작 드래그앤드롭 모달 컨트롤러]
-    function openSortModal() {
-        var listContainer = document.getElementById("sortableList");
-        listContainer.innerHTML = "";
-        
-        // 원장에 등록된 모든 고유 품목 가져오기
-        var allItems = Object.keys(itemPrices);
-        
-        // 현재 설정된 정렬 기준(myItemOrder)을 기반으로 순서 맞춰서 목록 뿌려주기
-        allItems.sort(customItemSort);
-        
-        allItems.forEach(item => {
-            var li = document.createElement("li");
-            li.className = "sortable-item";
-            li.draggable = true;
-            li.innerText = item;
-            
-            // 드래그앤드롭 이벤트 리스너 세팅
-            li.addEventListener("dragstart", () => { li.classList.add("dragging"); });
-            li.addEventListener("dragend", () => { li.classList.remove("dragging"); });
-            
-            listContainer.appendChild(li);
-        });
-
-        // 리스트 내 드래그 오버 정렬 계산식
-        listContainer.addEventListener("dragover", e => {
-            e.preventDefault();
-            var draggingItem = document.querySelector(".dragging");
-            var siblings = [...listContainer.querySelectorAll(".sortable-item:not(.dragging)")];
-            var nextSibling = siblings.find(sibling => {
-                return e.clientY <= sibling.getBoundingClientRect().top + sibling.getBoundingClientRect().height / 2;
-            });
-            listContainer.insertBefore(draggingItem, nextSibling);
-        });
-
-        document.getElementById("sortModal").style.display = "flex";
-    }
-
-    function closeSortModal() {
-        document.getElementById("sortModal").style.display = "none";
-    }
-
-    // 💡 순서 저장 버튼 클릭 시 실서버 데이터 전송
-    function saveItemOrder() {
-        var items = [...document.querySelectorAll("#sortableList .sortable-item")];
-        myItemOrder = items.map(li => li.innerText); // 드래그 정렬된 텍스트 수집
-        
-        closeSortModal();
-        buildPivotTable();
-        renderDropdowns();
-        
-        // 깃허브 원장 및 구글 스프레드시트에 저장 요청
-        syncWithGoogle("화면에서 직접 품목 정렬 순서 수정 저장", false);
-    }
+    function parseMainItemAndOption(fullName) { if(fullName.indexOf("(") > -1 && fullName.indexOf(")") > -1) { var parts = fullName.split("("); return { main: parts[0].trim(), option: parts[1].replace(")", "").trim() }; } return { main: fullName, option: "" }; }
 
     function buildPivotTable() {
         var table = document.getElementById('pivotTable'); table.innerHTML = ""; 
@@ -498,31 +288,23 @@
         
         var dateSet = [];
         var strMonth = selMonth < 10 ? "0" + selMonth : String(selMonth);
-        for(var d = 1; d <= lastDay; d++) {
-            var strDay = d < 10 ? "0" + d : String(d);
-            dateSet.push(strMonth + "/" + strDay);
-        }
+        for(var d = 1; d <= lastDay; d++) { dateSet.push(strMonth + "/" + (d < 10 ? "0" + d : String(d))); }
         
         var headerHtml = `<thead><tr><th class="fix-col-1">이름</th><th class="fix-col-2">구분</th><th class="fix-col-3">품목</th><th class="fix-col-4">단가</th><th class="fix-col-5">📦 금액</th><th class="fix-col-6">총수량 및 시간</th><th class="fix-col-7">📊 최종 합산 총액</th>${dateSet.map(d => `<th style="min-width:65px;">${d}</th>`).join('')}</tr></thead>`;
         var bodyHtml = "<tbody>";
         
         var totalAdminCost = 0, totalAdminQty = 0, totalWorkerQty = 0, totalWorkHours = 0, totalHourlyPaySum = 0, totalFinalGrandSum = 0;
-        
-        var dayAdminSums = {}; 
-        var dayWorkerSums = {}; 
-        dateSet.forEach(d => { dayAdminSums[d] = 0; dayWorkerSums[d] = 0; });
-        
-        var globalItemAdminQty = {}; 
-        var globalItemCost = {};     
-        var workerGrandTotalsMap = {}; 
+        var dayAdminSums = {}; var dayWorkerSums = {}; dateSet.forEach(d => { dayAdminSums[d] = 0; dayWorkerSums[d] = 0; });
+        var globalItemAdminQty = {}; var globalItemCost = {}; var workerGrandTotalsMap = {};
         
         workersPool.forEach(name => {
             var nameEntries = rawEntries.filter(e => e.name === name); var itemsOfName = [];
             nameEntries.forEach(e => { if(e.item && e.item !== '통합근무' && itemsOfName.indexOf(e.item) === -1) itemsOfName.push(e.item); });
             if(itemsOfName.length === 0) itemsOfName.push("지정품목");
             
+            // 👑 [대성공 보정] 정산 원장표 본문의 각 이름별 품목 정렬도 관리자 마스터 지정 순서로 강제 고정!!
             itemsOfName.sort(customItemSort);
-
+            
             var rateConfig = hourlyRates[name] || { rate: 9620, customDays: {} }; 
             if(!rateConfig.customDays) rateConfig.customDays = {};
             var nameTotalHours = 0; var nameHourlyPay = 0; var dayAttendanceMap = {};
@@ -538,11 +320,9 @@
                 } else { dayAttendanceMap[d] = { time: "-", apply: isDayApply }; } 
             });
             nameTotalHours = Number(nameTotalHours.toFixed(1));
-            totalWorkHours += nameTotalHours;
-            totalHourlyPaySum += nameHourlyPay;
+            totalWorkHours += nameTotalHours; totalHourlyPaySum += nameHourlyPay;
             
             var nameAdminCostSum = 0;
-
             var parentGroups = {};
             itemsOfName.forEach(item => {
                 var p = parseMainItemAndOption(item);
@@ -551,17 +331,12 @@
             });
             
             var subtotalRowsCount = 0;
-            for(var group in parentGroups) {
-                if(parentGroups[group].length > 1 || parentGroups[group][0].indexOf("(") > -1) subtotalRowsCount++;
-            }
+            for(var group in parentGroups) { if(parentGroups[group].length > 1 || parentGroups[group][0].indexOf("(") > -1) subtotalRowsCount++; }
             var totalRowsForName = (itemsOfName.length * 2) + subtotalRowsCount + 1;
             var isFirstRow = true;
 
             for(var groupName in parentGroups) {
-                var groupedItems = parentGroups[groupName];
-                var groupAdminSums = {};
-                var groupTotalAdminQty = 0;
-                var groupTotalAdminCost = 0;
+                var groupedItems = parentGroups[groupName]; var groupAdminSums = {}; var groupTotalAdminQty = 0; var groupTotalAdminCost = 0;
                 dateSet.forEach(d => { groupAdminSums[d] = 0; });
 
                 groupedItems.forEach(item => {
@@ -580,28 +355,15 @@
                         var aEnt = nameEntries.find(e => e.item === item && e.type === 'admin' && e.date === dateFull);
                         var wEnt = nameEntries.find(e => e.item === item && e.type === 'worker' && e.date === dateFull);
                         if(aEnt) { 
-                            var q = Number(aEnt.qty);
-                            sumAdminQty += q; 
-                            groupAdminSums[d] += q; 
-                            dayAdminSums[d] += q; 
-                            
-                            globalItemAdminQty[item][d] += q;
-                            globalItemAdminQty[item].total += q;
+                            var q = Number(aEnt.qty); sumAdminQty += q; groupAdminSums[d] += q; dayAdminSums[d] += q; 
+                            globalItemAdminQty[item][d] += q; globalItemAdminQty[item].total += q;
                         }
-                        if(wEnt) { 
-                            var wq = Number(wEnt.qty);
-                            sumWorkerQty += wq; 
-                            dayWorkerSums[d] += wq; 
-                        }
+                        if(wEnt) { var wq = Number(wEnt.qty); sumWorkerQty += wq; dayWorkerSums[d] += wq; }
                     });
                     
                     var sumAdminCost = cost * sumAdminQty;
-                    nameAdminCostSum += sumAdminCost; 
-                    totalAdminCost += sumAdminCost; 
-                    totalAdminQty += sumAdminQty; 
-                    totalWorkerQty += sumWorkerQty;
-                    groupTotalAdminQty += sumAdminQty; 
-                    groupTotalAdminCost += sumAdminCost;
+                    nameAdminCostSum += sumAdminCost; totalAdminCost += sumAdminCost; totalAdminQty += sumAdminQty; totalWorkerQty += sumWorkerQty;
+                    groupTotalAdminQty += sumAdminQty; groupTotalAdminCost += sumAdminCost;
 
                     var adminRowHtml = `<tr>`;
                     if(isFirstRow) { adminRowHtml += `<td class="fix-col-1" rowspan="${totalRowsForName}" style="font-weight:bold; vertical-align:middle;">${name}</td>`; }
@@ -655,76 +417,31 @@
 
         var footerHtml = "<tfoot>";
         var activeItems = Object.keys(globalItemAdminQty);
-        
         activeItems.sort(customItemSort);
         
         var isFirstSubRow = true;
         activeItems.forEach(item => {
-            var itemCost = globalItemCost[item] || 0;
-            var itemTotalQty = globalItemAdminQty[item].total;
-            var itemTotalCost = itemCost * itemTotalQty;
-            
+            var itemCost = globalItemCost[item] || 0; var itemTotalQty = globalItemAdminQty[item].total; var itemTotalCost = itemCost * itemTotalQty;
             footerHtml += `<tr class="bg-total-item-sub">`;
-            if (isFirstSubRow) {
-                footerHtml += `<td class="fix-col-1" rowspan="${activeItems.length}" style="vertical-align:middle; font-weight:bold;">품목별 소계</td>`;
-                isFirstSubRow = false;
-            }
-            footerHtml += `
-                <td class="fix-col-2 admin-text">유니입력</td>
-                <td class="fix-col-3" style="text-align: left; padding-left: 10px;">${item} 소계</td>
-                <td class="fix-col-4">${itemCost.toLocaleString()}원</td>
-                <td class="fix-col-5">${itemTotalCost.toLocaleString()}원</td>
-                <td class="fix-col-6">${itemTotalQty}개</td>
-                <td class="fix-col-7">-</td>`;
-            dateSet.forEach(d => {
-                var qVal = globalItemAdminQty[item][d];
-                footerHtml += `<td>${qVal || '-'}</td>`;
-            });
+            if (isFirstSubRow) { footerHtml += `<td class="fix-col-1" rowspan="${activeItems.length}" style="vertical-align:middle; font-weight:bold;">품목별 소계</td>`; isFirstSubRow = false; }
+            footerHtml += `<td class="fix-col-2 admin-text">유니입력</td><td class="fix-col-3" style="text-align: left; padding-left: 10px;">${item} 소계</td><td class="fix-col-4">${itemCost.toLocaleString()}원</td><td class="fix-col-5">${itemTotalCost.toLocaleString()}원</td><td class="fix-col-6">${itemTotalQty}개</td><td class="fix-col-7">-</td>`;
+            dateSet.forEach(d => { var qVal = globalItemAdminQty[item][d]; footerHtml += `<td>${qVal || '-'}</td>`; });
             footerHtml += `</tr>`;
         });
         
         totalFinalGrandSum = totalAdminCost + totalHourlyPaySum;
-
-        footerHtml += `
-        <tr class="bg-total-row-1">
-            <td class="fix-col-1" rowspan="2" style="vertical-align:middle; font-weight:bold;">최종 합계</td>
-            <td class="fix-col-2 admin-text">유니입력</td>
-            <td class="fix-col-3" rowspan="2" style="vertical-align:middle; font-weight:bold;">전체합산</td>
-            <td class="fix-col-4">-</td>
-            <td class="fix-col-5" style="background-color: #d0ebff !important;">${(totalAdminCost + totalHourlyPaySum).toLocaleString()}원</td>
-            <td class="fix-col-6" style="background-color: #e3fafc !important; padding: 4px 8px !important;">
-                <div class="total-split-box">
-                    <span class="val-qty">${totalAdminQty}개</span>
-                    <span class="val-hours">${totalWorkHours.toFixed(1)}시간</span>
-                </div>
-            </td>
-            <td class="fix-col-7" id="overallGrandTotalCell" style="background-color: #d3f9d8 !important; color:#2b8a3e; font-weight:bold;">계산중</td>
-            ${dateSet.map(d => `<td>${dayAdminSums[d] || '-'}</td>`).join('')}
-        </tr>
-        <tr class="bg-total-row-2">
-            <td class="fix-col-2 worker-text">개인입력</td>
-            <td class="fix-col-4">-</td>
-            <td class="fix-col-5">-</td>
-            <td class="fix-col-6" style="font-weight: bold; color: #27ae60;">${totalWorkerQty}개</td>
-            <td class="fix-col-7">-</td>
-            ${dateSet.map(d => `<td>${dayWorkerSums[d] || '-'}</td>`).join('')}
-        </tr>`;
+        footerHtml += `<tr class="bg-total-row-1"><td class="fix-col-1" rowspan="2" style="vertical-align:middle; font-weight:bold;">최종 합계</td><td class="fix-col-2 admin-text">유니입력</td><td class="fix-col-3" rowspan="2" style="vertical-align:middle; font-weight:bold;">전체합산</td><td class="fix-col-4">-</td><td class="fix-col-5" style="background-color: #d0ebff !important;">${(totalAdminCost + totalHourlyPaySum).toLocaleString()}원</td><td class="fix-col-6" style="background-color: #e3fafc !important; padding: 4px 8px !important;"><div class="total-split-box"><span class="val-qty">${totalAdminQty}개</span><span class="val-hours">${totalWorkHours.toFixed(1)}시간</span></div></td><td class="fix-col-7" id="overallGrandTotalCell" style="background-color: #d3f9d8 !important; color:#2b8a3e; font-weight:bold;">계산중</td>${dateSet.map(d => `<td>${dayAdminSums[d] || '-'}</td>`).join('')}</tr><tr class="bg-total-row-2"><td class="fix-col-2 worker-text">개인입력</td><td class="fix-col-4">-</td><td class="fix-col-5">-</td><td class="fix-col-6" style="font-weight: bold; color: #27ae60;">${totalWorkerQty}개</td><td class="fix-col-7">-</td>${dateSet.map(d => `<td>${dayWorkerSums[d] || '-'}</td>`).join('')}</tr>`;
         footerHtml += "</tfoot>";
         
         table.innerHTML = headerHtml + bodyHtml + footerHtml;
         
         setTimeout(function(){ 
             for(var name in workerGrandTotalsMap) {
-                var cellId = "grandTotalCell_" + name.replace(/\s+/g, '');
-                var cell = document.getElementById(cellId);
-                if(cell) {
-                    cell.innerText = workerGrandTotalsMap[name].toLocaleString() + "원";
-                }
+                var cellId = "grandTotalCell_" + name.replace(/\s+/g, ''); var cell = document.getElementById(cellId);
+                if(cell) { cell.innerText = workerGrandTotalsMap[name].toLocaleString() + "원"; }
             }
             var finalCell = document.getElementById('overallGrandTotalCell');
-            if(finalCell) {
-                finalCell.innerText = totalFinalGrandSum.toLocaleString() + "원"; 
-            }
+            if(finalCell) { finalCell.innerText = totalFinalGrandSum.toLocaleString() + "원"; }
         }, 10);
     }
 
@@ -746,15 +463,9 @@
     function renderDropdowns() { 
         var aN = document.getElementById('admNameSelect'), rN = document.getElementById('rateWorkerSelect'), aI = document.getElementById('admItemSelect'), dW = document.getElementById('delWorkerSelect'), dI = document.getElementById('delItemSelect'); 
         aN.innerHTML = ""; rN.innerHTML = ""; aI.innerHTML = ""; dW.innerHTML = ""; dI.innerHTML = ""; 
-        
         workersPool.forEach(n => { var o = `<option value="${n}">${n}</option>`; aN.innerHTML += o; rN.innerHTML += o; dW.innerHTML += o; }); 
-        
         var sortedItemKeys = Object.keys(itemPrices).sort(customItemSort);
-        
-        sortedItemKeys.forEach(i => { 
-            aI.innerHTML += `<option value="${i}" data-cost="${itemPrices[i]}">${i}</option>`; 
-            dI.innerHTML += `<option value="${i}">${i}</option>`; 
-        }); 
+        sortedItemKeys.forEach(i => { aI.innerHTML += `<option value="${i}" data-cost="${itemPrices[i]}">${i}</option>`; dI.innerHTML += `<option value="${i}">${i}</option>`; }); 
         updateAdminCostHint(); updateRateSettingHint(); 
     }
 </script>
