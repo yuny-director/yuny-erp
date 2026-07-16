@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YUNY_ERP - 유니워크 재고관리 원장 (B7 격벽 분리 버전)</title>
+    <title>YUNY_ERP - 유니워크 입출고 및 재고관리 원장</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; }
         .content { padding: 15px; }
@@ -12,18 +12,32 @@
         .form-group { display: flex; flex-direction: column; }
         .form-group label { margin-bottom: 6px; font-weight: bold; font-size: 14px; color: #333; height: 16px; line-height: 16px; }
         .form-group input, .form-group select { padding: 0 10px; border: 1px solid #ccc; border-radius: 4px; width: 160px; height: 38px; box-sizing: border-box; font-size: 14px !important; font-family: Arial, sans-serif; background-color: #ffffff; }
-        .btn { padding: 0 18px; background-color: #1abc9c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; height: 38px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s; box-sizing: border-box; }
-        .btn:hover { background-color: #16a085; }
+        .btn { padding: 0 18px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; height: 38px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s; box-sizing: border-box; }
+        .btn-green { background-color: #27ae60; }
+        .btn-green:hover { background-color: #219653; }
+        .btn-red { background-color: #e74c3c; }
+        .btn-red:hover { background-color: #c0392b; }
         
         .table-container { width: 100%; max-height: 70vh; overflow: auto !important; border: 1px solid #ccc; border-radius: 6px; background: white; -webkit-overflow-scrolling: touch; }
         table { border-collapse: separate !important; border-spacing: 0 !important; font-size: 13px; width: auto; min-width: 100%; table-layout: fixed; }
-        th, td { padding: 12px 10px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; border-left: none !important; border-top: none !important; }
+        th, td { padding: 10px 8px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; border-left: none !important; border-top: none !important; }
         th { background-color: #f8f9fa !important; font-weight: bold; position: sticky !important; top: 0 !important; z-index: 30 !important; border-top: 1px solid #ccc !important; }
         
-        .editable-cell { cursor: pointer; background-color: #fffde6 !important; font-weight: bold; color: #d9480f; min-width: 70px; }
-        .editable-cell:hover { background-color: #fff3bf !important; }
-        .inline-edit-input { width: 90%; height: 28px; text-align: center; border: 2px solid #2980b9; border-radius: 4px; font-weight: bold; }
-        .inline-edit-input:focus { outline: none; }
+        .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 120px; max-width: 150px; background: #ffffff !important; z-index: 10; border-left: 1px solid #ccc !important; }
+        .fix-col-2 { position: sticky !important; left: 120px !important; min-width: 70px; max-width: 80px; background: #ffffff !important; z-index: 10; }
+        .fix-col-3 { position: sticky !important; left: 190px !important; min-width: 90px; max-width: 100px; background: #fafafa !important; z-index: 10; border-right: 2px solid #aaa !important; }
+        th.fix-col-1, th.fix-col-2, th.fix-col-3 { z-index: 40 !important; }
+        th.fix-col-3 { border-right: 2px solid #aaa !important; }
+
+        .row-now-stock { background-color: #fff9db !important; font-weight: bold; color: #e67e22; }
+        .row-now-stock td { background-color: #fff9db !important; }
+        .text-in { color: #27ae60; font-weight: bold; }
+        .text-out { color: #e74c3c; font-weight: bold; }
+        
+        .editable-cell { cursor: pointer; }
+        .editable-cell:hover { background-color: #e8f4fd !important; }
+        .inline-edit-input { width: 90%; height: 26px; text-align: center; border: 2px solid #2980b9; border-radius: 4px; font-weight: bold; }
+        .divider { color: #ccc; font-size: 18px; margin: 0 5px; align-self: flex-end; padding-bottom: 10px; }
     </style>
     <script>
         document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');
@@ -40,16 +54,36 @@
     <div class="card" style="background-color: #fff9db; border: 2px solid #fab005; padding: 15px 25px;">
         <div class="flex-form-row" style="margin-bottom: 0; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <label style="color: #e67e22; font-weight: bold; margin: 0;">📅 재고 원장 확인 연월 :</label>
+                <label style="color: #e67e22; font-weight: bold; margin: 0;">📅 원장 선택 연월 :</label>
                 <select id="filterYear" style="width: 100px; height:36px;"></select>
                 <select id="filterMonth" style="width: 80px; height:36px;"></select>
             </div>
-            <span id="loadingStatus" style="font-weight: bold; color: #27ae60; font-size:14px;">🔄 재고 데이터 로드 중...</span>
+            <span id="loadingStatus" style="font-weight: bold; color: #27ae60; font-size:14px;">🔄 데이터 동기화 중...</span>
         </div>
     </div>
 
     <div class="card">
-        <h2 style="font-size:18px; margin-top:0; margin-bottom:15px;">📦 유니워크 실시간 재고 원장 관리표</h2>
+        <h2>📥 일일 입·출고 수량 기록 등록</h2>
+        <div class="flex-form-row">
+            <div class="form-group">
+                <label>선택 등록일자</label>
+                <input type="date" id="stockWorkDate" style="width: 150px;">
+            </div>
+            <div class="form-group">
+                <label>대상 품목 선택</label>
+                <select id="stockItemSelect" style="width: 160px;"></select>
+            </div>
+            <div class="form-group">
+                <label>기록 수량</label>
+                <input type="number" id="stockQty" value="100" style="width: 100px;">
+            </div>
+            <button class="btn btn-green" onclick="addStockEntry('in')">📦 입고 등록</button>
+            <button class="btn btn-red" onclick="addStockEntry('out')">📤 출고 등록</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📊 품목별 수량 변동 및 현재고 대장 (입고 / 출고 / 현재고)</h2>
         <div class="table-container">
             <table id="stockTable"></table>
         </div>
@@ -60,7 +94,7 @@
     var workersPool = []; var itemPrices = {}; var hourlyRates = {}; var userList = [];
     var myItemOrder = ["스포이드", "공병", "미스트(핑크)", "미스트(보라)", "지정품목"];
     
-    // 📦 정산표를 일절 건드리지 않는 순수 단독 재고 원장 배열
+    // B7 단독 서랍장 전용 재고 데이터 배열
     var stockEntries = []; 
     var isDataLoaded = false;
 
@@ -78,6 +112,7 @@
         var mSel = document.getElementById("filterMonth");
         for(var m = 1; m <= 12; m++) { mSel.innerHTML += `<option value="${m}" ${m===currentMonth?'selected':''}>${m}월</option>`; }
         
+        document.getElementById('stockWorkDate').value = now.toISOString().split('T')[0];
         ySel.onchange = buildStockTable; mSel.onchange = buildStockTable;
         loadData();
     };
@@ -89,10 +124,11 @@
             hourlyRates = data.hourlyRates || {}; userList = data.userList || [];
             if(data.itemOrder && Array.isArray(data.itemOrder)) { myItemOrder = data.itemOrder; }
             
-            // 📦 신설된 B7 셀 서랍장에서 내려오는 독립 재고 내역 수신
+            // B7 셀 단독 창고 데이터 수신
             stockEntries = Array.isArray(data.stockEntries) ? data.stockEntries : [];
 
             isDataLoaded = true;
+            renderDropdowns();
             buildStockTable();
             handleTopNavbarSessionName();
             document.getElementById('loadingStatus').innerText = "✅ 재고원장 동기화 완료";
@@ -105,12 +141,11 @@
         if (!isDataLoaded) return;
         document.getElementById('loadingStatus').innerText = "📤 재고 원장 자동 저장 중...";
         
-        // 🔒 정산표(B4) 액션과 완전 분리된 독립 재고 전용 파이프라인(syncStock) 가동!!
         var payload = { 
             action: "syncStock", 
             updater: "관리자", 
             summary: msg, 
-            stockEntries: stockEntries // 🎯 오직 재고 원장 배열만 깔끔하게 B7 칸으로 슛!
+            stockEntries: stockEntries // 오직 B7 칸으로만 전송하여 정산 기록 완벽 차단 보호
         };
         
         fetch(GOOGLE_SCRIPT_URL, { 
@@ -127,6 +162,27 @@
         });
     }
 
+    // [콘솔 제어 추가 등록 로직]
+    function addStockEntry(ioType) {
+        var date = document.getElementById('stockWorkDate').value;
+        var item = document.getElementById('stockItemSelect').value;
+        var qty = parseInt(document.getElementById('stockQty').value) || 0;
+        
+        if(!date) { alert("날짜를 선택해 주세요!"); return; }
+        if(!item) { alert("품목을 선택해 주세요!"); return; }
+        if(qty <= 0) { alert("올바른 수량을 입력해 주세요!"); return; }
+        
+        var idx = stockEntries.findIndex(x => x.date === date && x.item === item && x.type === ioType);
+        var entry = { date: date, item: item, type: ioType, qty: qty };
+        
+        if(idx > -1) stockEntries[idx] = entry;
+        else stockEntries.push(entry);
+        
+        buildStockTable();
+        syncWithGoogle(`패널 입력 - ${item} [${ioType === 'in' ? '입고' : '출고'}] 수량 ${qty}개 등록`);
+    }
+
+    // [핵심 매트릭스 렌더러 - 입고, 출고, 현재고 변환 구조 연산]
     function buildStockTable() {
         var table = document.getElementById('stockTable'); if(!table) return;
         table.innerHTML = "";
@@ -142,59 +198,88 @@
             dateSet.push(selYear + "-" + strMonth + "-" + strDay); 
         }
         
-        var headerHtml = `<thead><tr><th style="width:180px;">품목명</th><th style="width:100px;">구분</th><th style="width:120px;">총 재고량</th>${dateSet.map(d => `<th style="min-width:60px;">${d.substring(5).replace("-","/")}</th>`).join('')}</tr></thead>`;
+        var headerHtml = `<thead><tr><th class="fix-col-1">품목명</th><th class="fix-col-2">구분</th><th class="fix-col-3">총 수량 계</th>${dateSet.map(d => `<th style="min-width:65px;">${d.substring(5).replace("-","/")}</th>`).join('')}</tr></thead>`;
         var bodyHtml = "<tbody>";
         
         var sortedItems = Object.keys(itemPrices).sort(customItemSort);
         
         sortedItems.forEach(item => {
-            var sumStockQty = 0;
-            dateSet.forEach(dateFull => {
-                var sEnt = stockEntries.find(e => e.item === item && e.date === dateFull);
-                if(sEnt) sumStockQty += Number(sEnt.qty);
-            });
+            var totalIn = 0, totalOut = 0, totalNow = 0;
             
-            var rowHtml = `<tr>
-                <td style="font-weight:bold; text-align:left; padding-left:15px;">${item}</td>
-                <td style="color:#2980b9; font-weight:bold;">현재고</td>
-                <td style="background-color:#fff3bf; font-weight:bold; color:#e67e22;">${sumStockQty.toLocaleString()}개</td>`;
+            // 합계 및 칸 연산을 위한 사전 계산 루프
+            dateSet.forEach(dateFull => {
+                var inEnt = stockEntries.find(e => e.item === item && e.type === 'in' && e.date === dateFull);
+                var outEnt = stockEntries.find(e => e.item === item && e.type === 'out' && e.date === dateFull);
+                if(inEnt) totalIn += Number(inEnt.qty);
+                if(outEnt) totalOut += Number(outEnt.qty);
+            });
+            totalNow = totalIn - totalOut;
+
+            // 1. 입고 Row 생성
+            var inRow = `<tr><td class="fix-col-1" rowspan="3" style="font-weight:bold; vertical-align:middle; text-align:left; padding-left:15px; border-bottom: 2px solid #888 !important;">${item}</td>`;
+            inRow += `<td class="fix-col-2 text-in">입고</td><td class="fix-col-3 text-in">${totalIn.toLocaleString()}개</td>`;
+            dateSet.forEach(dateFull => {
+                var ent = stockEntries.find(e => e.item === item && e.type === 'in' && e.date === dateFull);
+                var val = ent ? ent.qty : '-';
+                inRow += `<td class="editable-cell" onclick="makeStockInlineEdit(this, '${dateFull}', '${item}', 'in')">${val}</td>`;
+            });
+            inRow += `</tr>`; bodyHtml += inRow;
+
+            // 2. 출고 Row 생성
+            var outRow = `<tr><td class="fix-col-2 text-out">출고</td><td class="fix-col-3 text-out">${totalOut.toLocaleString()}개</td>`;
+            dateSet.forEach(dateFull => {
+                var ent = stockEntries.find(e => e.item === item && e.type === 'out' && e.date === dateFull);
+                var val = ent ? ent.qty : '-';
+                outRow += `<td class="editable-cell" onclick="makeStockInlineEdit(this, '${dateFull}', '${item}', 'out')">${val}</td>`;
+            });
+            outRow += `</tr>`; bodyHtml += outRow;
+
+            // 3. 현재고 Row 생성 (입고 - 출고 계산법 대입)
+            var nowRow = `<tr class="row-now-stock"><td class="fix-col-2" style="border-bottom: 2px solid #888 !important;">현재고</td><td class="fix-col-3" style="border-bottom: 2px solid #888 !important;">${totalNow.toLocaleString()}개</td>`;
+            dateSet.forEach(dateFull => {
+                var inEnt = stockEntries.find(e => e.item === item && e.type === 'in' && e.date === dateFull);
+                var outEnt = stockEntries.find(e => e.item === item && e.type === 'out' && e.date === dateFull);
+                var inQ = inEnt ? Number(inEnt.qty) : 0;
+                var outQ = outEnt ? Number(outEnt.qty) : 0;
                 
-            dateSet.forEach(dateFull => {
-                var sEnt = stockEntries.find(e => e.item === item && e.date === dateFull);
-                var qtyVal = sEnt ? sEnt.qty : '-';
-                rowHtml += `<td class="editable-cell" onclick="makeStockCellEditable(this, '${dateFull}', '${item}')">${qtyVal}</td>`;
+                var nowQ = inQ - outQ;
+                nowRow += `<td style="border-bottom: 2px solid #888 !important;">${nowQ || '-'}</td>`;
             });
-            
-            bodyHtml += rowHtml + "</tr>";
+            nowRow += `</tr>`; bodyHtml += nowRow;
         });
         
         table.innerHTML = headerHtml + bodyHtml + "</tbody>";
     }
 
-    function makeStockCellEditable(cell, dateFull, item) {
+    function makeStockInlineEdit(cell, dateFull, item, type) {
         if (cell.querySelector('input')) return;
         var originalValue = cell.innerText === '-' ? '0' : cell.innerText;
-        cell.innerHTML = `<input type="number" class="inline-edit-input" value="${originalValue}" onblur="saveInlineStock(this, '${dateFull}', '${item}')" onkeydown="if(event.key==='Enter') this.blur();">`;
+        cell.innerHTML = `<input type="number" class="inline-edit-input" value="${originalValue}" onblur="saveStockInline(this, '${dateFull}', '${item}', '${type}')" onkeydown="if(event.key==='Enter') this.blur();">`;
         var input = cell.querySelector('input');
         if(input) { input.focus(); input.select(); }
     }
 
-    function saveInlineStock(input, dateFull, item) {
-        var cell = input.parentElement;
+    function saveStockInline(input, dateFull, item, type) {
         var newVal = parseInt(input.value) || 0;
-        
-        var idx = stockEntries.findIndex(x => x.date === dateFull && x.item === item);
+        var idx = stockEntries.findIndex(x => x.date === dateFull && x.item === item && x.type === type);
         
         if (newVal === 0) {
             if (idx > -1) stockEntries.splice(idx, 1);
         } else {
-            var entry = { date: dateFull, item: item, qty: newVal };
+            var entry = { date: dateFull, item: item, type: type, qty: newVal };
             if (idx > -1) stockEntries[idx] = entry;
             else stockEntries.push(entry);
         }
         
         buildStockTable();
-        syncWithGoogle(`재고 변경: [${item}] 수량 ${newVal}`);
+        syncWithGoogle(`인라인 격자 수정 - ${item} [${type === 'in' ? '입고' : '출고'}] 수량 ${newVal} 변경`);
+    }
+
+    function renderDropdowns() {
+        var sI = document.getElementById('stockItemSelect'); if(!sI) return;
+        sI.innerHTML = "";
+        var sorted = Object.keys(itemPrices || {}).sort(customItemSort);
+        sorted.forEach(i => { sI.innerHTML += `<option value="${i}">${i}</option>`; });
     }
 
     function handleTopNavbarSessionName() {
