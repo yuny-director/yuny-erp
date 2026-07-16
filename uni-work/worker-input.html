@@ -183,6 +183,7 @@
 
 <script>
     var workersPool = []; var itemPrices = {}; var rawEntries = []; var hourlyRates = {}; var userList = [];
+    // 👑 초기화 단계에서 구글 서버 연동 락 해제
     var myItemOrder = [];
 
     window.onload = function() {
@@ -199,7 +200,7 @@
     };
 
     function loadData() {
-        // 🔒 [정밀 캐시 제거 엔진 탑재] 주소창 뒤에 실시간 밀리초 타임스탬프(?t=231321)를 붙여 브라우저 강제 캐시를 무력화합니다.
+        // 🔒 [캐시 원천 파괴] 구글 서버가 찌꺼기 데이터를 주지 못하도록 강제 최신화 난수 주입
         var cacheBusterUrl = GOOGLE_SCRIPT_URL + (GOOGLE_SCRIPT_URL.indexOf('?') > -1 ? '&' : '?') + 't=' + new Date().getTime();
         
         fetch(cacheBusterUrl).then(r => r.json()).then(data => {
@@ -207,6 +208,7 @@
             rawEntries = data.rawEntries || []; hourlyRates = data.hourlyRates || {};
             userList = data.userList || [];
             
+            // 🔄 [동기화 매핑 완료] 구글 시트 B6 셀에 적힌 마스터 순서를 작업자 화면 변수에 실시간 이식
             if(data.itemOrder && Array.isArray(data.itemOrder) && data.itemOrder.length > 0) {
                 myItemOrder = data.itemOrder;
             } else {
@@ -241,6 +243,7 @@
         var wI = document.getElementById('workerItemSelect');
         wI.innerHTML = "";
         
+        // 👑 [드롭다운 정렬 강제 매핑] 구글에서 받아온 B6 셀 마스터 순서 배열에 맞춰 정렬
         var allItems = Object.keys(itemPrices);
         var sorted = [];
         myItemOrder.forEach(item => { if(allItems.includes(item)) sorted.push(item); });
@@ -268,6 +271,7 @@
         var nameEntries = rawEntries.filter(e => e.name === name);
         var allItems = Object.keys(itemPrices);
         
+        // 👑 [집계표 테이블 정렬 강제 매핑] 아래 표 순서도 구글 시트 B6 셀 순서대로 완벽 일치
         var sortedItems = [];
         myItemOrder.forEach(item => { if(allItems.includes(item)) sortedItems.push(item); });
         allItems.forEach(item => { if(!sortedItems.includes(item)) sortedItems.push(item); });
@@ -366,9 +370,7 @@
             var activeName = document.getElementById('workerNameSelect').value;
             if(!activeName) { activeName = localStorage.getItem('last_worker_name') || localStorage.getItem('login_user_name') || "작업자"; }
             var navUserEl = document.getElementById('navbar-user-name');
-            if(navUserEl) {
-                navUserEl.innerText = activeName + '님 접속중';
-            }
+            if(navUserEl) { navUserEl.innerText = activeName + '님 접속중'; }
         }, 350);
     }
 
