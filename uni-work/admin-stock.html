@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YUNY_ERP - 유니워크 재고관리 원장 (구조 결함 완전방어판)</title>
+    <title>YUNY_ERP - 유니워크 재고관리 원장 (B7 격벽 분리 버전)</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; }
         .content { padding: 15px; }
@@ -57,11 +57,11 @@
 </div>
 
 <script>
-    var workersPool = []; var itemPrices = {}; var rawEntries = []; var hourlyRates = {}; var userList = [];
+    var workersPool = []; var itemPrices = {}; var hourlyRates = {}; var userList = [];
     var myItemOrder = ["스포이드", "공병", "미스트(핑크)", "미스트(보라)", "지정품목"];
     
-    // 🔒 [구조결함 완전방어용] 정산 및 출퇴근 기록용 순수 원장 데이터 임시 보관소
-    var backupPureEntries = []; 
+    // 📦 정산표를 일절 건드리지 않는 순수 단독 재고 원장 배열
+    var stockEntries = []; 
     var isDataLoaded = false;
 
     function customItemSort(a, b) {
@@ -86,17 +86,15 @@
         var cacheUrl = GOOGLE_SCRIPT_URL + (GOOGLE_SCRIPT_URL.indexOf('?') > -1 ? '&' : '?') + 't=' + Date.now();
         fetch(cacheUrl).then(r => r.json()).then(data => {
             workersPool = data.workersPool || []; itemPrices = data.itemPrices || {};
-            rawEntries = data.rawEntries || []; hourlyRates = data.hourlyRates || {};
-            userList = data.userList || [];
+            hourlyRates = data.hourlyRates || {}; userList = data.userList || [];
             if(data.itemOrder && Array.isArray(data.itemOrder)) { myItemOrder = data.itemOrder; }
             
-            // 🛡️ [핵심 인프라] 불러온 데이터 중 '재고(stock)'가 아닌 순수 정산 기록들만 따로 안전하게 격리 보관!
-            backupPureEntries = rawEntries.filter(function(e) {
-                return e.type !== 'stock';
-            });
+            // 📦 신설된 B7 셀 서랍장에서 내려오는 독립 재고 내역 수신
+            stockEntries = Array.isArray(data.stockEntries) ? data.stockEntries : [];
 
             isDataLoaded = true;
             buildStockTable();
+            handleTopNavbarSessionName();
             document.getElementById('loadingStatus').innerText = "✅ 재고원장 동기화 완료";
         }).catch(err => {
             document.getElementById('loadingStatus').innerText = "❌ 데이터 동기화 지연";
@@ -107,26 +105,14 @@
         if (!isDataLoaded) return;
         document.getElementById('loadingStatus').innerText = "📤 재고 원장 자동 저장 중...";
         
-        // 🛡️ [데이터 병합 시스템] 현재 화면에서 수정한 재고 데이터(type: 'stock')만 수집합니다.
-        var currentStockEntries = rawEntries.filter(function(e) {
-            return e.type === 'stock';
-        });
-
-        // 격리 보관해두었던 순수 정산 기록(backupPureEntries)과 현재 재고 데이터를 완전히 결합(Merge)합니다.
-        var finalMergedEntries = backupPureEntries.concat(currentStockEntries);
-        
+        // 🔒 정산표(B4) 액션과 완전 분리된 독립 재고 전용 파이프라인(syncStock) 가동!!
         var payload = { 
-            action: "syncAll", 
+            action: "syncStock", 
             updater: "관리자", 
             summary: msg, 
-            workersPool: workersPool, 
-            itemPrices: itemPrices, 
-            rawEntries: finalMergedEntries, // 🎯 정산 데이터 유실을 완벽하게 차단한 통합 원장 전송
-            hourlyRates: hourlyRates, 
-            itemOrder: myItemOrder 
+            stockEntries: stockEntries // 🎯 오직 재고 원장 배열만 깔끔하게 B7 칸으로 슛!
         };
         
-        // 엇박자 저장을 방지하기 위한 안전 지연 통신 제어
         fetch(GOOGLE_SCRIPT_URL, { 
             method: 'POST', 
             headers: { 'Content-Type': 'text/plain' }, 
@@ -134,12 +120,10 @@
         })
         .then(res => res.json())
         .then(() => {
-            // 저장 완료 후 시차가 꼬이지 않도록 0.2초 여유를 두고 클린 로드 호출
-            setTimeout(loadData, 200);
+            setTimeout(loadData, 150);
         })
         .catch(err => {
             document.getElementById('loadingStatus').innerText = "❌ 실시간 저장 실패";
-            alert("재고 저장 통신에 장애가 발생했습니다. 잠시 후 다시 시도해 주세요.");
         });
     }
 
@@ -166,7 +150,7 @@
         sortedItems.forEach(item => {
             var sumStockQty = 0;
             dateSet.forEach(dateFull => {
-                var sEnt = rawEntries.find(e => e.item === item && e.type === 'stock' && e.date === dateFull);
+                var sEnt = stockEntries.find(e => e.item === item && e.date === dateFull);
                 if(sEnt) sumStockQty += Number(sEnt.qty);
             });
             
@@ -176,7 +160,7 @@
                 <td style="background-color:#fff3bf; font-weight:bold; color:#e67e22;">${sumStockQty.toLocaleString()}개</td>`;
                 
             dateSet.forEach(dateFull => {
-                var sEnt = rawEntries.find(e => e.item === item && e.type === 'stock' && e.date === dateFull);
+                var sEnt = stockEntries.find(e => e.item === item && e.date === dateFull);
                 var qtyVal = sEnt ? sEnt.qty : '-';
                 rowHtml += `<td class="editable-cell" onclick="makeStockCellEditable(this, '${dateFull}', '${item}')">${qtyVal}</td>`;
             });
@@ -199,18 +183,26 @@
         var cell = input.parentElement;
         var newVal = parseInt(input.value) || 0;
         
-        var idx = rawEntries.findIndex(x => x.date === dateFull && x.item === item && x.type === 'stock');
+        var idx = stockEntries.findIndex(x => x.date === dateFull && x.item === item);
         
         if (newVal === 0) {
-            if (idx > -1) rawEntries.splice(idx, 1);
+            if (idx > -1) stockEntries.splice(idx, 1);
         } else {
-            var entry = { date: dateFull, type: 'stock', name: '관리자', item: item, qty: newVal };
-            if (idx > -1) rawEntries[idx] = entry;
-            else rawEntries.push(entry);
+            var entry = { date: dateFull, item: item, qty: newVal };
+            if (idx > -1) stockEntries[idx] = entry;
+            else stockEntries.push(entry);
         }
         
         buildStockTable();
-        syncWithGoogle(`재고 수정: [${item}] 수량 ${newVal} 변경`);
+        syncWithGoogle(`재고 변경: [${item}] 수량 ${newVal}`);
+    }
+
+    function handleTopNavbarSessionName() {
+        setTimeout(function(){
+            var activeName = localStorage.getItem('last_worker_name') || localStorage.getItem('login_user_name') || "관리자";
+            var navUserEl = document.getElementById('navbar-user-name');
+            if(navUserEl) { navUserEl.innerText = activeName + '님 접속중'; }
+        }, 200);
     }
 </script>
 </body>
