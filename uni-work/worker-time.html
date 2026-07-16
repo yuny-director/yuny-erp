@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>YUNY_ERP - 출퇴근 도장</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; }
+        .navbar { background-color: #2c3e50; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; height: 60px; }
+        .navbar-brand { color: white; font-size: 20px; font-weight: bold; text-decoration: none; }
+        .content { padding: 30px; display: flex; justify-content: center; }
+        .card { background-color: white; padding: 35px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 450px; text-align: center; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; text-align: center; }
+        .btn-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        .time-btn { flex: 1; padding: 15px; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .btn-submit { width: 100%; padding: 15px; background: #34495e; color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn-back { background: #7f8c8d; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; font-size:14px; font-weight: bold; }
+    </style>
+    <script src="../config.js"></script>
+</head>
+<body>
+
+<nav class="navbar">
+    <a class="navbar-brand" href="#">⏳ 근태 관리 모바일 전용 도장판</a>
+    <a href="./worker-input.html" class="btn-back">⬅️ 물량 입력창 이동</a>
+</nav>
+
+<div class="content">
+    <div class="card">
+        <h2 id="todayTitle" style="color:#2c3e50; margin-top:0;">2026년 07월 13일 출퇴근</h2>
+        <p style="color:#7f8c8d; font-size:13px; margin-bottom:25px;">버튼을 누른 뒤 하단의 '최종 전송'을 누르셔야 장부에 안전하게 기록됩니다.</p>
+        
+        <div class="form-group">
+            <label>출근 시간</label>
+            <input type="text" id="wrkIn" placeholder="출근 도장 전" readonly>
+        </div>
+        <div class="form-group">
+            <label>퇴근 시간</label>
+            <input type="text" id="wrkOut" placeholder="퇴근 도장 전" readonly>
+        </div>
+
+        <div class="btn-box">
+            <button class="time-btn" style="background:#2980b9;" onclick="setCurrentTime('wrkIn')">🛫 출근 도장</button>
+            <button class="time-btn" style="background:#e67e22;" onclick="setCurrentTime('wrkOut')">🛬 퇴근 도장</button>
+        </div>
+
+        <button class="btn-submit" onclick="saveAttendance()">출퇴근 최종 기록 전송</button>
+    </div>
+</div>
+
+<script>
+    var myName = ""; var todayIso = "";
+
+    window.onload = function() {
+        var auth = checkPageAuth('worker'); if(!auth) return;
+        myName = auth.username;
+        todayIso = new Date().toISOString().split('T')[0];
+        
+        var dParts = todayIso.split('-');
+        document.getElementById('todayTitle').innerText = `👤 [${myName}] - ${dParts[1]}월 ${dParts[2]}일 근태`;
+    };
+
+    function setCurrentTime(id) {
+        var now = new Date(), h = now.getHours(), m = now.getMinutes();
+        var ampm = h >= 12 ? '오후' : '오전'; h = h % 12 || 12; m = m < 10 ? '0' + m : m;
+        document.getElementById(id).value = `${ampm} ${h}:${m}`;
+    }
+
+    function saveAttendance() {
+        var newIn = document.getElementById('wrkIn').value.trim();
+        var newOut = document.getElementById('wrkOut').value.trim();
+        if(!newIn && !newOut) return;
+
+        fetch(GOOGLE_SCRIPT_URL).then(r => r.json()).then(data => {
+            var fullList = data.rawEntries || [];
+            var exist = fullList.find(x => x.date === todayIso && x.name === myName && x.type === 'attendance');
+            
+            var finalIn = "미입력", finalOut = "미입력";
+            if(exist && exist.time && exist.time.indexOf("~") > -1) {
+                var p = exist.time.split("~"); finalIn = p[0].trim(); finalOut = p[1].trim();
+            }
+
+            if(newIn !== "") finalIn = newIn;
+            if(newOut !== "") finalOut = newOut;
+
+            var entry = { date: todayIso, name: myName, type: 'attendance', item: '통합근무', time: `${finalIn} ~ ${finalOut}` };
+            var idx = fullList.findIndex(x => x.date === todayIso && x.name === myName && x.type === 'attendance');
+            if(idx > -1) fullList[idx] = entry; else fullList.push(entry);
+
+            var payload = { action: "syncAll", updater: myName, summary: `${myName} 출퇴근 갱신`, workersPool: data.workersPool, itemPrices: data.itemPrices, rawEntries: fullList, hourlyRates: data.hourlyRates };
+            fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }).then(() => {
+                alert("출퇴근 원장이 동기화되었습니다.");
+                document.getElementById('wrkIn').value = ""; document.getElementById('wrkOut').value = "";
+            });
+        });
+    }
+</script>
+</body>
+</html>

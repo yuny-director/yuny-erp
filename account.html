@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>YUNY_ERP - 계정관리</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f9; }
+        .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        
+        /* 📦 입력 상자들과 버튼의 밑바닥 수평 라인을 강제로 칼정렬시키는 장치 */
+        .flex-form-row { 
+            display: flex; 
+            flex-wrap: wrap; 
+            align-items: flex-end; 
+            gap: 12px; 
+            margin-bottom: 20px;
+        }
+        
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { margin-bottom: 6px; font-weight: bold; font-size: 14px; color: #333; }
+        
+        /* 📐 전 브라우저 높이 오차 38px 통일 공정 */
+        .form-group input, .form-group select { 
+            padding: 0 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            width: 170px; 
+            height: 38px; 
+            box-sizing: border-box; 
+            font-size: 14px;
+        }
+        
+        /* 🔘 버튼 높이를 38px로 고정하여 혼자 밑으로 주저앉는 정렬 버그 해결 */
+        .btn { 
+            padding: 0 18px; 
+            background: #2c3e50; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            height: 38px; 
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+        .btn:hover { background: #34495e; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+        th { background: #e9ecef; font-weight: bold; }
+        .btn-danger { background-color: #e74c3c !important; height: 28px; padding: 0 10px; font-size: 12px; }
+        .btn-back { background: #7f8c8d; margin-bottom: 15px; color:white; padding: 8px 12px; text-decoration:none; display:inline-block; border-radius:4px; font-size:14px; font-weight: bold;}
+    </style>
+    <script src="./config.js"></script>
+</head>
+<body>
+    <a href="uni-work/admin-total.html" class="btn-back">⬅️ 유니작업관리로 돌아가기</a>
+    <div class="card">
+        <h3 style="margin-top:0; color:#2c3e50; font-size:18px;">👤 [계정 관리 창] 작업자 ID/PW 및 계정 권한 설정</h3>
+        
+        <div class="flex-form-row">
+            <div class="form-group">
+                <label>생성/수정할 ID (한글 가능)</label>
+                <input type="text" id="newUserId" placeholder="예: 홍길동">
+            </div>
+            <div class="form-group">
+                <label>비밀번호 설정</label>
+                <input type="text" id="newUserPw" placeholder="예: 1234">
+            </div>
+            <div class="form-group">
+                <label>계정 권한 등급</label>
+                <select id="newUserRole">
+                    <option value="worker">worker (일반 작업자)</option>
+                    <option value="admin">admin (마스터 관리자)</option>
+                </select>
+            </div>
+            <button class="btn" onclick="saveUserAccount()">계정 저장/등록</button>
+        </div>
+        
+        <table id="userManagementTable"></table>
+    </div>
+
+<script>
+    var userList = []; var workersPool = [];
+    window.onload = function() { if(typeof checkPageAuth === "function") { if(!checkPageAuth('admin')) return; } loadUsers(); };
+    function loadUsers() { fetch(GOOGLE_SCRIPT_URL).then(r => r.json()).then(data => { userList = data.userList || []; workersPool = data.workersPool || []; renderUserTable(); }); }
+    function saveUserAccount() {
+        var uid = document.getElementById('newUserId').value.trim(); var upw = document.getElementById('newUserPw').value.trim(); var urole = document.getElementById('newUserRole').value;
+        if(!uid || !upw) return;
+        var idx = userList.findIndex(u => u.id === uid);
+        if(idx > -1) userList[idx] = { id: uid, pw: upw, role: urole }; else userList.push({ id: uid, pw: upw, role: urole });
+        if(workersPool.indexOf(uid) === -1 && urole === 'worker') workersPool.push(uid);
+        
+        fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "syncUsers", userList: userList }) })
+        .then(() => { alert("계정이 저장되었습니다."); loadUsers(); });
+    }
+    function removeUserAccount(uid) {
+        if(uid === 'admin') return; if(!confirm("삭제하시겠습니까?")) return;
+        userList = userList.filter(u => u.id !== uid);
+        fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "syncUsers", userList: userList }) }).then(() => loadUsers());
+    }
+    function renderUserTable() {
+        var container = document.getElementById('userManagementTable');
+        container.innerHTML = `<thead><tr><th>등록된 ID</th><th>비밀번호</th><th>권한등급</th><th>계정파기</th></tr></thead><tbody>${userList.map(u => `<tr><td style="font-weight:bold;">${u.id}</td><td>•••• (보안)</td><td style="font-weight:bold; color:${u.role==='admin'?'#2980b9':'#27ae60'};">${u.role}</td><td><button class="btn btn-danger" onclick="removeUserAccount('${u.id}')">삭제</button></td></tr>`).join('')}</tbody>`;
+    }
+</script>
+</body>
+</html>
