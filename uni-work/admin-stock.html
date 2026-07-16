@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YUNY_ERP - 유니워크 재고관리 원장</title>
+    <title>YUNY_ERP - 유니워크 재고관리 원장 (구조 결함 완전방어판)</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; }
         .content { padding: 15px; }
@@ -14,15 +14,13 @@
         .form-group input, .form-group select { padding: 0 10px; border: 1px solid #ccc; border-radius: 4px; width: 160px; height: 38px; box-sizing: border-box; font-size: 14px !important; font-family: Arial, sans-serif; background-color: #ffffff; }
         .btn { padding: 0 18px; background-color: #1abc9c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; height: 38px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s; box-sizing: border-box; }
         .btn:hover { background-color: #16a085; }
-        .btn-dark { background-color: #2c3e50 !important; }
-        .btn-dark:hover { background-color: #1a252f !important; }
         
         .table-container { width: 100%; max-height: 70vh; overflow: auto !important; border: 1px solid #ccc; border-radius: 6px; background: white; -webkit-overflow-scrolling: touch; }
         table { border-collapse: separate !important; border-spacing: 0 !important; font-size: 13px; width: auto; min-width: 100%; table-layout: fixed; }
         th, td { padding: 12px 10px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; border-left: none !important; border-top: none !important; }
         th { background-color: #f8f9fa !important; font-weight: bold; position: sticky !important; top: 0 !important; z-index: 30 !important; border-top: 1px solid #ccc !important; }
         
-        .editable-cell { cursor: pointer; background-color: #fffde6 !important; font-weight: bold; color: #d9480f; }
+        .editable-cell { cursor: pointer; background-color: #fffde6 !important; font-weight: bold; color: #d9480f; min-width: 70px; }
         .editable-cell:hover { background-color: #fff3bf !important; }
         .inline-edit-input { width: 90%; height: 28px; text-align: center; border: 2px solid #2980b9; border-radius: 4px; font-weight: bold; }
         .inline-edit-input:focus { outline: none; }
@@ -61,6 +59,9 @@
 <script>
     var workersPool = []; var itemPrices = {}; var rawEntries = []; var hourlyRates = {}; var userList = [];
     var myItemOrder = ["스포이드", "공병", "미스트(핑크)", "미스트(보라)", "지정품목"];
+    
+    // 🔒 [구조결함 완전방어용] 정산 및 출퇴근 기록용 순수 원장 데이터 임시 보관소
+    var backupPureEntries = []; 
     var isDataLoaded = false;
 
     function customItemSort(a, b) {
@@ -89,6 +90,11 @@
             userList = data.userList || [];
             if(data.itemOrder && Array.isArray(data.itemOrder)) { myItemOrder = data.itemOrder; }
             
+            // 🛡️ [핵심 인프라] 불러온 데이터 중 '재고(stock)'가 아닌 순수 정산 기록들만 따로 안전하게 격리 보관!
+            backupPureEntries = rawEntries.filter(function(e) {
+                return e.type !== 'stock';
+            });
+
             isDataLoaded = true;
             buildStockTable();
             document.getElementById('loadingStatus').innerText = "✅ 재고원장 동기화 완료";
@@ -97,10 +103,17 @@
         });
     }
 
-    // 🔒 [유실 완전 차단 방어막] 사장님 시트의 B4셀 규격 이름인 rawEntries를 명확하게 매핑하여 전송 락 체결
     function syncWithGoogle(msg) {
         if (!isDataLoaded) return;
         document.getElementById('loadingStatus').innerText = "📤 재고 원장 자동 저장 중...";
+        
+        // 🛡️ [데이터 병합 시스템] 현재 화면에서 수정한 재고 데이터(type: 'stock')만 수집합니다.
+        var currentStockEntries = rawEntries.filter(function(e) {
+            return e.type === 'stock';
+        });
+
+        // 격리 보관해두었던 순수 정산 기록(backupPureEntries)과 현재 재고 데이터를 완전히 결합(Merge)합니다.
+        var finalMergedEntries = backupPureEntries.concat(currentStockEntries);
         
         var payload = { 
             action: "syncAll", 
@@ -108,21 +121,25 @@
             summary: msg, 
             workersPool: workersPool, 
             itemPrices: itemPrices, 
-            rawEntries: rawEntries, // 🎯 B4셀 원장 데이터가 유실되지 않도록 엄격하게 고정
+            rawEntries: finalMergedEntries, // 🎯 정산 데이터 유실을 완벽하게 차단한 통합 원장 전송
             hourlyRates: hourlyRates, 
             itemOrder: myItemOrder 
         };
         
+        // 엇박자 저장을 방지하기 위한 안전 지연 통신 제어
         fetch(GOOGLE_SCRIPT_URL, { 
             method: 'POST', 
             headers: { 'Content-Type': 'text/plain' }, 
             body: JSON.stringify(payload) 
         })
         .then(res => res.json())
-        .then(() => loadData())
+        .then(() => {
+            // 저장 완료 후 시차가 꼬이지 않도록 0.2초 여유를 두고 클린 로드 호출
+            setTimeout(loadData, 200);
+        })
         .catch(err => {
             document.getElementById('loadingStatus').innerText = "❌ 실시간 저장 실패";
-            alert("원장 저장에 실패했습니다. 데이터를 확인해주세요.");
+            alert("재고 저장 통신에 장애가 발생했습니다. 잠시 후 다시 시도해 주세요.");
         });
     }
 
