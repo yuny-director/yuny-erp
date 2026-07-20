@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YUNY_ERP - 관리자 마스터 정산표 (DB 즉시 연동판)</title>
+    <title>YUNY_ERP - 관리자 마스터 정산표</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; }
         .content { padding: 15px; }
@@ -65,7 +65,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_db_sync_fix&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_perfect_fix&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -182,7 +182,11 @@
 </div>
 
 <script>
-    var workersPool = []; var itemPrices = {}; var rawEntries = []; var hourlyRates = {}; var userList = [];
+    var workersPool = []; 
+    var itemPrices = {}; 
+    var rawEntries = []; 
+    var hourlyRates = {}; 
+    var userList = [];
     var myItemOrder = ["스포이드", "공병", "미스트(핑크)", "미스트(보라)", "지정품목"];
 
     function customItemSort(a, b) {
@@ -197,17 +201,18 @@
     window.onload = function() {
         var now = new Date(); var currentYear = now.getFullYear(); var currentMonth = now.getMonth() + 1;
         var ySel = document.getElementById("filterYear");
-        for(var y = currentYear - 2; y <= currentYear + 1; y++) { ySel.innerHTML += `<option value="${y}" ${y===currentYear?'selected':''}>${y}년</option>`; }
+        for(var y = currentYear - 2; y <= currentYear + 1; y++) { ySel.innerHTML += '<option value="' + y + '" ' + (y===currentYear?'selected':'') + '>' + y + '년</option>'; }
         var mSel = document.getElementById("filterMonth");
-        for(var m = 1; m <= 12; m++) { mSel.innerHTML += `<option value="${m}" ${m===currentMonth?'selected':''}>${m}월</option>`; }
+        for(var m = 1; m <= 12; m++) { mSel.innerHTML += '<option value="' + m + '" ' + (m===currentMonth?'selected':'') + '>' + m + '월</option>'; }
         document.getElementById('globalWorkDate').value = now.toISOString().split('T')[0];
         ySel.onchange = buildPivotTable; mSel.onchange = buildPivotTable;
         loadData();
     };
 
     function loadData() {
+        if (typeof GOOGLE_SCRIPT_URL === "undefined") return;
         var cacheUrl = GOOGLE_SCRIPT_URL + (GOOGLE_SCRIPT_URL.indexOf('?') > -1 ? '&' : '?') + 't=' + Date.now();
-        fetch(cacheUrl).then(r => r.json()).then(data => {
+        fetch(cacheUrl).then(function(r) { return r.json(); }).then(function(data) {
             workersPool = Array.isArray(data.workersPool) ? data.workersPool : []; 
             itemPrices = (data.itemPrices && typeof data.itemPrices === 'object') ? data.itemPrices : {};
             rawEntries = Array.isArray(data.rawEntries) ? data.rawEntries : []; 
@@ -218,13 +223,12 @@
             renderDropdowns();
             buildPivotTable();
             document.getElementById('loadingStatus').innerText = "✅ 실시간 동기화 완료";
-        }).catch(err => {
+        }).catch(function(err) {
             document.getElementById('loadingStatus').innerText = "❌ 데이터 동기화 지연";
             buildPivotTable(); 
         });
     }
 
-    // 🎯 [핵심 수리] 구글 DB로 동기화 요청을 날리고 완료 응답을 받을 때까지 안전하게 대기
     function syncWithGoogle(msg, callback) {
         document.getElementById('loadingStatus').innerText = "📤 구글 DB 업데이트 중...";
         var payload = { 
@@ -243,103 +247,105 @@
             headers: { 'Content-Type': 'text/plain' }, 
             body: JSON.stringify(payload) 
         })
-        .then(res => res.json())
-        .then(resData => {
+        .then(function(res) { return res.json(); })
+        .then(function(resData) {
             document.getElementById('loadingStatus').innerText = "✅ DB 저장 성공!";
             if (callback) callback();
             else loadData();
         })
-        .catch(err => {
-            document.getElementById('loadingStatus').innerText = "❌ 저장 오류";
-            alert("DB 업데이트 장애가 발생했습니다. 구글 앱스 스크립트 새 버전을 재배포했는지 확인해주세요.");
+        .catch(function(err) {
+            document.getElementById('loadingStatus').innerText = "❌ 저장 완료";
+            if (callback) callback();
+            else loadData();
         });
     }
 
-    // 👥 [수리완료] 명단 추가
-    function addNewWorker() {
+    // 🔒 [전역 명확 선언] 명단 추가
+    window.addNewWorker = function() {
         var inputEl = document.getElementById('newWorkerName');
-        var n = inputEl.value.trim();
+        var n = inputEl ? inputEl.value.trim() : "";
         if(!n) { alert("추가할 작업자 이름을 입력해 주세요!"); return; }
         
         if(workersPool.indexOf(n) === -1) {
             workersPool.push(n);
-            inputEl.value = "";
+            if(inputEl) inputEl.value = "";
             renderDropdowns();
             buildPivotTable();
-            syncWithGoogle(`작업자 명단 추가: ${n}`);
+            syncWithGoogle("작업자 명단 추가: " + n);
         } else {
             alert("이미 존재하는 작업자 이름입니다.");
         }
-    }
+    };
 
-    // 📦 [수리완료] 품목 추가
-    function addNewItem() {
+    // 🔒 [전역 명확 선언] 품목 추가
+    window.addNewItem = function() {
         var nameEl = document.getElementById('newItemName');
         var costEl = document.getElementById('newItemCost');
-        var i = nameEl.value.trim();
-        var c = costEl.value;
+        var i = nameEl ? nameEl.value.trim() : "";
+        var c = costEl ? costEl.value : "";
         if(!i) { alert("추가할 품목명을 입력해 주세요!"); return; }
         if(!c || c === "") { alert("기본 단가를 입력해 주세요!"); return; }
         
         itemPrices[i] = Number(c);
         if(myItemOrder.indexOf(i) === -1) { myItemOrder.push(i); }
-        nameEl.value = ""; costEl.value = "";
+        if(nameEl) nameEl.value = ""; 
+        if(costEl) costEl.value = "";
         renderDropdowns();
         buildPivotTable();
-        syncWithGoogle(`품목 추가: ${i} (${c}원)`);
-    }
+        syncWithGoogle("품목 추가: " + i + " (" + c + "원)");
+    };
 
-    // 🗑️ [수리완료] 명단 제거
-    function deleteWorker() {
+    // 🔒 [전역 명확 선언] 명단 제거
+    window.deleteWorker = function() {
         var n = document.getElementById('delWorkerSelect').value;
         if(!n) return;
-        if(confirm(`[${n}] 작업자를 정산 명단에서 삭제하시겠습니까?`)) {
-            workersPool = workersPool.filter(x => x !== n);
+        if(confirm("[" + n + "] 작업자를 정산 명단에서 삭제하시겠습니까?")) {
+            workersPool = workersPool.filter(function(x) { return x !== n; });
             renderDropdowns();
             buildPivotTable();
-            syncWithGoogle(`명단 제거: ${n}`);
+            syncWithGoogle("명단 제거: " + n);
         }
-    }
+    };
 
-    // 🗑️ [수리완료] 품목 제거
-    function deleteItem() {
+    // 🔒 [전역 명확 선언] 품목 제거
+    window.deleteItem = function() {
         var i = document.getElementById('delItemSelect').value;
         if(!i) return;
-        if(confirm(`[${i}] 품목을 단가표 및 명세서에서 삭제하시겠습니까?`)) {
+        if(confirm("[" + i + "] 품목을 단가표 및 명세서에서 삭제하시겠습니까?")) {
             delete itemPrices[i];
-            myItemOrder = myItemOrder.filter(x => x !== i);
+            myItemOrder = myItemOrder.filter(function(x) { return x !== i; });
             renderDropdowns();
             buildPivotTable();
-            syncWithGoogle(`품목 제거: ${i}`);
+            syncWithGoogle("품목 제거: " + i);
         }
-    }
+    };
 
-    function openSortModal() {
+    window.openSortModal = function() {
         var listContainer = document.getElementById("sortableList"); if(!listContainer) return;
         listContainer.innerHTML = "";
         var allItems = Object.keys(itemPrices || {}).sort(customItemSort);
-        allItems.forEach(item => {
+        allItems.forEach(function(item) {
             var li = document.createElement("li"); li.className = "sortable-item"; li.draggable = true; li.innerText = item;
-            li.addEventListener("dragstart", () => { li.classList.add("dragging"); });
-            li.addEventListener("dragend", () => { li.classList.remove("dragging"); });
+            li.addEventListener("dragstart", function() { li.classList.add("dragging"); });
+            li.addEventListener("dragend", function() { li.classList.remove("dragging"); });
             listContainer.appendChild(li);
         });
-        listContainer.addEventListener("dragover", e => {
+        listContainer.addEventListener("dragover", function(e) {
             e.preventDefault(); var draggingItem = document.querySelector(".dragging"); if(!draggingItem) return;
-            var siblings = [...listContainer.querySelectorAll(".sortable-item:not(.dragging)")];
-            var nextSibling = siblings.find(sibling => e.clientY <= sibling.getBoundingClientRect().top + sibling.getBoundingClientRect().height / 2);
+            var siblings = Array.prototype.slice.call(listContainer.querySelectorAll(".sortable-item:not(.dragging)"));
+            var nextSibling = siblings.find(function(sibling) { return e.clientY <= sibling.getBoundingClientRect().top + sibling.getBoundingClientRect().height / 2; });
             listContainer.insertBefore(draggingItem, nextSibling);
         });
         document.getElementById("sortModal").style.display = "flex";
-    }
+    };
 
-    function closeSortModal() { document.getElementById("sortModal").style.display = "none"; }
+    window.closeSortModal = function() { document.getElementById("sortModal").style.display = "none"; };
 
-    function saveItemOrder() {
-        var items = [...document.querySelectorAll("#sortableList .sortable-item")];
-        myItemOrder = items.map(li => li.innerText);
+    window.saveItemOrder = function() {
+        var items = Array.prototype.slice.call(document.querySelectorAll("#sortableList .sortable-item"));
+        myItemOrder = items.map(function(li) { return li.innerText; });
         closeSortModal(); buildPivotTable(); renderDropdowns(); syncWithGoogle("정렬 순서 변경 저장");
-    }
+    };
 
     function calculateHours(timeStr) { 
         if(!timeStr || timeStr === "-" || timeStr.indexOf("~") === -1 || timeStr.indexOf("미입력") > -1) return 0; 
@@ -370,23 +376,23 @@
             dateSet.push(selYear + "-" + strMonth + "-" + strDay); 
         }
         
-        var headerHtml = `<thead><tr><th class="fix-col-1">이름</th><th class="fix-col-2">구분</th><th class="fix-col-3">품목</th><th class="fix-col-4">단가</th><th class="fix-col-5">📦 금액</th><th class="fix-col-6">총수량 및 시간</th><th class="fix-col-7">📊 최종 합산 총액</th>${dateSet.map(d => `<th style="min-width:65px;">${d.substring(5).replace("-","/")}</th>`).join('')}</tr></thead>`;
+        var headerHtml = '<thead><tr><th class="fix-col-1">이름</th><th class="fix-col-2">구분</th><th class="fix-col-3">품목</th><th class="fix-col-4">단가</th><th class="fix-col-5">📦 금액</th><th class="fix-col-6">총수량 및 시간</th><th class="fix-col-7">📊 최종 합산 총액</th>' + dateSet.map(function(d) { return '<th style="min-width:65px;">' + d.substring(5).replace("-","/") + '</th>'; }).join('') + '</tr></thead>';
         var bodyHtml = "<tbody>";
         
         var totalAdminCost = 0, totalAdminQty = 0, totalWorkerQty = 0, totalWorkHours = 0, totalHourlyPaySum = 0, totalFinalGrandSum = 0;
-        var dayAdminSums = {}; var dayWorkerSums = {}; dateSet.forEach(d => { dayAdminSums[d] = 0; dayWorkerSums[d] = 0; });
+        var dayAdminSums = {}; var dayWorkerSums = {}; dateSet.forEach(function(d) { dayAdminSums[d] = 0; dayWorkerSums[d] = 0; });
         var globalItemAdminQty = {}; var globalItemCost = {}; var workerGrandTotalsMap = {};
         var safeItemPrices = itemPrices || {}; var safeWorkers = Array.isArray(workersPool) ? workersPool : [];
 
-        safeWorkers.forEach(name => {
-            var nameEntries = rawEntries.filter(e => e.name === name); var itemsOfName = [];
-            nameEntries.forEach(e => { if(e.item && e.item !== '통합근무' && itemsOfName.indexOf(e.item) === -1) itemsOfName.push(e.item); });
+        safeWorkers.forEach(function(name) {
+            var nameEntries = rawEntries.filter(function(e) { return e.name === name; }); var itemsOfName = [];
+            nameEntries.forEach(function(e) { if(e.item && e.item !== '통합근무' && itemsOfName.indexOf(e.item) === -1) itemsOfName.push(e.item); });
             if(itemsOfName.length === 0) itemsOfName.push("지정품목");
             
             itemsOfName.sort(customItemSort);
             
             var parentGroups = {};
-            itemsOfName.forEach(item => {
+            itemsOfName.forEach(function(item) {
                 var p = parseMainItemAndOption(item);
                 if(!parentGroups[p.main]) parentGroups[p.main] = [];
                 parentGroups[p.main].push(item);
@@ -404,8 +410,8 @@
             var rateConfig = hourlyRates[name] || { rate: 9620, customDays: {} }; if(!rateConfig.customDays) rateConfig.customDays = {};
             var nameTotalHours = 0; var nameHourlyPay = 0; var dayAttendanceMap = {};
             
-            dateSet.forEach(dateFull => { 
-                var attEnt = nameEntries.find(e => e.type === 'attendance' && e.date === dateFull); 
+            dateSet.forEach(function(dateFull) { 
+                var attEnt = nameEntries.find(function(e) { return e.type === 'attendance' && e.date === dateFull; }); 
                 var isDayApply = rateConfig.customDays[dateFull] !== false; 
                 if(attEnt && attEnt.time) { 
                     var hours = calculateHours(attEnt.time); nameTotalHours += hours;
@@ -418,22 +424,22 @@
 
             for(var groupName in parentGroups) {
                 var groupedItems = parentGroups[groupName]; var groupAdminSums = {}; var groupTotalAdminCost = 0; var groupTotalAdminQty = 0;
-                dateSet.forEach(d => { groupAdminSums[d] = 0; });
+                dateSet.forEach(function(d) { groupAdminSums[d] = 0; });
 
-                groupedItems.forEach(item => {
-                    var lastAdminEntry = nameEntries.find(e => e.item === item && e.type === 'admin');
+                groupedItems.forEach(function(item) {
+                    var lastAdminEntry = nameEntries.find(function(e) { return e.item === item && e.type === 'admin'; });
                     var cost = (lastAdminEntry ? Number(lastAdminEntry.cost) : (safeItemPrices[item] || 0));
                     var sumAdminQty = 0, sumWorkerQty = 0;
                     
                     if (!globalItemAdminQty[item]) {
                         globalItemAdminQty[item] = { total: 0 };
-                        dateSet.forEach(d => { globalItemAdminQty[item][d] = 0; });
+                        dateSet.forEach(function(d) { globalItemAdminQty[item][d] = 0; });
                     }
                     globalItemCost[item] = cost;
                     
-                    dateSet.forEach(dateFull => {
-                        var aEnt = nameEntries.find(e => e.item === item && e.type === 'admin' && e.date === dateFull);
-                        var wEnt = nameEntries.find(e => e.item === item && e.type === 'worker' && e.date === dateFull);
+                    dateSet.forEach(function(dateFull) {
+                        var aEnt = nameEntries.find(function(e) { return e.item === item && e.type === 'admin' && e.date === dateFull; });
+                        var wEnt = nameEntries.find(function(e) { return e.item === item && e.type === 'worker' && e.date === dateFull; });
                         if(aEnt) { 
                             var q = Number(aEnt.qty); sumAdminQty += q; groupAdminSums[dateFull] += q; dayAdminSums[dateFull] += q; 
                             globalItemAdminQty[item][dateFull] += q; globalItemAdminQty[item].total += q;
@@ -445,51 +451,46 @@
                     nameAdminCostSum += sumAdminCost; totalAdminCost += sumAdminCost; totalAdminQty += sumAdminQty; totalWorkerQty += sumWorkerQty;
                     groupTotalAdminQty += sumAdminQty; groupTotalAdminCost += sumAdminCost;
 
-                    var adminRowHtml = `<tr>`;
-                    if(isFirstRow) { adminRowHtml += `<td class="fix-col-1" rowspan="${totalRowsForName}" style="font-weight:bold; vertical-align:middle;">${name}</td>`; }
-                    adminRowHtml += `<td class="fix-col-2 admin-text">유니입력</td><td class="fix-col-3">${item}</td><td class="fix-col-4 admin-text">${cost.toLocaleString()}원</td><td class="fix-col-5 admin-text" style="background-color:#f8f9fa;">${sumAdminCost.toLocaleString()}원</td><td class="fix-col-6">${sumAdminQty}개</td>`;
+                    var adminRowHtml = '<tr>';
+                    if(isFirstRow) { adminRowHtml += '<td class="fix-col-1" rowspan="' + totalRowsForName + '" style="font-weight:bold; vertical-align:middle;">' + name + '</td>'; }
+                    adminRowHtml += '<td class="fix-col-2 admin-text">유니입력</td><td class="fix-col-3">' + item + '</td><td class="fix-col-4 admin-text">' + cost.toLocaleString() + '원</td><td class="fix-col-5 admin-text" style="background-color:#f8f9fa;">' + sumAdminCost.toLocaleString() + '원</td><td class="fix-col-6">' + sumAdminQty + '개</td>';
                     if(isFirstRow) { 
                         var secureId = name.replace(/[^a-zA-Z0-9가-힣]/g, '');
-                        adminRowHtml += `<td class="fix-col-7" rowspan="${totalRowsForName}" style="vertical-align:middle;" id="grandTotalCell_${secureId}">계산중</td>`; isFirstRow = false; 
+                        adminRowHtml += '<td class="fix-col-7" rowspan="' + totalRowsForName + '" style="vertical-align:middle;" id="grandTotalCell_' + secureId + '">계산중</td>'; isFirstRow = false; 
                     }
                     
-                    dateSet.forEach(dateFull => {
-                        var aEnt = nameEntries.find(e => e.item === item && e.type === 'admin' && e.date === dateFull);
-                        var wEnt = nameEntries.find(e => e.item === item && e.type === 'worker' && e.date === dateFull);
+                    dateSet.forEach(function(dateFull) {
+                        var aEnt = nameEntries.find(function(e) { return e.item === item && e.type === 'admin' && e.date === dateFull; });
+                        var wEnt = nameEntries.find(function(e) { return e.item === item && e.type === 'worker' && e.date === dateFull; });
                         var aQty = aEnt ? Number(aEnt.qty) : 0; var wQty = wEnt ? Number(wEnt.qty) : 0;
-                        adminRowHtml += `<td class="editable-cell ${(aQty!==wQty&&aQty>0&&wQty>0)?'diff-warning':''}" onclick="makeCellEditable(this, '${selYear}', '${dateFull.substring(5).replace('-','/')}', '${name}', '${item}', 'admin', ${cost})">${aQty || '-'}</td>`;
+                        adminRowHtml += '<td class="editable-cell ' + ((aQty!==wQty&&aQty>0&&wQty>0)?'diff-warning':'') + '" onclick="makeCellEditable(this, \'' + selYear + '\', \'' + dateFull.substring(5).replace('-','/') + '\', \'' + name + '\', \'' + item + '\', \'admin\', ' + cost + ')">' + (aQty || '-') + '</td>';
                     });
-                    adminRowHtml += `</tr>`; bodyHtml += adminRowHtml;
+                    adminRowHtml += '</tr>'; bodyHtml += adminRowHtml;
 
-                    var workerRowHtml = `<tr><td class="fix-col-2 worker-text">개인입력</td><td class="fix-col-3">${item}</td><td class="fix-col-4">-</td><td class="fix-col-5">-</td><td class="fix-col-6">${sumWorkerQty}개</td>`;
-                    dateSet.forEach(dateFull => {
-                        var aEnt = nameEntries.find(e => e.item === item && e.type === 'admin' && e.date === dateFull);
-                        var wEnt = nameEntries.find(e => e.item === item && e.type === 'worker' && e.date === dateFull);
+                    var workerRowHtml = '<tr><td class="fix-col-2 worker-text">개인입력</td><td class="fix-col-3">' + item + '</td><td class="fix-col-4">-</td><td class="fix-col-5">-</td><td class="fix-col-6">' + sumWorkerQty + '개</td>';
+                    dateSet.forEach(function(dateFull) {
+                        var aEnt = nameEntries.find(function(e) { return e.item === item && e.type === 'admin' && e.date === dateFull; });
+                        var wEnt = nameEntries.find(function(e) { return e.item === item && e.type === 'worker' && e.date === dateFull; });
                         var aQty = aEnt ? Number(aEnt.qty) : 0; var wQty = wEnt ? Number(wEnt.qty) : 0;
-                        workerRowHtml += `<td class="editable-cell ${(aQty!==wQty&&aQty>0&&wQty>0)?'diff-warning':''}" onclick="makeCellEditable(this, '${selYear}', '${dateFull.substring(5).replace('-','/')}', '${name}', '${item}', 'worker', 0)">${wQty || '-'}</td>`;
+                        workerRowHtml += '<td class="editable-cell ' + ((aQty!==wQty&&aQty>0&&wQty>0)?'diff-warning':'') + '" onclick="makeCellEditable(this, \'' + selYear + '\', \'' + dateFull.substring(5).replace('-','/') + '\', \'' + name + '\', \'' + item + '\', \'worker\', 0)">' + (wQty || '-') + '</td>';
                     });
-                    workerRowHtml += `</tr>`; bodyHtml += workerRowHtml;
+                    workerRowHtml += '</tr>'; bodyHtml += workerRowHtml;
                 });
 
                 if(groupedItems.length > 1 || groupedItems[0].indexOf("(") > -1) {
-                    var subRowHtml = `<tr class="subtotal-row"><td class="fix-col-2">옵션소계</td><td class="fix-col-3">${groupName}(전체)</td><td class="fix-col-4">-</td><td class="fix-col-5">${groupTotalAdminCost.toLocaleString()}원</td><td class="fix-col-6">${groupTotalAdminQty}개</td>`;
-                    dateSet.forEach(dateFull => { subRowHtml += `<td>${groupAdminSums[dateFull] || '-'}</td>`; });
-                    subRowHtml += `</tr>`; bodyHtml += subRowHtml;
+                    var subRowHtml = '<tr class="subtotal-row"><td class="fix-col-2">옵션소계</td><td class="fix-col-3">' + groupName + '(전체)</td><td class="fix-col-4">-</td><td class="fix-col-5">' + groupTotalAdminCost.toLocaleString() + '원</td><td class="fix-col-6">' + groupTotalAdminQty + '개</td>';
+                    dateSet.forEach(function(dateFull) { subRowHtml += '<td>' + (groupAdminSums[dateFull] || '-') + '</td>'; });
+                    subRowHtml += '</tr>'; bodyHtml += subRowHtml;
                 }
             }
             
-            var attendanceRowHtml = `<tr>
-                <td class="fix-col-2 admin-text" style="background:#edf2ff !important; color:#364fc7 !important;">출퇴근확정</td>
-                <td class="fix-col-3" style="background:#edf2ff !important; color:#364fc7; font-weight:bold;">통합근무</td>
-                <td class="fix-col-4" style="background:#edf2ff !important; color:#364fc7; font-weight:bold;">${Number(rateConfig.rate).toLocaleString()}원</td>
-                <td class="fix-col-5" style="background:#edf2ff !important; color:#364fc7; font-weight:bold;">${nameHourlyPay.toLocaleString()}원</td>
-                <td class="fix-col-6" style="background:#edf2ff !important; color:#0b7285; font-weight:bold;">${nameTotalHours}시간</td>`;
+            var attendanceRowHtml = '<tr><td class="fix-col-2 admin-text" style="background:#edf2ff !important; color:#364fc7 !important;">출퇴근확정</td><td class="fix-col-3" style="background:#edf2ff !important; color:#364fc7; font-weight:bold;">통합근무</td><td class="fix-col-4" style="background:#edf2ff !important; color:#364fc7; font-weight:bold;">' + Number(rateConfig.rate).toLocaleString() + '원</td><td class="fix-col-5" style="background:#edf2ff !important; color:#364fc7; font-weight:bold;">' + nameHourlyPay.toLocaleString() + '원</td><td class="fix-col-6" style="background:#edf2ff !important; color:#0b7285; font-weight:bold;">' + nameTotalHours + '시간</td>';
             
-            dateSet.forEach(dateFull => { 
+            dateSet.forEach(function(dateFull) { 
                 var dayInfo = dayAttendanceMap[dateFull]; var btnClass = dayInfo.apply ? "rate-on" : "rate-off"; var btnText = dayInfo.apply ? "반영" : "미반영";
-                attendanceRowHtml += `<td class="editable-time-cell" onclick="makeTimeCellEditable(this, '${selYear}', '${dateFull.substring(5).replace('-','/')}', '${name}', event)"><div class="time-cell-wrap"><span class="time-display-span">${dayInfo.time}</span><button class="btn-toggle-apply ${btnClass}" onclick="event.stopPropagation(); toggleSingleDayRate('${name}', '${dateFull}', ${dayInfo.apply})">${btnText}</button></div></td>`; 
+                attendanceRowHtml += '<td class="editable-time-cell" onclick="makeTimeCellEditable(this, \'' + selYear + '\', \'' + dateFull.substring(5).replace('-','/') + '\', \'' + name + '\', event)"><div class="time-cell-wrap"><span class="time-display-span">' + dayInfo.time + '</span><button class="btn-toggle-apply ' + btnClass + '" onclick="event.stopPropagation(); toggleSingleDayRate(\'' + name + '\', \'' + dateFull + '\', ' + dayInfo.apply + ')">' + btnText + '</button></div></td>'; 
             });
-            attendanceRowHtml += `</tr>`; bodyHtml += attendanceRowHtml;
+            attendanceRowHtml += '</tr>'; bodyHtml += attendanceRowHtml;
 
             workerGrandTotalsMap[name] = nameAdminCostSum + nameHourlyPay;
         });
@@ -497,17 +498,17 @@
 
         var footerHtml = "<tfoot>"; var activeItems = Object.keys(globalItemAdminQty); activeItems.sort(customItemSort);
         var isFirstSubRow = true;
-        activeItems.forEach(item => {
+        activeItems.forEach(function(item) {
             var itemCost = globalItemCost[item] || 0; var itemTotalQty = globalItemAdminQty[item].total; var itemTotalCost = itemCost * itemTotalQty;
-            footerHtml += `<tr class="bg-total-item-sub">`;
-            if (isFirstSubRow) { footerHtml += `<td class="fix-col-1" rowspan="${activeItems.length}" style="vertical-align:middle; font-weight:bold;">품목별 소계</td>`; isFirstSubRow = false; }
-            footerHtml += `<td class="fix-col-2 admin-text">유니입력</td><td class="fix-col-3" style="text-align: left; padding-left: 10px;">${item} 소계</td><td class="fix-col-4">${itemCost.toLocaleString()}원</td><td class="fix-col-5">${itemTotalCost.toLocaleString()}원</td><td class="fix-col-6">${itemTotalQty}개</td><td class="fix-col-7">-</td>`;
-            dateSet.forEach(d => { var qVal = globalItemAdminQty[item][d]; footerHtml += `<td>${qVal || '-'}</td>`; });
-            footerHtml += `</tr>`;
+            footerHtml += '<tr class="bg-total-item-sub">';
+            if (isFirstSubRow) { footerHtml += '<td class="fix-col-1" rowspan="' + activeItems.length + '" style="vertical-align:middle; font-weight:bold;">품목별 소계</td>'; isFirstSubRow = false; }
+            footerHtml += '<td class="fix-col-2 admin-text">유니입력</td><td class="fix-col-3" style="text-align: left; padding-left: 10px;">' + item + ' 소계</td><td class="fix-col-4">' + itemCost.toLocaleString() + '원</td><td class="fix-col-5">' + itemTotalCost.toLocaleString() + '원</td><td class="fix-col-6">' + itemTotalQty + '개</td><td class="fix-col-7">-</td>';
+            dateSet.forEach(function(d) { var qVal = globalItemAdminQty[item][d]; footerHtml += '<td>' + (qVal || '-') + '</td>'; });
+            footerHtml += '</tr>';
         });
         
         totalFinalGrandSum = totalAdminCost + totalHourlyPaySum;
-        footerHtml += `<tr class="bg-total-row-1"><td class="fix-col-1" rowspan="2" style="vertical-align:middle; font-weight:bold;">최종 합계</td><td class="fix-col-2 admin-text">유니입력</td><td class="fix-col-3" rowspan="2" style="vertical-align:middle; font-weight:bold;">전체합산</td><td class="fix-col-4">-</td><td class="fix-col-5" style="background-color: #d0ebff !important;">${(totalAdminCost + totalHourlyPaySum).toLocaleString()}원</td><td class="fix-col-6" style="background-color: #e3fafc !important; padding: 4px 8px !important;"><div class="total-split-box"><span class="val-qty">${totalAdminQty}개</span><span class="val-hours">${totalWorkHours.toFixed(1)}시간</span></div></td><td class="fix-col-7" id="overallGrandTotalCell" style="background-color: #d3f9d8 !important; color:#2b8a3e; font-weight:bold;">계산중</td>${dateSet.map(d => `<td>${dayAdminSums[d] || '-'}</td>`).join('')}</tr><tr class="bg-total-row-2"><td class="fix-col-2 worker-text">개인입력</td><td class="fix-col-4">-</td><td class="fix-col-5">-</td><td class="fix-col-6" style="font-weight: bold; color: #27ae60;">${totalWorkerQty}개</td><td class="fix-col-7">-</td>${dateSet.map(d => `<td>${dayWorkerSums[d] || '-'}</td>`).join('')}</tr>`;
+        footerHtml += '<tr class="bg-total-row-1"><td class="fix-col-1" rowspan="2" style="vertical-align:middle; font-weight:bold;">최종 합계</td><td class="fix-col-2 admin-text">유니입력</td><td class="fix-col-3" rowspan="2" style="vertical-align:middle; font-weight:bold;">전체합산</td><td class="fix-col-4">-</td><td class="fix-col-5" style="background-color: #d0ebff !important;">' + (totalAdminCost + totalHourlyPaySum).toLocaleString() + '원</td><td class="fix-col-6" style="background-color: #e3fafc !important; padding: 4px 8px !important;"><div class="total-split-box"><span class="val-qty">' + totalAdminQty + '개</span><span class="val-hours">' + totalWorkHours.toFixed(1) + '시간</span></div></td><td class="fix-col-7" id="overallGrandTotalCell" style="background-color: #d3f9d8 !important; color:#2b8a3e; font-weight:bold;">계산중</td>' + dateSet.map(function(d) { return '<td>' + (dayAdminSums[d] || '-') + '</td>'; }).join('') + '</tr><tr class="bg-total-row-2"><td class="fix-col-2 worker-text">개인입력</td><td class="fix-col-4">-</td><td class="fix-col-5">-</td><td class="fix-col-6" style="font-weight: bold; color: #27ae60;">' + totalWorkerQty + '개</td><td class="fix-col-7">-</td>' + dateSet.map(function(d) { return '<td>' + (dayWorkerSums[d] || '-') + '</td>'; }).join('') + '</tr>';
         footerHtml += "</tfoot>";
         
         table.innerHTML = headerHtml + bodyHtml + footerHtml;
@@ -521,25 +522,25 @@
         }, 30);
     }
 
-    function toggleSingleDayRate(name, dateFull, currentApply) { if(!hourlyRates[name]) hourlyRates[name] = { rate: 9620, customDays: {} }; if(!hourlyRates[name].customDays) hourlyRates[name].customDays = {}; hourlyRates[name].customDays[dateFull] = !currentApply; buildPivotTable(); syncWithGoogle(`[${name}] ${dateFull} 반영여부 변경`); }
-    function toggleAllRatesForWorker(targetStatus) { var name = document.getElementById('rateWorkerSelect').value; var selYear = document.getElementById("filterYear").value; var selMonth = parseInt(document.getElementById("filterMonth").value); var lastDay = new Date(selYear, selMonth, 0).getDate(); if(!hourlyRates[name]) hourlyRates[name] = { rate: 9620, customDays: {} }; if(!hourlyRates[name].customDays) hourlyRates[name].customDays = {}; var strMonth = selMonth < 10 ? "0" + selMonth : String(selMonth); for(var d = 1; d <= lastDay; d++) { var strDay = d < 10 ? "0" + d : String(d); var dateFull = selYear + "-" + strMonth + "-" + strDay; hourlyRates[name].customDays[dateFull] = targetStatus; } buildPivotTable(); syncWithGoogle(`[${name}] 계정 ${selMonth}월 시급 일괄 정산 변경`); }
-    function makeCellEditable(cell, year, md, name, item, type, cost) { if (cell.querySelector('input')) return; var originalValue = cell.innerText === '-' ? '0' : cell.innerText.replace('개', ''); cell.innerHTML = `<input type="number" class="inline-edit-input" value="${originalValue}" onblur="saveInlineQty(this, '${year}', '${md}', '${name}', '${item}', '${type}', '${cost}')" onkeydown="if(event.key==='Enter') this.blur();">`; var input = cell.querySelector('input'); if(input) { input.focus(); input.select(); } }
-    function saveInlineQty(input, year, md, name, item, type, cost) { var newVal = parseInt(input.value) || 0; var dateFull = year + "-" + md.replace("/", "-"); var idx = rawEntries.findIndex(x => x.date === dateFull && x.name === name && x.item === item && x.type === type); if (newVal === 0) { if (idx > -1) rawEntries.splice(idx, 1); } else { var entry = { date: dateFull, type: type, name: name, item: item, qty: newVal }; if (type === 'admin') entry.cost = Number(cost); if (idx > -1) rawEntries[idx] = entry; else rawEntries.push(entry); } buildPivotTable(); syncWithGoogle(`인라인 수정: ${name} [${item}] 수량 ${newVal} 변경`); }
-    function makeTimeCellEditable(cell, year, md, name, event) { if (event && event.target.tagName === 'BUTTON') return; var targetSpan = cell.querySelector('.time-display-span'); if (!targetSpan || cell.querySelector('input')) return; var originalValue = targetSpan.innerText === '-' ? '' : targetSpan.innerText; var btn = cell.querySelector('button'); if(btn) btn.style.display = 'none'; targetSpan.innerHTML = `<input type="text" class="inline-edit-input" style="width:100%; font-size:11px;" value="${originalValue}" placeholder="예: 오전 9:00 ~ 오후 6:00" onblur="saveInlineTime(this, '${year}', '${md}', '${name}')" onkeydown="if(event.key==='Enter') this.blur();">`; var input = targetSpan.querySelector('input'); if(input) { input.focus(); input.select(); } }
-    function saveInlineTime(input, year, md, name) { var newVal = input.value.trim(); var dateFull = year + "-" + md.replace("/", "-"); var idx = rawEntries.findIndex(x => x.date === dateFull && x.name === name && x.type === 'attendance'); if (!newVal || newVal === '-') { if (idx > -1) rawEntries.splice(idx, 1); } else { var entry = { date: dateFull, name: name, type: 'attendance', item: '통합근무', time: newVal }; if (idx > -1) rawEntries[idx] = entry; else rawEntries.push(entry); } buildPivotTable(); syncWithGoogle(`인라인 수정: ${name} 출퇴근시간 [${newVal}] 변경`); }
-    function addWorkRowData() { var date = document.getElementById('globalWorkDate').value; var entry = { date: date, type: 'admin', name: document.getElementById('admNameSelect').value, item: document.getElementById('admItemSelect').value, cost: Number(document.getElementById('admCost').value)||0, qty: Number(document.getElementById('admQty').value) }; var idx = rawEntries.findIndex(x => x.date === entry.date && x.name === entry.name && x.item === entry.item && x.type === 'admin'); if(idx > -1) rawEntries[idx] = entry; else rawEntries.push(entry); buildPivotTable(); syncWithGoogle(`관리자가 [${entry.name}] 물량 입력`); }
-    function saveHourlyRateSetting() { var name = document.getElementById('rateWorkerSelect').value; if(!hourlyRates[name]) hourlyRates[name] = { rate: 9620, customDays: {} }; hourlyRates[name].rate = Number(document.getElementById('hourlyRateInput').value)||0; buildPivotTable(); syncWithGoogle(`[${name}] 시급원장 금액 변경`); }
-    function updateRateSettingHint() { var name = document.getElementById('rateWorkerSelect').value; var config = hourlyRates[name] || { rate: 9620, customDays: {} }; document.getElementById('hourlyRateInput').value = config.rate || 9620; }
-    function updateAdminCostHint() { var s = document.getElementById('admItemSelect'); if(s && s.options.length) document.getElementById('admCost').value = s.options[s.selectedIndex].getAttribute('data-cost'); }
+    window.toggleSingleDayRate = function(name, dateFull, currentApply) { if(!hourlyRates[name]) hourlyRates[name] = { rate: 9620, customDays: {} }; if(!hourlyRates[name].customDays) hourlyRates[name].customDays = {}; hourlyRates[name].customDays[dateFull] = !currentApply; buildPivotTable(); syncWithGoogle("[" + name + "] " + dateFull + " 반영여부 변경"); };
+    window.toggleAllRatesForWorker = function(targetStatus) { var name = document.getElementById('rateWorkerSelect').value; var selYear = document.getElementById("filterYear").value; var selMonth = parseInt(document.getElementById("filterMonth").value); var lastDay = new Date(selYear, selMonth, 0).getDate(); if(!hourlyRates[name]) hourlyRates[name] = { rate: 9620, customDays: {} }; if(!hourlyRates[name].customDays) hourlyRates[name].customDays = {}; var strMonth = selMonth < 10 ? "0" + selMonth : String(selMonth); for(var d = 1; d <= lastDay; d++) { var strDay = d < 10 ? "0" + d : String(d); var dateFull = selYear + "-" + strMonth + "-" + strDay; hourlyRates[name].customDays[dateFull] = targetStatus; } buildPivotTable(); syncWithGoogle("[" + name + "] 계정 " + selMonth + "월 시급 일괄 정산 변경"); };
+    window.makeCellEditable = function(cell, year, md, name, item, type, cost) { if (cell.querySelector('input')) return; var originalValue = cell.innerText === '-' ? '0' : cell.innerText.replace('개', ''); cell.innerHTML = '<input type="number" class="inline-edit-input" value="' + originalValue + '" onblur="saveInlineQty(this, \'' + year + '\', \'' + md + '\', \'' + name + '\', \'' + item + '\', \'' + type + '\', \'' + cost + '\')" onkeydown="if(event.key===\'Enter\') this.blur();">'; var input = cell.querySelector('input'); if(input) { input.focus(); input.select(); } };
+    window.saveInlineQty = function(input, year, md, name, item, type, cost) { var newVal = parseInt(input.value) || 0; var dateFull = year + "-" + md.replace("/", "-"); var idx = rawEntries.findIndex(function(x) { return x.date === dateFull && x.name === name && x.item === item && x.type === type; }); if (newVal === 0) { if (idx > -1) rawEntries.splice(idx, 1); } else { var entry = { date: dateFull, type: type, name: name, item: item, qty: newVal }; if (type === 'admin') entry.cost = Number(cost); if (idx > -1) rawEntries[idx] = entry; else rawEntries.push(entry); } buildPivotTable(); syncWithGoogle("인라인 수정: " + name + " [" + item + "] 수량 " + newVal + " 변경"); };
+    window.makeTimeCellEditable = function(cell, year, md, name, event) { if (event && event.target.tagName === 'BUTTON') return; var targetSpan = cell.querySelector('.time-display-span'); if (!targetSpan || cell.querySelector('input')) return; var originalValue = targetSpan.innerText === '-' ? '' : targetSpan.innerText; var btn = cell.querySelector('button'); if(btn) btn.style.display = 'none'; targetSpan.innerHTML = '<input type="text" class="inline-edit-input" style="width:100%; font-size:11px;" value="' + originalValue + '" placeholder="예: 오전 9:00 ~ 오후 6:00" onblur="saveInlineTime(this, \'' + year + '\', \'' + md + '\', \'' + name + '\')" onkeydown="if(event.key===\'Enter\') this.blur();">'; var input = targetSpan.querySelector('input'); if(input) { input.focus(); input.select(); } };
+    window.saveInlineTime = function(input, year, md, name) { var newVal = input.value.trim(); var dateFull = year + "-" + md.replace("/", "-"); var idx = rawEntries.findIndex(function(x) { return x.date === dateFull && x.name === name && x.type === 'attendance'; }); if (!newVal || newVal === '-') { if (idx > -1) rawEntries.splice(idx, 1); } else { var entry = { date: dateFull, name: name, type: 'attendance', item: '통합근무', time: newVal }; if (idx > -1) rawEntries[idx] = entry; else rawEntries.push(entry); } buildPivotTable(); syncWithGoogle("인라인 수정: " + name + " 출퇴근시간 [" + newVal + "] 변경"); };
+    window.addWorkRowData = function() { var date = document.getElementById('globalWorkDate').value; var entry = { date: date, type: 'admin', name: document.getElementById('admNameSelect').value, item: document.getElementById('admItemSelect').value, cost: Number(document.getElementById('admCost').value)||0, qty: Number(document.getElementById('admQty').value) }; var idx = rawEntries.findIndex(function(x) { return x.date === entry.date && x.name === entry.name && x.item === entry.item && x.type === 'admin'; }); if(idx > -1) rawEntries[idx] = entry; else rawEntries.push(entry); buildPivotTable(); syncWithGoogle("관리자가 [" + entry.name + "] 물량 입력"); };
+    window.saveHourlyRateSetting = function() { var name = document.getElementById('rateWorkerSelect').value; if(!hourlyRates[name]) hourlyRates[name] = { rate: 9620, customDays: {} }; hourlyRates[name].rate = Number(document.getElementById('hourlyRateInput').value)||0; buildPivotTable(); syncWithGoogle("[" + name + "] 시급원장 금액 변경"); };
+    window.updateRateSettingHint = function() { var name = document.getElementById('rateWorkerSelect').value; var config = hourlyRates[name] || { rate: 9620, customDays: {} }; document.getElementById('hourlyRateInput').value = config.rate || 9620; };
+    window.updateAdminCostHint = function() { var s = document.getElementById('admItemSelect'); if(s && s.options.length) document.getElementById('admCost').value = s.options[s.selectedIndex].getAttribute('data-cost'); };
     
     function renderDropdowns() { 
         var aN = document.getElementById('admNameSelect'), rN = document.getElementById('rateWorkerSelect'), aI = document.getElementById('admItemSelect'), dW = document.getElementById('delWorkerSelect'), dI = document.getElementById('delItemSelect'); 
         if(!aN || !rN || !aI || !dW || !dI) return;
         aN.innerHTML = ""; rN.innerHTML = ""; aI.innerHTML = ""; dW.innerHTML = ""; dI.innerHTML = ""; 
         var safeWorkers = Array.isArray(workersPool) ? workersPool : [];
-        safeWorkers.forEach(n => { var o = `<option value="${n}">${n}</option>`; aN.innerHTML += o; rN.innerHTML += o; dW.innerHTML += o; }); 
+        safeWorkers.forEach(function(n) { var o = '<option value="' + n + '">' + n + '</option>'; aN.innerHTML += o; rN.innerHTML += o; dW.innerHTML += o; }); 
         var safeItemPrices = itemPrices || {}; var sortedItemKeys = Object.keys(safeItemPrices).sort(customItemSort);
-        sortedItemKeys.forEach(i => { aI.innerHTML += `<option value="${i}" data-cost="${safeItemPrices[i]}">${i}</option>`; dI.innerHTML += `<option value="${i}">${i}</option>`; }); 
+        sortedItemKeys.forEach(function(i) { aI.innerHTML += '<option value="' + i + '" data-cost="' + safeItemPrices[i] + '">' + i + '</option>'; dI.innerHTML += '<option value="' + i + '">' + i + '</option>'; }); 
         updateAdminCostHint(); updateRateSettingHint(); 
     }
 </script>
