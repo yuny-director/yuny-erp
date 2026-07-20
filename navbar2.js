@@ -1,4 +1,4 @@
-// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (PC 화면 완전 고정 fixed 적용판)
+// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (웹버전 캐시 및 CSS 우선순위 무력화 최상단 강제 고정판)
 (function() {
     function initNavbar() {
         var navbarContainer = document.getElementById('global-navbar');
@@ -16,31 +16,33 @@
 
         var navHtml = `
         <style>
-            /* 📌 화면 상단에 위치 완전 고정 (fixed) */
+            /* 📌 웹버전 강제 최상단 fixed 고정 */
             .custom-navbar { 
                 position: fixed !important; 
                 top: 0 !important; 
                 left: 0 !important;
+                right: 0 !important;
                 width: 100% !important;
-                z-index: 9999 !important; 
-                background-color: #2c3e50; 
-                color: white; 
-                display: flex; 
-                justify-content: space-between; 
-                align-items: center; 
-                padding: 0 15px; 
-                height: 50px; 
-                font-family: Arial, sans-serif; 
-                font-size: 13px; 
-                box-sizing: border-box; 
-                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                z-index: 999999 !important; 
+                background-color: #2c3e50 !important; 
+                color: white !important; 
+                display: flex !important; 
+                justify-content: space-between !important; 
+                align-items: center !important; 
+                padding: 0 15px !important; 
+                height: 50px !important; 
+                font-family: Arial, sans-serif !important; 
+                font-size: 13px !important; 
+                box-sizing: border-box !important; 
+                box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important;
             }
             
-            /* 📌 fixed 고정 시 본문 내용이 네비바 뒤로 파묻히지 않도록 높이 보정 공간 확보 */
+            /* 📌 fixed 고정 시 본문 내용이 네비바 뒤로 파묻히지 않도록 높이 공간 확보 */
             .navbar-spacer {
-                height: 50px;
-                width: 100%;
-                display: block;
+                height: 50px !important;
+                width: 100% !important;
+                display: block !important;
+                clear: both !important;
             }
 
             .custom-navbar-left { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow-x: auto; }
@@ -58,7 +60,7 @@
             .btn-nav-red { background-color: #e74c3c; border: none; }
             .btn-nav-red:hover { background-color: #c0392b; color: white; }
 
-            .account-modal-overlay { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.55); align-items: center; justify-content: center; }
+            .account-modal-overlay { display: none; position: fixed; z-index: 1000000; left: 0; top: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.55); align-items: center; justify-content: center; }
             .account-modal-card { background-color: #ffffff; padding: 25px; border-radius: 10px; width: 90%; max-width: 580px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
             .account-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #2c3e50; }
             .account-modal-header h3 { margin: 0; font-size: 17px; color: #2c3e50; font-weight: bold; }
