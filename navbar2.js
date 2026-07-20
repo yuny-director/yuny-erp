@@ -1,4 +1,4 @@
-// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (브라우저 GPU 강제 레이어 최상단 고정판)
+// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (접속자 로그인 세션 명확화 반영판)
 (function() {
     function initNavbar() {
         var navbarContainer = document.getElementById('global-navbar');
@@ -16,7 +16,6 @@
 
         var navHtml = `
         <style>
-            /* 📌 브라우저 스크롤 영향 0% 강제 고정 (fixed + transform layer) */
             .custom-navbar { 
                 position: fixed !important; 
                 top: 0 !important; 
@@ -147,10 +146,11 @@
     }
 })();
 
+// 🎯 [접속자명 정확화] 로그인 계정명을 최우선으로 가져오도록 수정
 window.updateNavbarUserDisplay = function() {
     var nameEl = document.getElementById('navbar-user-name');
     if (!nameEl) return;
-    var activeName = localStorage.getItem('login_user_name') || localStorage.getItem('last_worker_name') || "관리자";
+    var activeName = localStorage.getItem('login_user_name') || "admin";
     nameEl.innerText = activeName + "님 접속중";
 };
 
