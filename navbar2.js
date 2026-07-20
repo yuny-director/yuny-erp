@@ -1,4 +1,4 @@
-// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (웹버전 캐시 및 CSS 우선순위 무력화 최상단 강제 고정판)
+// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (브라우저 GPU 강제 레이어 최상단 고정판)
 (function() {
     function initNavbar() {
         var navbarContainer = document.getElementById('global-navbar');
@@ -16,13 +16,14 @@
 
         var navHtml = `
         <style>
-            /* 📌 웹버전 강제 최상단 fixed 고정 */
+            /* 📌 브라우저 스크롤 영향 0% 강제 고정 (fixed + transform layer) */
             .custom-navbar { 
                 position: fixed !important; 
                 top: 0 !important; 
                 left: 0 !important;
                 right: 0 !important;
-                width: 100% !important;
+                width: 100vw !important;
+                height: 50px !important; 
                 z-index: 999999 !important; 
                 background-color: #2c3e50 !important; 
                 color: white !important; 
@@ -30,19 +31,12 @@
                 justify-content: space-between !important; 
                 align-items: center !important; 
                 padding: 0 15px !important; 
-                height: 50px !important; 
                 font-family: Arial, sans-serif !important; 
                 font-size: 13px !important; 
                 box-sizing: border-box !important; 
-                box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important;
-            }
-            
-            /* 📌 fixed 고정 시 본문 내용이 네비바 뒤로 파묻히지 않도록 높이 공간 확보 */
-            .navbar-spacer {
-                height: 50px !important;
-                width: 100% !important;
-                display: block !important;
-                clear: both !important;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+                -webkit-transform: translateZ(0);
+                transform: translateZ(0);
             }
 
             .custom-navbar-left { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow-x: auto; }
@@ -94,7 +88,6 @@
                 <button class="btn-nav-action btn-nav-red" onclick="window.logoutSystem()">로그아웃</button>
             </div>
         </div>
-        <div class="navbar-spacer"></div>
 
         <div id="accountModal" class="account-modal-overlay">
             <div class="account-modal-card">
