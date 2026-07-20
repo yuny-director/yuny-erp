@@ -5,7 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>YUNY_ERP - 관리자 마스터 정산표</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; }
+        /* 📌 웹버전 상단 고정을 위한 레이아웃 초기화 */
+        html, body { 
+            margin: 0; 
+            padding: 0; 
+            background-color: #f4f6f9; 
+            font-family: Arial, sans-serif;
+        }
+
+        /* 📌 네비바 상단 완전 밀착 고정 */
+        #global-navbar {
+            position: sticky;
+            top: 0;
+            z-index: 99999;
+        }
+
         .content { padding: 15px; }
         .flex-form-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 15px; }
         .card { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 25px; }
@@ -21,7 +35,7 @@
         .btn-gray { background-color: #7f8c8d !important; }
         .btn-purple { background-color: #9b59b6 !important; }
 
-        .table-container { width: 100%; max-height: 75vh; overflow: auto !important; border: 1px solid #ccc; border-radius: 6px; background: white; -webkit-overflow-scrolling: touch; }
+        .table-container { width: 100%; max-height: 70vh; overflow: auto !important; border: 1px solid #ccc; border-radius: 6px; background: white; -webkit-overflow-scrolling: touch; }
         table { border-collapse: separate !important; border-spacing: 0 !important; font-size: 13px; width: auto; min-width: 100%; table-layout: fixed; }
         th, td { padding: 10px 6px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; }
         th { background-color: #f8f9fa !important; font-weight: bold; position: sticky !important; top: 0 !important; z-index: 30 !important; }
@@ -50,16 +64,14 @@
         .rate-on { background-color: #2bc891 !important; color: white !important; }
         .rate-off { background-color: #e74c3c !important; color: white !important; }
     </style>
-    <!-- ⚡ 캐시 무력화 실시간 외부 설정 로드 -->
+    <!-- 외부 config 및 navbar 구동 -->
     <script>
         document.write('<script src="../config.js?v=' + Date.now() + '"><\/script>');
     </script>
 </head>
 <body>
 
-<!-- 상단 공통 네비게이션 영역 -->
 <div id="global-navbar"></div>
-<!-- ⚡ 캐시 무력화 navbar2.js 강제 최신 구동 -->
 <script>
     document.write('<script src="../navbar2.js?v=' + Date.now() + '"><\/script>');
 </script>
