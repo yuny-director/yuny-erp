@@ -50,13 +50,19 @@
         .rate-on { background-color: #2bc891 !important; color: white !important; }
         .rate-off { background-color: #e74c3c !important; color: white !important; }
     </style>
-    <script src="../config.js"></script>
+    <!-- ⚡ 캐시 무력화 실시간 외부 설정 로드 -->
+    <script>
+        document.write('<script src="../config.js?v=' + Date.now() + '"><\/script>');
+    </script>
 </head>
 <body>
 
 <!-- 상단 공통 네비게이션 영역 -->
 <div id="global-navbar"></div>
-<script src="../navbar2.js"></script>
+<!-- ⚡ 캐시 무력화 navbar2.js 강제 최신 구동 -->
+<script>
+    document.write('<script src="../navbar2.js?v=' + Date.now() + '"><\/script>');
+</script>
 
 <div class="content">
     <div class="card" style="background-color: #fff9db; border: 2px solid #fab005; padding: 15px 25px;">
