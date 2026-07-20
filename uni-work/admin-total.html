@@ -50,11 +50,11 @@
         .rate-on { background-color: #2bc891 !important; color: white !important; }
         .rate-off { background-color: #e74c3c !important; color: white !important; }
     </style>
-    <!-- 상위 경로 외부 설정 및 네비게이션 연결 -->
     <script src="../config.js"></script>
 </head>
 <body>
 
+<!-- 상단 공통 네비게이션 영역 -->
 <div id="global-navbar"></div>
 <script src="../navbar2.js"></script>
 
@@ -228,7 +228,7 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 window.loadData = function() {
-    var scriptUrl = window.GOOGLE_SCRIPT_URL || "ttps://script.google.com/macros/s/AKfycbyPWv070zApltQFMeq6HUxFAnnBcZfpAXHz5n_vwnmX34kCXqadFumI1BfmJRWu0OZE/exec";
+    var scriptUrl = window.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbyPWv070zApltQFMeq6HUxFAnnBcZfpAXHz5n_vwnmX34kCXqadFumI1BfmJRWu0OZE/exec";
     var cacheUrl = scriptUrl + (scriptUrl.indexOf('?') > -1 ? '&' : '?') + 't=' + Date.now();
     fetch(cacheUrl)
     .then(function(r) { return r.json(); })
@@ -242,6 +242,7 @@ window.loadData = function() {
         
         window.renderDropdowns();
         window.buildPivotTable();
+        if (typeof window.updateNavbarUserDisplay === 'function') window.updateNavbarUserDisplay();
         document.getElementById('loadingStatus').innerText = "✅ 실시간 동기화 완료";
     })
     .catch(function(err) {
@@ -252,7 +253,7 @@ window.loadData = function() {
 
 window.syncWithGoogle = function(msg, callback) {
     document.getElementById('loadingStatus').innerText = "📤 구글 DB 업데이트 중...";
-    var scriptUrl = window.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbwqS2s410xS5C-iXQY-r_jQ3n7vL-GzWf/exec";
+    var scriptUrl = window.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbyPWv070zApltQFMeq6HUxFAnnBcZfpAXHz5n_vwnmX34kCXqadFumI1BfmJRWu0OZE/exec";
     var payload = {
         action: "syncAll",
         updater: "관리자",
