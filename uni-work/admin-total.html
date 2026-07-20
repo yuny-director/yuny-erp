@@ -21,13 +21,6 @@
         .btn-gray { background-color: #7f8c8d !important; }
         .btn-purple { background-color: #9b59b6 !important; }
 
-        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); align-items: center; justify-content: center; }
-        .modal-content { background-color: #fff; padding: 25px; border-radius: 8px; width: 90%; max-width: 550px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .sortable-list { list-style: none; padding: 0; margin: 15px 0; }
-        .sortable-item { background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px 15px; margin-bottom: 8px; border-radius: 4px; cursor: grab; display: flex; justify-content: space-between; align-items: center; user-select: none; }
-        .sortable-item.dragging { opacity: 0.5; background: #e8f4fd; border: 1px dashed #2980b9; }
-        .sortable-item::after { content: '☰'; color: #aaa; font-size: 16px; }
-
         .table-container { width: 100%; max-height: 75vh; overflow: auto !important; border: 1px solid #ccc; border-radius: 6px; background: white; -webkit-overflow-scrolling: touch; }
         table { border-collapse: separate !important; border-spacing: 0 !important; font-size: 13px; width: auto; min-width: 100%; table-layout: fixed; }
         th, td { padding: 10px 6px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; }
@@ -57,6 +50,7 @@
         .rate-on { background-color: #2bc891 !important; color: white !important; }
         .rate-off { background-color: #e74c3c !important; color: white !important; }
     </style>
+    <!-- 상위 경로 외부 설정 및 네비게이션 연결 -->
     <script src="../config.js"></script>
 </head>
 <body>
@@ -166,8 +160,8 @@
     </div>
 </div>
 
-<div id="sortModal" class="modal">
-    <div class="modal-content">
+<div id="sortModal" class="modal" style="display:none; position:fixed; z-index:100; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.4); align-items:center; justify-content:center;">
+    <div class="modal-content" style="background:#fff; padding:25px; border-radius:8px; width:90%; max-width:550px;">
         <h3 style="margin-top:0; color: #2c3e50;">↕️ 품목 순서 임의 조정</h3>
         <ul class="sortable-list" id="sortableList"></ul>
         <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
@@ -178,26 +172,25 @@
 </div>
 
 <script>
-// 전역 상태 변수
-var workersPool = [];
-var itemPrices = {};
-var rawEntries = [];
-var hourlyRates = {};
-var userList = [];
-var myItemOrder = ["스포이드", "공병", "미스트(핑크)", "미스트(보라)", "지정품목"];
+// 전역 변수
+window.workersPool = [];
+window.itemPrices = {};
+window.rawEntries = [];
+window.hourlyRates = {};
+window.userList = [];
+window.myItemOrder = ["스포이드", "공병", "미스트(핑크)", "미스트(보라)", "지정품목"];
 
-function customItemSort(a, b) {
+window.customItemSort = function(a, b) {
     try {
-        if (!myItemOrder || !Array.isArray(myItemOrder)) return 0;
-        var idxA = myItemOrder.indexOf(a);
-        var idxB = myItemOrder.indexOf(b);
+        if (!window.myItemOrder || !Array.isArray(window.myItemOrder)) return 0;
+        var idxA = window.myItemOrder.indexOf(a);
+        var idxB = window.myItemOrder.indexOf(b);
         if (idxA === -1) idxA = 999;
         if (idxB === -1) idxB = 999;
         return idxA - idxB;
     } catch (e) { return 0; }
-}
+};
 
-// 🎯 DOM 요소 로드가 모두 끝난 후 안전하게 이벤트 바인딩
 document.addEventListener("DOMContentLoaded", function() {
     var now = new Date();
     var currentYear = now.getFullYear();
@@ -212,65 +205,66 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     document.getElementById('globalWorkDate').value = now.toISOString().split('T')[0];
     
-    ySel.onchange = buildPivotTable;
-    mSel.onchange = buildPivotTable;
+    ySel.onchange = window.buildPivotTable;
+    mSel.onchange = window.buildPivotTable;
 
-    // 🔒 [이벤트 리스너 안전 연결]
-    document.getElementById("btnAddWorker").addEventListener("click", addNewWorker);
-    document.getElementById("btnAddItem").addEventListener("click", addNewItem);
-    document.getElementById("btnDelWorker").addEventListener("click", deleteWorker);
-    document.getElementById("btnDelItem").addEventListener("click", deleteItem);
-    document.getElementById("btnSaveRate").addEventListener("click", saveHourlyRateSetting);
-    document.getElementById("btnRateAllApply").addEventListener("click", function() { toggleAllRatesForWorker(true); });
-    document.getElementById("btnRateAllExclude").addEventListener("click", function() { toggleAllRatesForWorker(false); });
-    document.getElementById("btnAddWorkRow").addEventListener("click", addWorkRowData);
-    document.getElementById("btnSortModal").addEventListener("click", openSortModal);
-    document.getElementById("btnCloseSortModal").addEventListener("click", closeSortModal);
-    document.getElementById("btnSaveItemOrder").addEventListener("click", saveItemOrder);
+    // 이벤트 리스너 바인딩
+    document.getElementById("btnAddWorker").addEventListener("click", window.addNewWorker);
+    document.getElementById("btnAddItem").addEventListener("click", window.addNewItem);
+    document.getElementById("btnDelWorker").addEventListener("click", window.deleteWorker);
+    document.getElementById("btnDelItem").addEventListener("click", window.deleteItem);
+    document.getElementById("btnSaveRate").addEventListener("click", window.saveHourlyRateSetting);
+    document.getElementById("btnRateAllApply").addEventListener("click", function() { window.toggleAllRatesForWorker(true); });
+    document.getElementById("btnRateAllExclude").addEventListener("click", function() { window.toggleAllRatesForWorker(false); });
+    document.getElementById("btnAddWorkRow").addEventListener("click", window.addWorkRowData);
+    document.getElementById("btnSortModal").addEventListener("click", window.openSortModal);
+    document.getElementById("btnCloseSortModal").addEventListener("click", window.closeSortModal);
+    document.getElementById("btnSaveItemOrder").addEventListener("click", window.saveItemOrder);
     
-    document.getElementById("rateWorkerSelect").addEventListener("change", updateRateSettingHint);
-    document.getElementById("admItemSelect").addEventListener("change", updateAdminCostHint);
+    document.getElementById("rateWorkerSelect").addEventListener("change", window.updateRateSettingHint);
+    document.getElementById("admItemSelect").addEventListener("change", window.updateAdminCostHint);
 
-    loadData();
+    window.loadData();
 });
 
-function loadData() {
-    if (typeof GOOGLE_SCRIPT_URL === "undefined") return;
-    var cacheUrl = GOOGLE_SCRIPT_URL + (GOOGLE_SCRIPT_URL.indexOf('?') > -1 ? '&' : '?') + 't=' + Date.now();
+window.loadData = function() {
+    var scriptUrl = window.GOOGLE_SCRIPT_URL || "ttps://script.google.com/macros/s/AKfycbyPWv070zApltQFMeq6HUxFAnnBcZfpAXHz5n_vwnmX34kCXqadFumI1BfmJRWu0OZE/exec";
+    var cacheUrl = scriptUrl + (scriptUrl.indexOf('?') > -1 ? '&' : '?') + 't=' + Date.now();
     fetch(cacheUrl)
     .then(function(r) { return r.json(); })
     .then(function(data) {
-        workersPool = Array.isArray(data.workersPool) ? data.workersPool : [];
-        itemPrices = (data.itemPrices && typeof data.itemPrices === 'object') ? data.itemPrices : {};
-        rawEntries = Array.isArray(data.rawEntries) ? data.rawEntries : [];
-        hourlyRates = (data.hourlyRates && typeof data.hourlyRates === 'object') ? data.hourlyRates : {};
-        userList = Array.isArray(data.userList) ? data.userList : [];
-        if(data.itemOrder && Array.isArray(data.itemOrder)) { myItemOrder = data.itemOrder; }
+        window.workersPool = Array.isArray(data.workersPool) ? data.workersPool : [];
+        window.itemPrices = (data.itemPrices && typeof data.itemPrices === 'object') ? data.itemPrices : {};
+        window.rawEntries = Array.isArray(data.rawEntries) ? data.rawEntries : [];
+        window.hourlyRates = (data.hourlyRates && typeof data.hourlyRates === 'object') ? data.hourlyRates : {};
+        window.userList = Array.isArray(data.userList) ? data.userList : [];
+        if(data.itemOrder && Array.isArray(data.itemOrder)) { window.myItemOrder = data.itemOrder; }
         
-        renderDropdowns();
-        buildPivotTable();
+        window.renderDropdowns();
+        window.buildPivotTable();
         document.getElementById('loadingStatus').innerText = "✅ 실시간 동기화 완료";
     })
     .catch(function(err) {
         document.getElementById('loadingStatus').innerText = "❌ 데이터 동기화 지연";
-        buildPivotTable();
+        window.buildPivotTable();
     });
-}
+};
 
-function syncWithGoogle(msg, callback) {
+window.syncWithGoogle = function(msg, callback) {
     document.getElementById('loadingStatus').innerText = "📤 구글 DB 업데이트 중...";
+    var scriptUrl = window.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbwqS2s410xS5C-iXQY-r_jQ3n7vL-GzWf/exec";
     var payload = {
         action: "syncAll",
         updater: "관리자",
         summary: msg,
-        workersPool: workersPool,
-        itemPrices: itemPrices,
-        rawEntries: rawEntries,
-        hourlyRates: hourlyRates,
-        itemOrder: myItemOrder
+        workersPool: window.workersPool,
+        itemPrices: window.itemPrices,
+        rawEntries: window.rawEntries,
+        hourlyRates: window.hourlyRates,
+        itemOrder: window.myItemOrder
     };
 
-    fetch(GOOGLE_SCRIPT_URL, {
+    fetch(scriptUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(payload)
@@ -279,32 +273,32 @@ function syncWithGoogle(msg, callback) {
     .then(function(resData) {
         document.getElementById('loadingStatus').innerText = "✅ DB 저장 성공!";
         if (callback) callback();
-        else loadData();
+        else window.loadData();
     })
     .catch(function(err) {
         document.getElementById('loadingStatus').innerText = "❌ 저장 완료";
         if (callback) callback();
-        else loadData();
+        else window.loadData();
     });
-}
+};
 
-function addNewWorker() {
+window.addNewWorker = function() {
     var inputEl = document.getElementById('newWorkerName');
     var n = inputEl ? inputEl.value.trim() : "";
     if(!n) { alert("추가할 작업자 이름을 입력해 주세요!"); return; }
     
-    if(workersPool.indexOf(n) === -1) {
-        workersPool.push(n);
+    if(window.workersPool.indexOf(n) === -1) {
+        window.workersPool.push(n);
         if(inputEl) inputEl.value = "";
-        renderDropdowns();
-        buildPivotTable();
-        syncWithGoogle("작업자 명단 추가: " + n);
+        window.renderDropdowns();
+        window.buildPivotTable();
+        window.syncWithGoogle("작업자 명단 추가: " + n);
     } else {
         alert("이미 존재하는 작업자 이름입니다.");
     }
-}
+};
 
-function addNewItem() {
+window.addNewItem = function() {
     var nameEl = document.getElementById('newItemName');
     var costEl = document.getElementById('newItemCost');
     var i = nameEl ? nameEl.value.trim() : "";
@@ -312,42 +306,42 @@ function addNewItem() {
     if(!i) { alert("추가할 품목명을 입력해 주세요!"); return; }
     if(!c || c === "") { alert("기본 단가를 입력해 주세요!"); return; }
     
-    itemPrices[i] = Number(c);
-    if(myItemOrder.indexOf(i) === -1) { myItemOrder.push(i); }
+    window.itemPrices[i] = Number(c);
+    if(window.myItemOrder.indexOf(i) === -1) { window.myItemOrder.push(i); }
     if(nameEl) nameEl.value = "";
     if(costEl) costEl.value = "";
-    renderDropdowns();
-    buildPivotTable();
-    syncWithGoogle("품목 추가: " + i + " (" + c + "원)");
-}
+    window.renderDropdowns();
+    window.buildPivotTable();
+    window.syncWithGoogle("품목 추가: " + i + " (" + c + "원)");
+};
 
-function deleteWorker() {
+window.deleteWorker = function() {
     var n = document.getElementById('delWorkerSelect').value;
     if(!n) return;
     if(confirm("[" + n + "] 작업자를 정산 명단에서 삭제하시겠습니까?")) {
-        workersPool = workersPool.filter(function(x) { return x !== n; });
-        renderDropdowns();
-        buildPivotTable();
-        syncWithGoogle("명단 제거: " + n);
+        window.workersPool = window.workersPool.filter(function(x) { return x !== n; });
+        window.renderDropdowns();
+        window.buildPivotTable();
+        window.syncWithGoogle("명단 제거: " + n);
     }
-}
+};
 
-function deleteItem() {
+window.deleteItem = function() {
     var i = document.getElementById('delItemSelect').value;
     if(!i) return;
     if(confirm("[" + i + "] 품목을 단가표 및 명세서에서 삭제하시겠습니까?")) {
-        delete itemPrices[i];
-        myItemOrder = myItemOrder.filter(function(x) { return x !== i; });
-        renderDropdowns();
-        buildPivotTable();
-        syncWithGoogle("품목 제거: " + i);
+        delete window.itemPrices[i];
+        window.myItemOrder = window.myItemOrder.filter(function(x) { return x !== i; });
+        window.renderDropdowns();
+        window.buildPivotTable();
+        window.syncWithGoogle("품목 제거: " + i);
     }
-}
+};
 
-function openSortModal() {
+window.openSortModal = function() {
     var listContainer = document.getElementById("sortableList"); if(!listContainer) return;
     listContainer.innerHTML = "";
-    var allItems = Object.keys(itemPrices || {}).sort(customItemSort);
+    var allItems = Object.keys(window.itemPrices || {}).sort(window.customItemSort);
     allItems.forEach(function(item) {
         var li = document.createElement("li"); li.className = "sortable-item"; li.draggable = true; li.innerText = item;
         li.addEventListener("dragstart", function() { li.classList.add("dragging"); });
@@ -361,15 +355,15 @@ function openSortModal() {
         listContainer.insertBefore(draggingItem, nextSibling);
     });
     document.getElementById("sortModal").style.display = "flex";
-}
+};
 
-function closeSortModal() { document.getElementById("sortModal").style.display = "none"; }
+window.closeSortModal = function() { document.getElementById("sortModal").style.display = "none"; };
 
-function saveItemOrder() {
+window.saveItemOrder = function() {
     var items = Array.prototype.slice.call(document.querySelectorAll("#sortableList .sortable-item"));
-    myItemOrder = items.map(function(li) { return li.innerText; });
-    closeSortModal(); buildPivotTable(); renderDropdowns(); syncWithGoogle("정렬 순서 변경 저장");
-}
+    window.myItemOrder = items.map(function(li) { return li.innerText; });
+    window.closeSortModal(); window.buildPivotTable(); window.renderDropdowns(); window.syncWithGoogle("정렬 순서 변경 저장");
+};
 
 function calculateHours(timeStr) {
     if(!timeStr || timeStr === "-" || timeStr.indexOf("~") === -1 || timeStr.indexOf("미입력") > -1) return 0;
@@ -386,7 +380,7 @@ function calculateHours(timeStr) {
 
 function parseMainItemAndOption(fullName) { if(fullName.indexOf("(") > -1 && fullName.indexOf(")") > -1) { var parts = fullName.split("("); return { main: parts[0].trim(), option: parts[1].replace(")", "").trim() }; } return { main: fullName, option: "" }; }
 
-function buildPivotTable() {
+window.buildPivotTable = function() {
     var table = document.getElementById('pivotTable'); if(!table) return;
     table.innerHTML = "";
     var selYear = parseInt(document.getElementById("filterYear").value) || new Date().getFullYear();
@@ -406,14 +400,14 @@ function buildPivotTable() {
     var totalAdminCost = 0, totalAdminQty = 0, totalWorkerQty = 0, totalWorkHours = 0, totalHourlyPaySum = 0, totalFinalGrandSum = 0;
     var dayAdminSums = {}; var dayWorkerSums = {}; dateSet.forEach(function(d) { dayAdminSums[d] = 0; dayWorkerSums[d] = 0; });
     var globalItemAdminQty = {}; var globalItemCost = {}; var workerGrandTotalsMap = {};
-    var safeItemPrices = itemPrices || {}; var safeWorkers = Array.isArray(workersPool) ? workersPool : [];
+    var safeItemPrices = window.itemPrices || {}; var safeWorkers = Array.isArray(window.workersPool) ? window.workersPool : [];
 
     safeWorkers.forEach(function(name) {
-        var nameEntries = rawEntries.filter(function(e) { return e.name === name; }); var itemsOfName = [];
+        var nameEntries = window.rawEntries.filter(function(e) { return e.name === name; }); var itemsOfName = [];
         nameEntries.forEach(function(e) { if(e.item && e.item !== '통합근무' && itemsOfName.indexOf(e.item) === -1) itemsOfName.push(e.item); });
         if(itemsOfName.length === 0) itemsOfName.push("지정품목");
         
-        itemsOfName.sort(customItemSort);
+        itemsOfName.sort(window.customItemSort);
         
         var parentGroups = {};
         itemsOfName.forEach(function(item) {
@@ -421,7 +415,7 @@ function buildPivotTable() {
             if(!parentGroups[p.main]) parentGroups[p.main] = [];
             parentGroups[p.main].push(item);
         });
-        for (var groupKey in parentGroups) { parentGroups[groupKey].sort(customItemSort); }
+        for (var groupKey in parentGroups) { parentGroups[groupKey].sort(window.customItemSort); }
 
         var totalRowsForName = 0;
         for (var groupKey in parentGroups) {
@@ -431,7 +425,7 @@ function buildPivotTable() {
         }
         totalRowsForName += 1;
 
-        var rateConfig = hourlyRates[name] || { rate: 9620, customDays: {} }; if(!rateConfig.customDays) rateConfig.customDays = {};
+        var rateConfig = window.hourlyRates[name] || { rate: 9620, customDays: {} }; if(!rateConfig.customDays) rateConfig.customDays = {};
         var nameTotalHours = 0; var nameHourlyPay = 0; var dayAttendanceMap = {};
         
         dateSet.forEach(function(dateFull) {
@@ -487,7 +481,7 @@ function buildPivotTable() {
                     var aEnt = nameEntries.find(function(e) { return e.item === item && e.type === 'admin' && e.date === dateFull; });
                     var wEnt = nameEntries.find(function(e) { return e.item === item && e.type === 'worker' && e.date === dateFull; });
                     var aQty = aEnt ? Number(aEnt.qty) : 0; var wQty = wEnt ? Number(wEnt.qty) : 0;
-                    adminRowHtml += '<td class="editable-cell ' + ((aQty!==wQty&&aQty>0&&wQty>0)?'diff-warning':'') + '" onclick="makeCellEditable(this, \'' + selYear + '\', \'' + dateFull.substring(5).replace('-','/') + '\', \'' + name + '\', \'' + item + '\', \'admin\', ' + cost + ')">' + (aQty || '-') + '</td>';
+                    adminRowHtml += '<td class="editable-cell ' + ((aQty!==wQty&&aQty>0&&wQty>0)?'diff-warning':'') + '" onclick="window.makeCellEditable(this, \'' + selYear + '\', \'' + dateFull.substring(5).replace('-','/') + '\', \'' + name + '\', \'' + item + '\', \'admin\', ' + cost + ')">' + (aQty || '-') + '</td>';
                 });
                 adminRowHtml += '</tr>'; bodyHtml += adminRowHtml;
 
@@ -496,7 +490,7 @@ function buildPivotTable() {
                     var aEnt = nameEntries.find(function(e) { return e.item === item && e.type === 'admin' && e.date === dateFull; });
                     var wEnt = nameEntries.find(function(e) { return e.item === item && e.type === 'worker' && e.date === dateFull; });
                     var aQty = aEnt ? Number(aEnt.qty) : 0; var wQty = wEnt ? Number(wEnt.qty) : 0;
-                    workerRowHtml += '<td class="editable-cell ' + ((aQty!==wQty&&aQty>0&&wQty>0)?'diff-warning':'') + '" onclick="makeCellEditable(this, \'' + selYear + '\', \'' + dateFull.substring(5).replace('-','/') + '\', \'' + name + '\', \'' + item + '\', \'worker\', 0)">' + (wQty || '-') + '</td>';
+                    workerRowHtml += '<td class="editable-cell ' + ((aQty!==wQty&&aQty>0&&wQty>0)?'diff-warning':'') + '" onclick="window.makeCellEditable(this, \'' + selYear + '\', \'' + dateFull.substring(5).replace('-','/') + '\', \'' + name + '\', \'' + item + '\', \'worker\', 0)">' + (wQty || '-') + '</td>';
                 });
                 workerRowHtml += '</tr>'; bodyHtml += workerRowHtml;
             });
@@ -512,7 +506,7 @@ function buildPivotTable() {
         
         dateSet.forEach(function(dateFull) {
             var dayInfo = dayAttendanceMap[dateFull]; var btnClass = dayInfo.apply ? "rate-on" : "rate-off"; var btnText = dayInfo.apply ? "반영" : "미반영";
-            attendanceRowHtml += '<td class="editable-time-cell" onclick="makeTimeCellEditable(this, \'' + selYear + '\', \'' + dateFull.substring(5).replace('-','/') + '\', \'' + name + '\', event)"><div class="time-cell-wrap"><span class="time-display-span">' + dayInfo.time + '</span><button class="btn-toggle-apply ' + btnClass + '" onclick="event.stopPropagation(); toggleSingleDayRate(\'' + name + '\', \'' + dateFull + '\', ' + dayInfo.apply + ')">' + btnText + '</button></div></td>';
+            attendanceRowHtml += '<td class="editable-time-cell" onclick="window.makeTimeCellEditable(this, \'' + selYear + '\', \'' + dateFull.substring(5).replace('-','/') + '\', \'' + name + '\', event)"><div class="time-cell-wrap"><span class="time-display-span">' + dayInfo.time + '</span><button class="btn-toggle-apply ' + btnClass + '" onclick="event.stopPropagation(); window.toggleSingleDayRate(\'' + name + '\', \'' + dateFull + '\', ' + dayInfo.apply + ')">' + btnText + '</button></div></td>';
         });
         attendanceRowHtml += '</tr>'; bodyHtml += attendanceRowHtml;
 
@@ -520,7 +514,7 @@ function buildPivotTable() {
     });
     bodyHtml += "</tbody>";
 
-    var footerHtml = "<tfoot>"; var activeItems = Object.keys(globalItemAdminQty); activeItems.sort(customItemSort);
+    var footerHtml = "<tfoot>"; var activeItems = Object.keys(globalItemAdminQty); activeItems.sort(window.customItemSort);
     var isFirstSubRow = true;
     activeItems.forEach(function(item) {
         var itemCost = globalItemCost[item] || 0; var itemTotalQty = globalItemAdminQty[item].total; var itemTotalCost = itemCost * itemTotalQty;
@@ -544,29 +538,29 @@ function buildPivotTable() {
         }
         var finalCell = document.getElementById('overallGrandTotalCell'); if(finalCell) { finalCell.innerText = totalFinalGrandSum.toLocaleString() + "원"; }
     }, 30);
-}
+};
 
-function toggleSingleDayRate(name, dateFull, currentApply) { if(!hourlyRates[name]) hourlyRates[name] = { rate: 9620, customDays: {} }; if(!hourlyRates[name].customDays) hourlyRates[name].customDays = {}; hourlyRates[name].customDays[dateFull] = !currentApply; buildPivotTable(); syncWithGoogle("[" + name + "] " + dateFull + " 반영여부 변경"); }
-function toggleAllRatesForWorker(targetStatus) { var name = document.getElementById('rateWorkerSelect').value; var selYear = document.getElementById("filterYear").value; var selMonth = parseInt(document.getElementById("filterMonth").value); var lastDay = new Date(selYear, selMonth, 0).getDate(); if(!hourlyRates[name]) hourlyRates[name] = { rate: 9620, customDays: {} }; if(!hourlyRates[name].customDays) hourlyRates[name].customDays = {}; var strMonth = selMonth < 10 ? "0" + selMonth : String(selMonth); for(var d = 1; d <= lastDay; d++) { var strDay = d < 10 ? "0" + d : String(d); var dateFull = selYear + "-" + strMonth + "-" + strDay; hourlyRates[name].customDays[dateFull] = targetStatus; } buildPivotTable(); syncWithGoogle("[" + name + "] 계정 " + selMonth + "월 시급 일괄 정산 변경"); }
-function makeCellEditable(cell, year, md, name, item, type, cost) { if (cell.querySelector('input')) return; var originalValue = cell.innerText === '-' ? '0' : cell.innerText.replace('개', ''); cell.innerHTML = '<input type="number" class="inline-edit-input" value="' + originalValue + '" onblur="saveInlineQty(this, \'' + year + '\', \'' + md + '\', \'' + name + '\', \'' + item + '\', \'' + type + '\', \'' + cost + '\')" onkeydown="if(event.key===\'Enter\') this.blur();">'; var input = cell.querySelector('input'); if(input) { input.focus(); input.select(); } }
-function saveInlineQty(input, year, md, name, item, type, cost) { var newVal = parseInt(input.value) || 0; var dateFull = year + "-" + md.replace("/", "-"); var idx = rawEntries.findIndex(function(x) { return x.date === dateFull && x.name === name && x.item === item && x.type === type; }); if (newVal === 0) { if (idx > -1) rawEntries.splice(idx, 1); } else { var entry = { date: dateFull, type: type, name: name, item: item, qty: newVal }; if (type === 'admin') entry.cost = Number(cost); if (idx > -1) rawEntries[idx] = entry; else rawEntries.push(entry); } buildPivotTable(); syncWithGoogle("인라인 수정: " + name + " [" + item + "] 수량 " + newVal + " 변경"); }
-function makeTimeCellEditable(cell, year, md, name, event) { if (event && event.target.tagName === 'BUTTON') return; var targetSpan = cell.querySelector('.time-display-span'); if (!targetSpan || cell.querySelector('input')) return; var originalValue = targetSpan.innerText === '-' ? '' : targetSpan.innerText; var btn = cell.querySelector('button'); if(btn) btn.style.display = 'none'; targetSpan.innerHTML = '<input type="text" class="inline-edit-input" style="width:100%; font-size:11px;" value="' + originalValue + '" placeholder="예: 오전 9:00 ~ 오후 6:00" onblur="saveInlineTime(this, \'' + year + '\', \'' + md + '\', \'' + name + '\')" onkeydown="if(event.key===\'Enter\') this.blur();">'; var input = targetSpan.querySelector('input'); if(input) { input.focus(); input.select(); } }
-function saveInlineTime(input, year, md, name) { var newVal = input.value.trim(); var dateFull = year + "-" + md.replace("/", "-"); var idx = rawEntries.findIndex(function(x) { return x.date === dateFull && x.name === name && x.type === 'attendance'; }); if (!newVal || newVal === '-') { if (idx > -1) rawEntries.splice(idx, 1); } else { var entry = { date: dateFull, name: name, type: 'attendance', item: '통합근무', time: newVal }; if (idx > -1) rawEntries[idx] = entry; else rawEntries.push(entry); } buildPivotTable(); syncWithGoogle("인라인 수정: " + name + " 출퇴근시간 [" + newVal + "] 변경"); }
-function addWorkRowData() { var date = document.getElementById('globalWorkDate').value; var entry = { date: date, type: 'admin', name: document.getElementById('admNameSelect').value, item: document.getElementById('admItemSelect').value, cost: Number(document.getElementById('admCost').value)||0, qty: Number(document.getElementById('admQty').value) }; var idx = rawEntries.findIndex(function(x) { return x.date === entry.date && x.name === entry.name && x.item === entry.item && x.type === 'admin'; }); if(idx > -1) rawEntries[idx] = entry; else rawEntries.push(entry); buildPivotTable(); syncWithGoogle("관리자가 [" + entry.name + "] 물량 입력"); }
-function saveHourlyRateSetting() { var name = document.getElementById('rateWorkerSelect').value; if(!hourlyRates[name]) hourlyRates[name] = { rate: 9620, customDays: {} }; hourlyRates[name].rate = Number(document.getElementById('hourlyRateInput').value)||0; buildPivotTable(); syncWithGoogle("[" + name + "] 시급원장 금액 변경"); }
-function updateRateSettingHint() { var name = document.getElementById('rateWorkerSelect').value; var config = hourlyRates[name] || { rate: 9620, customDays: {} }; document.getElementById('hourlyRateInput').value = config.rate || 9620; }
-function updateAdminCostHint() { var s = document.getElementById('admItemSelect'); if(s && s.options.length) document.getElementById('admCost').value = s.options[s.selectedIndex].getAttribute('data-cost'); }
+window.toggleSingleDayRate = function(name, dateFull, currentApply) { if(!window.hourlyRates[name]) window.hourlyRates[name] = { rate: 9620, customDays: {} }; if(!window.hourlyRates[name].customDays) window.hourlyRates[name].customDays = {}; window.hourlyRates[name].customDays[dateFull] = !currentApply; window.buildPivotTable(); window.syncWithGoogle("[" + name + "] " + dateFull + " 반영여부 변경"); };
+window.toggleAllRatesForWorker = function(targetStatus) { var name = document.getElementById('rateWorkerSelect').value; var selYear = document.getElementById("filterYear").value; var selMonth = parseInt(document.getElementById("filterMonth").value); var lastDay = new Date(selYear, selMonth, 0).getDate(); if(!window.hourlyRates[name]) window.hourlyRates[name] = { rate: 9620, customDays: {} }; if(!window.hourlyRates[name].customDays) window.hourlyRates[name].customDays = {}; var strMonth = selMonth < 10 ? "0" + selMonth : String(selMonth); for(var d = 1; d <= lastDay; d++) { var strDay = d < 10 ? "0" + d : String(d); var dateFull = selYear + "-" + strMonth + "-" + strDay; window.hourlyRates[name].customDays[dateFull] = targetStatus; } window.buildPivotTable(); window.syncWithGoogle("[" + name + "] 계정 " + selMonth + "월 시급 일괄 정산 변경"); };
+window.makeCellEditable = function(cell, year, md, name, item, type, cost) { if (cell.querySelector('input')) return; var originalValue = cell.innerText === '-' ? '0' : cell.innerText.replace('개', ''); cell.innerHTML = '<input type="number" class="inline-edit-input" value="' + originalValue + '" onblur="window.saveInlineQty(this, \'' + year + '\', \'' + md + '\', \'' + name + '\', \'' + item + '\', \'' + type + '\', \'' + cost + '\')" onkeydown="if(event.key===\'Enter\') this.blur();">'; var input = cell.querySelector('input'); if(input) { input.focus(); input.select(); } };
+window.saveInlineQty = function(input, year, md, name, item, type, cost) { var newVal = parseInt(input.value) || 0; var dateFull = year + "-" + md.replace("/", "-"); var idx = window.rawEntries.findIndex(function(x) { return x.date === dateFull && x.name === name && x.item === item && x.type === type; }); if (newVal === 0) { if (idx > -1) window.rawEntries.splice(idx, 1); } else { var entry = { date: dateFull, type: type, name: name, item: item, qty: newVal }; if (type === 'admin') entry.cost = Number(cost); if (idx > -1) window.rawEntries[idx] = entry; else window.rawEntries.push(entry); } window.buildPivotTable(); window.syncWithGoogle("인라인 수정: " + name + " [" + item + "] 수량 " + newVal + " 변경"); };
+window.makeTimeCellEditable = function(cell, year, md, name, event) { if (event && event.target.tagName === 'BUTTON') return; var targetSpan = cell.querySelector('.time-display-span'); if (!targetSpan || cell.querySelector('input')) return; var originalValue = targetSpan.innerText === '-' ? '' : targetSpan.innerText; var btn = cell.querySelector('button'); if(btn) btn.style.display = 'none'; targetSpan.innerHTML = '<input type="text" class="inline-edit-input" style="width:100%; font-size:11px;" value="' + originalValue + '" placeholder="예: 오전 9:00 ~ 오후 6:00" onblur="window.saveInlineTime(this, \'' + year + '\', \'' + md + '\', \'' + name + '\')" onkeydown="if(event.key===\'Enter\') this.blur();">'; var input = targetSpan.querySelector('input'); if(input) { input.focus(); input.select(); } };
+window.saveInlineTime = function(input, year, md, name) { var newVal = input.value.trim(); var dateFull = year + "-" + md.replace("/", "-"); var idx = window.rawEntries.findIndex(function(x) { return x.date === dateFull && x.name === name && x.type === 'attendance'; }); if (!newVal || newVal === '-') { if (idx > -1) window.rawEntries.splice(idx, 1); } else { var entry = { date: dateFull, name: name, type: 'attendance', item: '통합근무', time: newVal }; if (idx > -1) window.rawEntries[idx] = entry; else window.rawEntries.push(entry); } window.buildPivotTable(); window.syncWithGoogle("인라인 수정: " + name + " 출퇴근시간 [" + newVal + "] 변경"); };
+window.addWorkRowData = function() { var date = document.getElementById('globalWorkDate').value; var entry = { date: date, type: 'admin', name: document.getElementById('admNameSelect').value, item: document.getElementById('admItemSelect').value, cost: Number(document.getElementById('admCost').value)||0, qty: Number(document.getElementById('admQty').value) }; var idx = window.rawEntries.findIndex(function(x) { return x.date === entry.date && x.name === entry.name && x.item === entry.item && x.type === 'admin'; }); if(idx > -1) window.rawEntries[idx] = entry; else window.rawEntries.push(entry); window.buildPivotTable(); window.syncWithGoogle("관리자가 [" + entry.name + "] 물량 입력"); };
+window.saveHourlyRateSetting = function() { var name = document.getElementById('rateWorkerSelect').value; if(!window.hourlyRates[name]) window.hourlyRates[name] = { rate: 9620, customDays: {} }; window.hourlyRates[name].rate = Number(document.getElementById('hourlyRateInput').value)||0; window.buildPivotTable(); window.syncWithGoogle("[" + name + "] 시급원장 금액 변경"); };
+window.updateRateSettingHint = function() { var name = document.getElementById('rateWorkerSelect').value; var config = window.hourlyRates[name] || { rate: 9620, customDays: {} }; document.getElementById('hourlyRateInput').value = config.rate || 9620; };
+window.updateAdminCostHint = function() { var s = document.getElementById('admItemSelect'); if(s && s.options.length) document.getElementById('admCost').value = s.options[s.selectedIndex].getAttribute('data-cost'); };
 
-function renderDropdowns() {
+window.renderDropdowns = function() {
     var aN = document.getElementById('admNameSelect'), rN = document.getElementById('rateWorkerSelect'), aI = document.getElementById('admItemSelect'), dW = document.getElementById('delWorkerSelect'), dI = document.getElementById('delItemSelect');
     if(!aN || !rN || !aI || !dW || !dI) return;
     aN.innerHTML = ""; rN.innerHTML = ""; aI.innerHTML = ""; dW.innerHTML = ""; dI.innerHTML = "";
-    var safeWorkers = Array.isArray(workersPool) ? workersPool : [];
+    var safeWorkers = Array.isArray(window.workersPool) ? window.workersPool : [];
     safeWorkers.forEach(function(n) { var o = '<option value="' + n + '">' + n + '</option>'; aN.innerHTML += o; rN.innerHTML += o; dW.innerHTML += o; });
-    var safeItemPrices = itemPrices || {}; var sortedItemKeys = Object.keys(safeItemPrices).sort(customItemSort);
+    var safeItemPrices = window.itemPrices || {}; var sortedItemKeys = Object.keys(safeItemPrices).sort(window.customItemSort);
     sortedItemKeys.forEach(function(i) { aI.innerHTML += '<option value="' + i + '" data-cost="' + safeItemPrices[i] + '">' + i + '</option>'; dI.innerHTML += '<option value="' + i + '">' + i + '</option>'; });
-    updateAdminCostHint(); updateRateSettingHint();
-}
+    window.updateAdminCostHint(); window.updateRateSettingHint();
+};
 </script>
 </body>
 </html>
