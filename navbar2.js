@@ -1,4 +1,4 @@
-// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (계정 리스트 로딩 무소실 완벽 보장판)
+// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (PC 화면 완전 고정 fixed 적용판)
 (function() {
     function initNavbar() {
         var navbarContainer = document.getElementById('global-navbar');
@@ -16,7 +16,33 @@
 
         var navHtml = `
         <style>
-            .custom-navbar { background-color: #2c3e50; color: white; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; height: 50px; font-family: Arial, sans-serif; font-size: 13px; box-sizing: border-box; }
+            /* 📌 화면 상단에 위치 완전 고정 (fixed) */
+            .custom-navbar { 
+                position: fixed !important; 
+                top: 0 !important; 
+                left: 0 !important;
+                width: 100% !important;
+                z-index: 9999 !important; 
+                background-color: #2c3e50; 
+                color: white; 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center; 
+                padding: 0 15px; 
+                height: 50px; 
+                font-family: Arial, sans-serif; 
+                font-size: 13px; 
+                box-sizing: border-box; 
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            }
+            
+            /* 📌 fixed 고정 시 본문 내용이 네비바 뒤로 파묻히지 않도록 높이 보정 공간 확보 */
+            .navbar-spacer {
+                height: 50px;
+                width: 100%;
+                display: block;
+            }
+
             .custom-navbar-left { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow-x: auto; }
             .custom-navbar a { color: #ecf0f1; text-decoration: none; padding: 6px 10px; border-radius: 4px; font-weight: bold; white-space: nowrap; transition: background 0.2s, color 0.2s; display: inline-flex; align-items: center; gap: 4px; }
             .custom-navbar a:hover { background-color: #34495e; color: #1abc9c; }
@@ -32,7 +58,7 @@
             .btn-nav-red { background-color: #e74c3c; border: none; }
             .btn-nav-red:hover { background-color: #c0392b; color: white; }
 
-            .account-modal-overlay { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.55); align-items: center; justify-content: center; }
+            .account-modal-overlay { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.55); align-items: center; justify-content: center; }
             .account-modal-card { background-color: #ffffff; padding: 25px; border-radius: 10px; width: 90%; max-width: 580px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
             .account-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #2c3e50; }
             .account-modal-header h3 { margin: 0; font-size: 17px; color: #2c3e50; font-weight: bold; }
@@ -66,6 +92,7 @@
                 <button class="btn-nav-action btn-nav-red" onclick="window.logoutSystem()">로그아웃</button>
             </div>
         </div>
+        <div class="navbar-spacer"></div>
 
         <div id="accountModal" class="account-modal-overlay">
             <div class="account-modal-card">
@@ -143,13 +170,11 @@ window.closeAccountManagerModal = function() {
     if (modal) modal.style.display = 'none';
 };
 
-// 🎯 [완벽 보정] userList가 비어있어도 최소 백업 데이터 복원 후 절대 사라지지 않게 처리
 window.renderAccountTable = function() {
     var tbody = document.getElementById('accountTableBody');
     if (!tbody) return;
     tbody.innerHTML = "";
     
-    // 전역 변수 userList 검색 및 없을 경우 기본 계정 세트 자동 지정
     var currentUsers = window.userList || (typeof userList !== "undefined" ? userList : []);
     
     if (!currentUsers || currentUsers.length === 0) {
