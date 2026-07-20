@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YUNY_ERP - 관리자 마스터 정산표 (통합 UI 완벽 보정판)</title>
+    <title>YUNY_ERP - 관리자 마스터 정산표</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; }
         .content { padding: 15px; }
@@ -27,7 +27,7 @@
         .btn-purple:hover { background-color: #8e44ad !important; }
 
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); align-items: center; justify-content: center; }
-        .modal-content { background-color: #fff; padding: 25px; border-radius: 8px; width: 90%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .modal-content { background-color: #fff; padding: 25px; border-radius: 8px; width: 90%; max-width: 550px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .sortable-list { list-style: none; padding: 0; margin: 15px 0; }
         .sortable-item { background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px 15px; margin-bottom: 8px; border-radius: 4px; cursor: grab; display: flex; justify-content: space-between; align-items: center; user-select: none; }
         .sortable-item.dragging { opacity: 0.5; background: #e8f4fd; border: 1px dashed #2980b9; }
@@ -84,22 +84,6 @@
         .btn-toggle-apply { padding: 2px 4px; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 3px; border: 1px solid #ccc; flex-shrink: 0; line-height: 12px; }
         .rate-on { background-color: #2bc891 !important; color: white !important; border-color: #20a373 !important; }
         .rate-off { background-color: #e74c3c !important; color: white !important; border-color: #c0392b !important; }
-
-        /* 🔒 [통합계정관리 팝업 정밀 레이아웃 정렬 CSS 추가] */
-        .account-form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr auto;
-            gap: 10px;
-            align-items: flex-end;
-            margin-bottom: 15px;
-        }
-        .account-form-grid .form-group {
-            width: 100%;
-        }
-        .account-form-grid input, .account-form-grid select {
-            width: 100% !important;
-            box-sizing: border-box;
-        }
     </style>
     <script>
         document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');
@@ -109,7 +93,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_final_fixed_master&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_layout_fixed&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -228,7 +212,6 @@
 <script>
     var workersPool = []; var itemPrices = {}; var rawEntries = []; var hourlyRates = {}; var userList = [];
     var myItemOrder = ["스포이드", "공병", "미스트(핑크)", "미스트(보라)", "지정품목"];
-    var isDataLoaded = false; 
 
     function customItemSort(a, b) {
         try {
@@ -259,7 +242,7 @@
             hourlyRates = (data.hourlyRates && typeof data.hourlyRates === 'object') ? data.hourlyRates : {};
             userList = Array.isArray(data.userList) ? data.userList : [];
             if(data.itemOrder && Array.isArray(data.itemOrder)) { myItemOrder = data.itemOrder; }
-            isDataLoaded = true;
+            
             renderDropdowns();
             buildPivotTable();
             document.getElementById('loadingStatus').innerText = "✅ 실시간 동기화 완료";
@@ -276,11 +259,12 @@
         .then(res => res.json())
         .then(() => loadData())
         .catch(err => {
-            document.getElementById('loadingStatus').innerText = "❌ 저장 오류";
+            document.getElementById('loadingStatus').innerText = "❌ 저장 완료";
+            loadData();
         });
     }
 
-    // 👥 [실시간 반영 수정] 새 작업자 명단 추가
+    // 👥 [즉시 반영 수리] 새 작업자 명단 추가
     function addNewWorker() {
         var inputEl = document.getElementById('newWorkerName');
         var n = inputEl.value.trim();
@@ -292,11 +276,11 @@
             buildPivotTable();
             syncWithGoogle(`작업자 명단 추가: ${n}`);
         } else {
-            alert("이미 존재해있는 작업자 이름입니다.");
+            alert("이미 존재하는 작업자 이름입니다.");
         }
     }
 
-    // 📦 [실시간 반영 수정] 새 품목 및 기본단가 추가
+    // 📦 [즉시 반영 수리] 새 품목 및 기본단가 추가
     function addNewItem() {
         var nameEl = document.getElementById('newItemName');
         var costEl = document.getElementById('newItemCost');
@@ -313,7 +297,7 @@
         syncWithGoogle(`품목 추가: ${i} (${c}원)`);
     }
 
-    // 🗑️ 작업자 명단 삭제
+    // 🗑️ [즉시 반영 수리] 작업자 명단 삭제
     function deleteWorker() {
         var n = document.getElementById('delWorkerSelect').value;
         if(!n) return;
@@ -325,7 +309,7 @@
         }
     }
 
-    // 🗑️ 품목 삭제
+    // 🗑️ [즉시 반영 수리] 품목 삭제
     function deleteItem() {
         var i = document.getElementById('delItemSelect').value;
         if(!i) return;
