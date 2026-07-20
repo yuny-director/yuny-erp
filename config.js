@@ -1,5 +1,5 @@
 // 🚨 사장님의 구글 웹 앱 URL 주소를 여기에 딱 한 번만 적어주세요!
-var GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJYz7b4ymeekeSz-QTFwmKtznvo2g2UK7WZIY7LCawgcjr7SANbXULH50ePiPJn4FH/exec";
+var GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyPWv070zApltQFMeq6HUxFAnnBcZfpAXHz5n_vwnmX34kCXqadFumI1BfmJRWu0OZE/exec";
 
 // 🔐 [최종 보정] 작업자와 관리자가 주소를 이동할 때 서로 간섭하지 않도록 경로 검증 조건 완화
 function checkPageAuth(requiredRole) {
