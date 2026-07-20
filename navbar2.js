@@ -13,12 +13,12 @@
         .btn-nav-action { background-color: #34495e; border: 1px solid #7f8c8d; color: white; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
         .btn-nav-action:hover { background-color: #415b76; color: #1abc9c; }
         
-        /* 🔒 [통합 계정 관리 팝업 레이아웃 1:1 세로선 정렬 박스] */
+        /* 🔒 [계정 팝업 1:1 완벽 정렬 전용 CSS] */
         .account-modal-body { display: flex; flex-direction: column; gap: 15px; }
-        .account-form-row { display: flex; align-items: flex-end; gap: 10px; width: 100%; box-sizing: border-box; }
-        .account-field-item { display: flex; flex-direction: column; flex: 1; }
-        .account-field-item label { font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #333; text-align: left; }
-        .account-field-item input, .account-field-item select { height: 36px; padding: 0 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; width: 100%; box-sizing: border-box; }
+        .account-input-bar { display: flex; align-items: flex-end; gap: 10px; width: 100%; box-sizing: border-box; background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e9ecef; }
+        .account-field-box { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+        .account-field-box label { font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #495057; text-align: left; }
+        .account-field-box input, .account-field-box select { height: 36px; padding: 0 8px; border: 1px solid #ced4da; border-radius: 4px; font-size: 13px; width: 100%; box-sizing: border-box; background: #fff; }
         .account-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
         .account-table th, .account-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
         .account-table th { background-color: #f8f9fa; font-weight: bold; }
@@ -33,38 +33,40 @@
         </div>
         <div class="navbar-user-info">
             <span id="navbar-user-name">로그인 확인 중...</span>
-            <button class="btn-nav-action" onclick="openAccountManagerModal()">⚙️ 통합 계정 관리</button>
+            <button class="btn-nav-action" onclick="openAccountManagerModal()">⚙️ 계정 권한 설정</button>
             <button class="btn-nav-action" onclick="logoutSystem()">로그아웃</button>
         </div>
     </div>
 
-    <!-- 🔒 통합 계정 관리 정밀 정렬 모달 팝업 -->
+    <!-- 🔒 정밀 칼정렬 계정 권한 설정 모달 -->
     <div id="accountModal" class="modal">
         <div class="modal-content" style="max-width: 550px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin:0; color: #2c3e50;">🥷 [통합 계정 관리] 작업자 ID/PW 및 권한 제어</h3>
+                <h3 style="margin:0; color: #2c3e50;">🥷 [통합 계정 관리] 작업자 ID/PW 및 권한 등급 제어</h3>
                 <span style="cursor:pointer; font-size:20px; font-weight:bold; color:#aaa;" onclick="closeAccountManagerModal()">&times;</span>
             </div>
             
             <div class="account-modal-body">
-                <div class="account-form-row">
-                    <div class="account-field-item">
-                        <label>ID (사용자명)</label>
-                        <input type="text" id="accInputId" placeholder="예: 이재호">
+                <form id="accountForm" onsubmit="return false;" autocomplete="off">
+                    <div class="account-input-bar">
+                        <div class="account-field-box">
+                            <label for="accInputId">ID</label>
+                            <input type="text" id="accInputId" name="acc_user_id" placeholder="아이디 입력" autocomplete="off">
+                        </div>
+                        <div class="account-field-box">
+                            <label for="accInputPw">비밀번호</label>
+                            <input type="password" id="accInputPw" name="acc_user_pw" placeholder="비밀번호" autocomplete="new-password">
+                        </div>
+                        <div class="account-field-box">
+                            <label for="accInputRole">권한 등급</label>
+                            <select id="accInputRole">
+                                <option value="worker">worker</option>
+                                <option value="admin">admin</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-dark-verify" style="height:36px; padding:0 14px; margin-bottom:0; flex-shrink:0;" onclick="saveAccountItem()">저장/등록</button>
                     </div>
-                    <div class="account-field-item">
-                        <label>비밀번호</label>
-                        <input type="text" id="accInputPw" placeholder="1234">
-                    </div>
-                    <div class="account-field-item">
-                        <label>권한 등급</label>
-                        <select id="accInputRole">
-                            <option value="worker">worker (작업자)</option>
-                            <option value="admin">admin (관리자)</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-dark-verify" style="height:36px; padding:0 12px; margin-bottom:0;" onclick="saveAccountItem()">저장/등록</button>
-                </div>
+                </form>
 
                 <div style="max-height: 250px; overflow-y: auto;">
                     <table class="account-table">
