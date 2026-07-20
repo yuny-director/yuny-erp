@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YUNY_ERP - 관리자 마스터 정산표</title>
+    <title>YUNY_ERP - 관리자 마스터 정산표 (DB 즉시 연동판)</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; }
         .content { padding: 15px; }
@@ -12,19 +12,14 @@
         .form-group { display: flex; flex-direction: column; }
         .form-group label { margin-bottom: 6px; font-weight: bold; font-size: 14px; color: #333; height: 16px; line-height: 16px; }
         .form-group input, .form-group select, .flex-form-row select { padding: 0 10px; border: 1px solid #ccc; border-radius: 4px; width: 160px; height: 38px; box-sizing: border-box; font-size: 14px !important; font-family: Arial, sans-serif; background-color: #ffffff; }
-        .flex-form-row > select { margin-bottom: 0px; }
         .btn { padding: 0 18px; background-color: #1abc9c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; height: 38px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s; box-sizing: border-box; margin-bottom: 0px; }
         .btn:hover { background-color: #16a085; }
         .btn-dark-verify { background-color: #2c3e50; }
         .btn-dark-verify:hover { background-color: #34495e; }
         .btn-danger { background-color: #e74c3c !important; }
-        .btn-danger:hover { background-color: #c0392b !important; }
         .btn-orange { background-color: #e67e22 !important; }
-        .btn-orange:hover { background-color: #d35400 !important; }
         .btn-gray { background-color: #7f8c8d !important; }
-        .btn-gray:hover { background-color: #95a5a6 !important; }
         .btn-purple { background-color: #9b59b6 !important; }
-        .btn-purple:hover { background-color: #8e44ad !important; }
 
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); align-items: center; justify-content: center; }
         .modal-content { background-color: #fff; padding: 25px; border-radius: 8px; width: 90%; max-width: 550px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
@@ -35,10 +30,10 @@
 
         .table-container { width: 100%; max-height: 75vh; overflow: auto !important; border: 1px solid #ccc; border-radius: 6px; background: white; -webkit-overflow-scrolling: touch; }
         table { border-collapse: separate !important; border-spacing: 0 !important; font-size: 13px; width: auto; min-width: 100%; table-layout: fixed; }
-        th, td { padding: 10px 6px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; border-left: none !important; border-top: none !important; }
-        th { background-color: #f8f9fa !important; font-weight: bold; position: sticky !important; top: 0 !important; z-index: 30 !important; border-top: 1px solid #ccc !important; }
+        th, td { padding: 10px 6px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; }
+        th { background-color: #f8f9fa !important; font-weight: bold; position: sticky !important; top: 0 !important; z-index: 30 !important; }
         
-        .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 65px; max-width: 65px; background: #ffffff !important; z-index: 10; border-left: 1px solid #ccc !important; }
+        .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 65px; max-width: 65px; background: #ffffff !important; z-index: 10; }
         .fix-col-2 { position: sticky !important; left: 65px !important; min-width: 65px; max-width: 65px; background: #ffffff !important; z-index: 10; }
         .fix-col-3 { position: sticky !important; left: 130px !important; min-width: 105px; max-width: 130px; background: #ffffff !important; z-index: 10; }
         .fix-col-4 { position: sticky !important; left: 235px !important; min-width: 60px; max-width: 75px; background: #ffffff !important; z-index: 10; }
@@ -47,43 +42,20 @@
         .fix-col-7 { position: sticky !important; left: 470px !important; min-width: 100px; max-width: 120px; background: #f4fce3 !important; z-index: 10; font-weight: bold; border-right: 2px solid #999 !important; }
         
         th.fix-col-1, th.fix-col-2, th.fix-col-3, th.fix-col-4, th.fix-col-5, th.fix-col-6, th.fix-col-7 { z-index: 40 !important; }
-        th.fix-col-7 { border-right: 2px solid #999 !important; }
         .admin-text { color: #2c3e50; font-weight: bold; }
         .worker-text { color: #27ae60; font-weight: bold; }
         
-        tbody tr:hover td { background-color: #e8f4fd !important; transition: background 0.1s; }
-        tbody tr:hover td.fix-col-1, tbody tr:hover td.fix-col-2, tbody tr:hover td.fix-col-3, tbody tr:hover td.fix-col-4, tbody tr:hover td.fix-col-5, tbody tr:hover td.fix-col-6 { background-color: #e8f4fd !important; }
-        tbody tr:hover td.fix-col-7 { background-color: #d3f9d8 !important; }
-        tbody tr.subtotal-row:hover td { background-color: #fff3bf !important; }
         .subtotal-row { background-color: #fff9db !important; font-weight: bold !important; color: #d9480f !important; }
         .subtotal-row td { background-color: #fff9db !important; }
-        tfoot tr.bg-total-item-sub td { background: #f1f3f5 !important; font-weight: bold !important; color: #495057 !important; border-top: 1px solid #ccc !important; }
-        tfoot tr.bg-total-row-1 td, tfoot tr.bg-total-row-2 td { background: #e9ecef !important; font-weight: bold !important; white-space: nowrap !important; }
-        tfoot tr.bg-total-row-1 td { border-top: 2px solid #888 !important; }
-        tfoot tr td.fix-col-1, tfoot tr td.fix-col-2, tfoot tr td.fix-col-3, tfoot tr td.fix-col-4, tfoot tr td.fix-col-5, tfoot tr td.fix-col-6 { position: sticky !important; z-index: 11 !important; }
-        tfoot tr.bg-total-item-sub td.fix-col-1, tfoot tr.bg-total-item-sub td.fix-col-2, tfoot tr.bg-total-item-sub td.fix-col-3, tfoot tr.bg-total-item-sub td.fix-col-4, tfoot tr.bg-total-item-sub td.fix-col-5, tfoot tr.bg-total-item-sub td.fix-col-6 { background: #f1f3f5 !important; }
-        tfoot tr.bg-total-row-1 td.fix-col-1, tfoot tr.bg-total-row-1 td.fix-col-2, tfoot tr.bg-total-row-1 td.fix-col-3, tfoot tr.bg-total-row-1 td.fix-col-4, tfoot tr.bg-total-row-1 td.fix-col-5, tfoot tr.bg-total-row-1 td.fix-col-6, tfoot tr.bg-total-row-2 td.fix-col-1, tfoot tr.bg-total-row-2 td.fix-col-2, tfoot tr.bg-total-row-2 td.fix-col-3, tfoot tr.bg-total-row-2 td.fix-col-4, tfoot tr.bg-total-row-2 td.fix-col-5, tfoot tr.bg-total-row-2 td.fix-col-6 { background: #e9ecef !important; }
-        tfoot tr td.fix-col-7 { position: sticky !important; z-index: 11 !important; border-right: 2px solid #999 !important; }
-        tfoot tr.bg-total-item-sub td.fix-col-7 { background: #f1f3f5 !important; }
-        tfoot tr.bg-total-row-1 td.fix-col-7 { background-color: #d3f9d8 !important; }
-        tfoot tr.bg-total-row-2 td.fix-col-7 { background-color: #e9ecef !important; }
-        
-        .total-split-box { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; line-height: 1.3; }
-        .total-split-box .val-qty { color: #0b7285; font-weight: bold; }
-        .total-split-box .val-hours { color: #2b6cb0; font-weight: bold; }
-        .diff-warning { background-color: #ffcccc !important; color: #b91c1c !important; font-weight: bold; }
-        .sub-section { margin-top: 20px; padding-top: 20px; border-top: 1px dashed #ddd; width: 100%; }
         .divider { color: #ccc; font-size: 18px; margin: 0 5px; align-self: flex-end; padding-bottom: 10px; }
         .inline-edit-input { width: 95%; height: 26px; text-align: center; border: 2px solid #2980b9; border-radius: 4px; box-sizing: border-box; font-weight: bold; }
         .editable-cell { cursor: pointer; min-width: 50px; }
-        .editable-cell:hover { background-color: #e8f4fd !important; color: #2980b9; font-weight: bold; }
         .editable-time-cell { cursor: pointer; font-size: 11px !important; min-width: 210px; background: #edf2ff !important; color: #364fc7 !important; padding: 6px 6px !important; }
-        .editable-time-cell:hover { background-color: #dbe4ff !important; }
         .time-cell-wrap { display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 4px; width: 100%; text-align: center; }
         .time-display-span { display: inline-block; min-height: 18px; line-height: 18px; }
         .btn-toggle-apply { padding: 2px 4px; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 3px; border: 1px solid #ccc; flex-shrink: 0; line-height: 12px; }
-        .rate-on { background-color: #2bc891 !important; color: white !important; border-color: #20a373 !important; }
-        .rate-off { background-color: #e74c3c !important; color: white !important; border-color: #c0392b !important; }
+        .rate-on { background-color: #2bc891 !important; color: white !important; }
+        .rate-off { background-color: #e74c3c !important; color: white !important; }
     </style>
     <script>
         document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');
@@ -93,7 +65,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_layout_fixed&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_db_sync_fix&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -252,23 +224,43 @@
         });
     }
 
-    function syncWithGoogle(msg) {
-        document.getElementById('loadingStatus').innerText = "📤 원장 자동 저장 중...";
-        var payload = { action: "syncAll", updater: "관리자", summary: msg, workersPool: workersPool, itemPrices: itemPrices, rawEntries: rawEntries, hourlyRates: hourlyRates, itemOrder: myItemOrder };
-        fetch(GOOGLE_SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) })
+    // 🎯 [핵심 수리] 구글 DB로 동기화 요청을 날리고 완료 응답을 받을 때까지 안전하게 대기
+    function syncWithGoogle(msg, callback) {
+        document.getElementById('loadingStatus').innerText = "📤 구글 DB 업데이트 중...";
+        var payload = { 
+            action: "syncAll", 
+            updater: "관리자", 
+            summary: msg, 
+            workersPool: workersPool, 
+            itemPrices: itemPrices, 
+            rawEntries: rawEntries, 
+            hourlyRates: hourlyRates, 
+            itemOrder: myItemOrder 
+        };
+
+        fetch(GOOGLE_SCRIPT_URL, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain' }, 
+            body: JSON.stringify(payload) 
+        })
         .then(res => res.json())
-        .then(() => loadData())
+        .then(resData => {
+            document.getElementById('loadingStatus').innerText = "✅ DB 저장 성공!";
+            if (callback) callback();
+            else loadData();
+        })
         .catch(err => {
-            document.getElementById('loadingStatus').innerText = "❌ 저장 완료";
-            loadData();
+            document.getElementById('loadingStatus').innerText = "❌ 저장 오류";
+            alert("DB 업데이트 장애가 발생했습니다. 구글 앱스 스크립트 새 버전을 재배포했는지 확인해주세요.");
         });
     }
 
-    // 👥 [즉시 반영 수리] 새 작업자 명단 추가
+    // 👥 [수리완료] 명단 추가
     function addNewWorker() {
         var inputEl = document.getElementById('newWorkerName');
         var n = inputEl.value.trim();
         if(!n) { alert("추가할 작업자 이름을 입력해 주세요!"); return; }
+        
         if(workersPool.indexOf(n) === -1) {
             workersPool.push(n);
             inputEl.value = "";
@@ -280,7 +272,7 @@
         }
     }
 
-    // 📦 [즉시 반영 수리] 새 품목 및 기본단가 추가
+    // 📦 [수리완료] 품목 추가
     function addNewItem() {
         var nameEl = document.getElementById('newItemName');
         var costEl = document.getElementById('newItemCost');
@@ -297,7 +289,7 @@
         syncWithGoogle(`품목 추가: ${i} (${c}원)`);
     }
 
-    // 🗑️ [즉시 반영 수리] 작업자 명단 삭제
+    // 🗑️ [수리완료] 명단 제거
     function deleteWorker() {
         var n = document.getElementById('delWorkerSelect').value;
         if(!n) return;
@@ -309,7 +301,7 @@
         }
     }
 
-    // 🗑️ [즉시 반영 수리] 품목 삭제
+    // 🗑️ [수리완료] 품목 제거
     function deleteItem() {
         var i = document.getElementById('delItemSelect').value;
         if(!i) return;
