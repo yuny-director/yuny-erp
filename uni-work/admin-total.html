@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YUNY_ERP - 관리자 마스터 정산표 (명단/품목 추가 복구판)</title>
+    <title>YUNY_ERP - 관리자 마스터 정산표 (통합 UI 완벽 보정판)</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; }
         .content { padding: 15px; }
@@ -84,6 +84,22 @@
         .btn-toggle-apply { padding: 2px 4px; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 3px; border: 1px solid #ccc; flex-shrink: 0; line-height: 12px; }
         .rate-on { background-color: #2bc891 !important; color: white !important; border-color: #20a373 !important; }
         .rate-off { background-color: #e74c3c !important; color: white !important; border-color: #c0392b !important; }
+
+        /* 🔒 [통합계정관리 팝업 정밀 레이아웃 정렬 CSS 추가] */
+        .account-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 10px;
+            align-items: flex-end;
+            margin-bottom: 15px;
+        }
+        .account-form-grid .form-group {
+            width: 100%;
+        }
+        .account-form-grid input, .account-form-grid select {
+            width: 100% !important;
+            box-sizing: border-box;
+        }
     </style>
     <script>
         document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');
@@ -253,7 +269,6 @@
         });
     }
 
-    // 🔒 [명단/품목 추가 즉시 저장 완벽 보구]
     function syncWithGoogle(msg) {
         document.getElementById('loadingStatus').innerText = "📤 원장 자동 저장 중...";
         var payload = { action: "syncAll", updater: "관리자", summary: msg, workersPool: workersPool, itemPrices: itemPrices, rawEntries: rawEntries, hourlyRates: hourlyRates, itemOrder: myItemOrder };
@@ -265,7 +280,7 @@
         });
     }
 
-    // 👥 [복구 완료] 새 작업자 명단 추가
+    // 👥 [실시간 반영 수정] 새 작업자 명단 추가
     function addNewWorker() {
         var inputEl = document.getElementById('newWorkerName');
         var n = inputEl.value.trim();
@@ -281,7 +296,7 @@
         }
     }
 
-    // 📦 [복구 완료] 새 품목 및 기본단가 추가
+    // 📦 [실시간 반영 수정] 새 품목 및 기본단가 추가
     function addNewItem() {
         var nameEl = document.getElementById('newItemName');
         var costEl = document.getElementById('newItemCost');
@@ -298,7 +313,7 @@
         syncWithGoogle(`품목 추가: ${i} (${c}원)`);
     }
 
-    // 🗑️ [복구 완료] 작업자 명단 삭제
+    // 🗑️ 작업자 명단 삭제
     function deleteWorker() {
         var n = document.getElementById('delWorkerSelect').value;
         if(!n) return;
@@ -310,7 +325,7 @@
         }
     }
 
-    // 🗑️ [복구 완료] 품목 삭제
+    // 🗑️ 품목 삭제
     function deleteItem() {
         var i = document.getElementById('delItemSelect').value;
         if(!i) return;
@@ -426,7 +441,7 @@
             var nameAdminCostSum = 0; var isFirstRow = true;
 
             for(var groupName in parentGroups) {
-                var groupedItems = parentGroups[groupName]; var groupAdminSums = {}; var groupTotalAdminQty = 0; var groupTotalAdminCost = 0;
+                var groupedItems = parentGroups[groupName]; var groupAdminSums = {}; var groupTotalAdminCost = 0; var groupTotalAdminQty = 0;
                 dateSet.forEach(d => { groupAdminSums[d] = 0; });
 
                 groupedItems.forEach(item => {
