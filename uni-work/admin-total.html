@@ -5,19 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>YUNY_ERP - 관리자 마스터 정산표</title>
     <style>
-        /* 📌 웹버전 상단 고정을 위한 레이아웃 초기화 */
-        html, body { 
+        /* 📌 상단 네비바 fixed 고정에 따른 body 여백 지정 */
+        html { 
             margin: 0; 
             padding: 0; 
             background-color: #f4f6f9; 
             font-family: Arial, sans-serif;
         }
-
-        /* 📌 네비바 상단 완전 밀착 고정 */
-        #global-navbar {
-            position: sticky;
-            top: 0;
-            z-index: 99999;
+        
+        body {
+            margin: 0;
+            padding: 0;
+            padding-top: 50px !important; /* 네비바 높이만큼 본문 내림 */
+            background-color: #f4f6f9;
+            font-family: Arial, sans-serif;
         }
 
         .content { padding: 15px; }
@@ -64,7 +65,7 @@
         .rate-on { background-color: #2bc891 !important; color: white !important; }
         .rate-off { background-color: #e74c3c !important; color: white !important; }
     </style>
-    <!-- 외부 config 및 navbar 구동 -->
+    <!-- 캐시 방지 스크립트 연결 -->
     <script>
         document.write('<script src="../config.js?v=' + Date.now() + '"><\/script>');
     </script>
