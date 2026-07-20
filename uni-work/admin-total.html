@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>YUNY_ERP - 관리자 마스터 정산표</title>
     <style>
-        /* 📌 상단 네비바 fixed 고정에 따른 body 여백 지정 */
         html { 
             margin: 0; 
             padding: 0; 
@@ -16,7 +15,7 @@
         body {
             margin: 0;
             padding: 0;
-            padding-top: 50px !important; /* 📌 네비바 높이(50px)만큼 본문 밀어내기 */
+            padding-top: 50px !important;
             background-color: #f4f6f9;
             font-family: Arial, sans-serif;
         }
@@ -65,7 +64,6 @@
         .rate-on { background-color: #2bc891 !important; color: white !important; }
         .rate-off { background-color: #e74c3c !important; color: white !important; }
     </style>
-    <!-- 캐시 방지 스크립트 연결 -->
     <script>
         document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');
     </script>
@@ -74,19 +72,20 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_total_fixed&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_total_sync_v2&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
-    <div class="card" style="background-color: #fff9db; border: 2px solid #fab005; padding: 15px 25px;">
-        <div class="flex-form-row" style="margin-bottom: 0;">
+    <!-- 🎯 세로 가운데 정렬(align-items: center) 및 날짜 선택 옆 노출 -->
+    <div class="card" style="background-color: #fff9db; border: 2px solid #fab005; padding: 12px 25px;">
+        <div class="flex-form-row" style="margin-bottom: 0; align-items: center;">
             <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px;">
                 <label style="color: #e67e22; margin-bottom: 0; font-size: 14px; font-weight: bold;">📅 원장 연월 :</label>
                 <select id="filterYear" style="width: 95px; height:36px;"></select>
                 <select id="filterMonth" style="width: 75px; height:36px;"></select>
                 <input type="date" id="globalWorkDate" style="width: 140px; height:36px; margin-left:10px;">
             </div>
-            <span id="loadingStatus" style="font-weight: bold; color: #e67e22; font-size:13px; margin-left:10px; padding-bottom: 2px;">🔄 데이터 로드 중...</span>
+            <span id="loadingStatus" style="font-weight: bold; color: #e67e22; font-size:13px; margin-left:15px; display: inline-flex; align-items: center;">🔄 데이터 로드 중...</span>
         </div>
     </div>
 
