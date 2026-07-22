@@ -61,11 +61,10 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_stock_sync_v2&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_stock_carryover_v2&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
-    <!-- 🎯 정산표와 동일하게 날짜 선택 드롭다운 바로 옆에 세로 중앙 배치 -->
     <div class="card" style="background-color: #fff9db; border: 2px solid #fab005; padding: 12px 25px;">
         <div class="flex-form-row" style="margin-bottom: 0; align-items: center;">
             <div style="display: flex; align-items: center; gap: 10px;">
@@ -194,6 +193,7 @@
         syncWithGoogle(`패널 입력 - ${item} [${ioType === 'in' ? '입고' : '출고'}] 수량 ${qty}개 등록`);
     }
 
+    // 🎯 [입고/출고는 당월 순수 합계, 현재고에만 전월 이월 정밀 반영]
     function buildStockTable() {
         var table = document.getElementById('stockTable'); if(!table) return;
         table.innerHTML = "";
@@ -209,24 +209,42 @@
             dateSet.push(selYear + "-" + strMonth + "-" + strDay); 
         }
         
+        // 당월 1일 기준 날짜
+        var currentMonthStart = selYear + "-" + strMonth + "-01";
+
         var headerHtml = `<thead><tr><th class="fix-col-1">품목명</th><th class="fix-col-2">구분</th><th class="fix-col-3">총 수량 계</th>${dateSet.map(d => `<th style="min-width:65px;">${d.substring(5).replace("-","/")}</th>`).join('')}</tr></thead>`;
         var bodyHtml = "<tbody>";
         
         var sortedItems = Object.keys(itemPrices).sort(customItemSort);
         
         sortedItems.forEach(item => {
-            var totalIn = 0, totalOut = 0, totalNow = 0;
-            
+            // 1) 📌 전월 이월 재고 연산 (당월 1일 이전의 누적 입고 - 누적 출고)
+            var carryOverStock = 0;
+            stockEntries.forEach(e => {
+                if (e.item === item && e.date < currentMonthStart) {
+                    var q = Number(e.qty) || 0;
+                    if (e.type === 'in') carryOverStock += q;
+                    else if (e.type === 'out') carryOverStock -= q;
+                }
+            });
+
+            // 2) 📌 당월 순수 입고/출고 수량 합계
+            var monthInSum = 0;
+            var monthOutSum = 0;
+
             dateSet.forEach(dateFull => {
                 var inEnt = stockEntries.find(e => e.item === item && e.type === 'in' && e.date === dateFull);
                 var outEnt = stockEntries.find(e => e.item === item && e.type === 'out' && e.date === dateFull);
-                if(inEnt) totalIn += Number(inEnt.qty);
-                if(outEnt) totalOut += Number(outEnt.qty);
+                if (inEnt) monthInSum += Number(inEnt.qty) || 0;
+                if (outEnt) monthOutSum += Number(outEnt.qty) || 0;
             });
-            totalNow = totalIn - totalOut;
 
+            // 당월 말 최종 실재고 = (전월 이월 재고) + (당월 순수 입고합) - (당월 순수 출고합)
+            var finalMonthStock = carryOverStock + monthInSum - monthOutSum;
+
+            // 1. 입고 Row (오직 당월 순수 입고 합계만 표시)
             var inRow = `<tr><td class="fix-col-1" rowspan="3" style="font-weight:bold; vertical-align:middle; text-align:left; padding-left:15px; border-bottom: 2px solid #888 !important;">${item}</td>`;
-            inRow += `<td class="fix-col-2 text-in">입고</td><td class="fix-col-3 text-in">${totalIn.toLocaleString()}개</td>`;
+            inRow += `<td class="fix-col-2 text-in">입고</td><td class="fix-col-3 text-in">${monthInSum.toLocaleString()}개</td>`;
             dateSet.forEach(dateFull => {
                 var ent = stockEntries.find(e => e.item === item && e.type === 'in' && e.date === dateFull);
                 var val = ent ? ent.qty : '-';
@@ -234,7 +252,8 @@
             });
             inRow += `</tr>`; bodyHtml += inRow;
 
-            var outRow = `<tr><td class="fix-col-2 text-out">출고</td><td class="fix-col-3 text-out">${totalOut.toLocaleString()}개</td>`;
+            // 2. 출고 Row (오직 당월 순수 출고 합계만 표시)
+            var outRow = `<tr><td class="fix-col-2 text-out">출고</td><td class="fix-col-3 text-out">${monthOutSum.toLocaleString()}개</td>`;
             dateSet.forEach(dateFull => {
                 var ent = stockEntries.find(e => e.item === item && e.type === 'out' && e.date === dateFull);
                 var val = ent ? ent.qty : '-';
@@ -242,15 +261,18 @@
             });
             outRow += `</tr>`; bodyHtml += outRow;
 
-            var nowRow = `<tr class="row-now-stock"><td class="fix-col-2" style="border-bottom: 2px solid #888 !important;">현재고</td><td class="fix-col-3" style="border-bottom: 2px solid #888 !important;">${totalNow.toLocaleString()}개</td>`;
+            // 3. 현재고 Row (전월 이월분부터 시작하여 당월 일별 누적 실재고 표시)
+            var nowRow = `<tr class="row-now-stock"><td class="fix-col-2" style="border-bottom: 2px solid #888 !important;">현재고</td><td class="fix-col-3" style="border-bottom: 2px solid #888 !important;" title="전월 이월재고: ${carryOverStock.toLocaleString()}개">${finalMonthStock.toLocaleString()}개</td>`;
+            
+            var runningStock = carryOverStock; // 전월 이월재고를 누적 출발점으로 지정
             dateSet.forEach(dateFull => {
                 var inEnt = stockEntries.find(e => e.item === item && e.type === 'in' && e.date === dateFull);
                 var outEnt = stockEntries.find(e => e.item === item && e.type === 'out' && e.date === dateFull);
                 var inQ = inEnt ? Number(inEnt.qty) : 0;
                 var outQ = outEnt ? Number(outEnt.qty) : 0;
                 
-                var nowQ = inQ - outQ;
-                nowRow += `<td style="border-bottom: 2px solid #888 !important;">${nowQ || '-'}</td>`;
+                runningStock += (inQ - outQ);
+                nowRow += `<td style="border-bottom: 2px solid #888 !important;">${runningStock}</td>`;
             });
             nowRow += `</tr>`; bodyHtml += nowRow;
         });
