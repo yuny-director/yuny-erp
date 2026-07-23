@@ -57,7 +57,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_stock_excel_v1&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_stock_excel_v2&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -69,12 +69,11 @@
                 <select id="filterMonth" style="width: 80px; height:36px;"></select>
                 <span id="loadingStatus" style="font-weight: bold; color: #27ae60; font-size:14px; margin-left: 15px; display: inline-flex; align-items: center;">🔄 데이터 로드 중...</span>
             </div>
-            <!-- 🎯 엑셀 다운로드 버튼 배치 -->
             <button class="btn btn-blue" onclick="downloadStockExcel()">📥 현재 화면 엑셀(CSV) 다운로드</button>
         </div>
     </div>
 
-    <!-- 🎯 엑셀 대량 업로드 제어 카드 -->
+    <!-- 🎯 엑셀 대량 업로드 제어 카드 (개별 샘플 다운로드 버튼 적용) -->
     <div class="card" style="background-color: #f8f9fa; border: 1px solid #ced4da;">
         <h2 style="margin-top:0;">📂 엑셀(CSV) 데이터 대량 업로드</h2>
         <div class="flex-form-row">
@@ -91,7 +90,8 @@
             </div>
             <button class="btn btn-orange" onclick="processCSVUpload()">🚀 대량 업로드 실행</button>
             <div class="divider">|</div>
-            <button class="btn btn-gray" onclick="downloadCSVTemplate()">📄 업로드 양식(샘플) 받기</button>
+            <button class="btn btn-gray" onclick="downloadCSVTemplate('item')">📄 1. 품목등록 양식 받기</button>
+            <button class="btn btn-gray" onclick="downloadCSVTemplate('entry')">📄 2. 입출고등록 양식 받기</button>
         </div>
     </div>
 
@@ -223,13 +223,12 @@
         .catch(err => { document.getElementById('loadingStatus').innerText = "❌ 실시간 저장 실패"; });
     }
 
-    // 🎯 [신규] 엑셀(CSV) 샘플 양식 다운로드
-    function downloadCSVTemplate() {
-        var type = document.getElementById('uploadType').value;
-        var csvContent = "\uFEFF"; // UTF-8 BOM 한글 깨짐 방지
+    // 🎯 [수정] 각각의 양식별 다운로드 함수 처리
+    function downloadCSVTemplate(targetType) {
+        var csvContent = "\uFEFF"; // UTF-8 BOM
         var fileName = "";
 
-        if(type === 'item') {
+        if(targetType === 'item') {
             csvContent += "품목명,모델명\n스포이드,핑크 50ml\n공병,투명 100ml\n";
             fileName = "재고_품목등록_양식.csv";
         } else {
@@ -244,7 +243,6 @@
         link.click();
     }
 
-    // 🎯 [신규] CSV 파일 읽기 및 대량 등록 처리
     function processCSVUpload() {
         var fileInput = document.getElementById('csvFileInput');
         var file = fileInput.files[0];
@@ -293,17 +291,16 @@
             alert(`성공적으로 ${addedCount}건의 데이터가 반영되었습니다!`);
         };
 
-        reader.readAsText(file, 'EUC-KR'); // 한글 인코딩 지원
+        reader.readAsText(file, 'EUC-KR');
     }
 
-    // 🎯 [신규] 현재 대장 표 화면 엑셀 다운로드
     function downloadStockExcel() {
         var selYear = document.getElementById("filterYear").value;
         var selMonth = document.getElementById("filterMonth").value;
         var table = document.getElementById('stockTable');
         if(!table) return;
 
-        var csvContent = "\uFEFF"; // UTF-8 BOM
+        var csvContent = "\uFEFF";
         var rows = table.querySelectorAll("tr");
 
         rows.forEach(row => {
