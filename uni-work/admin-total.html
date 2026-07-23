@@ -63,6 +63,11 @@
         .btn-toggle-apply { padding: 2px 4px; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 3px; border: 1px solid #ccc; flex-shrink: 0; line-height: 12px; }
         .rate-on { background-color: #2bc891 !important; color: white !important; }
         .rate-off { background-color: #e74c3c !important; color: white !important; }
+
+        /* 🎯 [재고표와 스타일 통일] 드래그 앤 드롭 품목 순서 정렬 모달 스타일 */
+        .sortable-list { list-style: none; padding: 0; margin: 0; }
+        .sortable-item { padding: 10px 14px; margin-bottom: 8px; background-color: #f8f9fa; border: 1px solid #ced4da; border-radius: 6px; cursor: grab; font-weight: bold; font-size: 13px; color: #2c3e50; display: flex; align-items: center; justify-content: space-between; }
+        .sortable-item.dragging { opacity: 0.5; background-color: #e8f4fd; border: 2px dashed #2980b9; }
     </style>
     <script>
         document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');
@@ -72,11 +77,10 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_total_sync_v2&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_total_modal_fix&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
-    <!-- 🎯 세로 가운데 정렬(align-items: center) 및 날짜 선택 옆 노출 -->
     <div class="card" style="background-color: #fff9db; border: 2px solid #fab005; padding: 12px 25px;">
         <div class="flex-form-row" style="margin-bottom: 0; align-items: center;">
             <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px;">
@@ -178,13 +182,21 @@
     </div>
 </div>
 
-<div id="sortModal" class="modal" style="display:none; position:fixed; z-index:100; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.4); align-items:center; justify-content:center;">
-    <div class="modal-content" style="background:#fff; padding:25px; border-radius:8px; width:90%; max-width:550px;">
-        <h3 style="margin-top:0; color: #2c3e50;">↕️ 품목 순서 임의 조정</h3>
-        <ul class="sortable-list" id="sortableList"></ul>
-        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+<!-- 🎯 [수정] 재고표와 100% 동일하게 모달 디자인, 드래그 카드, 스크롤바 제어 개선 -->
+<div id="sortModal" class="modal" style="display:none; position:fixed; z-index:1000000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
+    <div class="modal-content" style="background:#fff; padding:25px; border-radius:10px; width:90%; max-width:580px; max-height:85vh; display:flex; flex-direction:column; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing:border-box;">
+        <div style="flex-shrink:0;">
+            <h3 style="margin-top:0; margin-bottom:8px; color: #2c3e50;">↕️ 품목 순서 임의 조정</h3>
+            <p style="font-size:12px; color:#666; margin-bottom:15px;">항목을 마우스로 드래그하여 원하시는 순서대로 배치한 후 하단의 [순서 저장]을 누르세요.</p>
+        </div>
+        
+        <div style="flex:1; overflow-y:auto; padding-right:5px; margin-bottom:15px; border:1px solid #e9ecef; border-radius:6px; padding:10px; background:#f8f9fa;">
+            <ul class="sortable-list" id="sortableList"></ul>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 8px; flex-shrink:0; border-top:1px solid #eee; padding-top:15px;">
             <button class="btn btn-gray" id="btnCloseSortModal">취소</button>
-            <button class="btn" id="btnSaveItemOrder">순서 저장</button>
+            <button class="btn btn-purple" id="btnSaveItemOrder">순서 저장</button>
         </div>
     </div>
 </div>
@@ -357,31 +369,54 @@ window.deleteItem = function() {
     }
 };
 
+// 🎯 [수정] 모달 열기 및 드래그 앤 드롭 카드 렌더링
 window.openSortModal = function() {
     var listContainer = document.getElementById("sortableList"); if(!listContainer) return;
     listContainer.innerHTML = "";
     var allItems = Object.keys(window.itemPrices || {}).sort(window.customItemSort);
+    
+    if(allItems.length === 0) {
+        listContainer.innerHTML = "<li style='padding:15px; color:#888;'>등록된 품목이 없습니다.</li>";
+        document.getElementById("sortModal").style.display = "flex";
+        return;
+    }
+
     allItems.forEach(function(item) {
-        var li = document.createElement("li"); li.className = "sortable-item"; li.draggable = true; li.innerText = item;
+        var li = document.createElement("li"); 
+        li.className = "sortable-item"; 
+        li.draggable = true; 
+        li.setAttribute("data-item", item);
+        li.innerHTML = "<span>📂 " + item + "</span> <span>☰</span>";
+        
         li.addEventListener("dragstart", function() { li.classList.add("dragging"); });
         li.addEventListener("dragend", function() { li.classList.remove("dragging"); });
         listContainer.appendChild(li);
     });
+
     listContainer.addEventListener("dragover", function(e) {
-        e.preventDefault(); var draggingItem = document.querySelector(".dragging"); if(!draggingItem) return;
+        e.preventDefault(); 
+        var draggingItem = document.querySelector("#sortableList .dragging"); 
+        if(!draggingItem) return;
         var siblings = Array.prototype.slice.call(listContainer.querySelectorAll(".sortable-item:not(.dragging)"));
-        var nextSibling = siblings.find(function(sibling) { return e.clientY <= sibling.getBoundingClientRect().top + sibling.getBoundingClientRect().height / 2; });
+        var nextSibling = siblings.find(function(sibling) { 
+            return e.clientY <= sibling.getBoundingClientRect().top + sibling.getBoundingClientRect().height / 2; 
+        });
         listContainer.insertBefore(draggingItem, nextSibling);
     });
+
     document.getElementById("sortModal").style.display = "flex";
 };
 
 window.closeSortModal = function() { document.getElementById("sortModal").style.display = "none"; };
 
+// 🎯 [수정] 품목 순서 저장
 window.saveItemOrder = function() {
     var items = Array.prototype.slice.call(document.querySelectorAll("#sortableList .sortable-item"));
-    window.myItemOrder = items.map(function(li) { return li.innerText; });
-    window.closeSortModal(); window.buildPivotTable(); window.renderDropdowns(); window.syncWithGoogle("정렬 순서 변경 저장");
+    window.myItemOrder = items.map(function(li) { return li.getAttribute("data-item"); }).filter(Boolean);
+    window.closeSortModal(); 
+    window.buildPivotTable(); 
+    window.renderDropdowns(); 
+    window.syncWithGoogle("정렬 순서 변경 저장");
 };
 
 function calculateHours(timeStr) {
@@ -546,7 +581,7 @@ window.buildPivotTable = function() {
     
     totalFinalGrandSum = totalAdminCost + totalHourlyPaySum;
     footerHtml += '<tr class="bg-total-row-1"><td class="fix-col-1" rowspan="2" style="vertical-align:middle; font-weight:bold;">최종 합계</td><td class="fix-col-2 admin-text">유니입력</td><td class="fix-col-3" rowspan="2" style="vertical-align:middle; font-weight:bold;">전체합산</td><td class="fix-col-4">-</td><td class="fix-col-5" style="background-color: #d0ebff !important;">' + (totalAdminCost + totalHourlyPaySum).toLocaleString() + '원</td><td class="fix-col-6" style="background-color: #e3fafc !important; padding: 4px 8px !important;"><div class="total-split-box"><span class="val-qty">' + totalAdminQty + '개</span><span class="val-hours">' + totalWorkHours.toFixed(1) + '시간</span></div></td><td class="fix-col-7" id="overallGrandTotalCell" style="background-color: #d3f9d8 !important; color:#2b8a3e; font-weight:bold;">계산중</td>' + dateSet.map(function(d) { return '<td>' + (dayAdminSums[d] || '-') + '</td>'; }).join('') + '</tr><tr class="bg-total-row-2"><td class="fix-col-2 worker-text">개인입력</td><td class="fix-col-4">-</td><td class="fix-col-5">-</td><td class="fix-col-6" style="font-weight: bold; color: #27ae60;">' + totalWorkerQty + '개</td><td class="fix-col-7">-</td>' + dateSet.map(function(d) { return '<td>' + (dayWorkerSums[d] || '-') + '</td>'; }).join('') + '</tr>';
-    footerHtml += "</tfoot>";
+    footerHtml += "<tfoot>";
     
     table.innerHTML = headerHtml + bodyHtml + footerHtml;
     
