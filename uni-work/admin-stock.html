@@ -26,7 +26,6 @@
         th, td { padding: 10px 8px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; border-left: none !important; border-top: none !important; }
         th { background-color: #f8f9fa !important; font-weight: bold; position: sticky !important; top: 0 !important; z-index: 30 !important; border-top: 1px solid #ccc !important; }
         
-        /* 🎯 [수정] 긴 품목명과 모델명이 잘리지 않도록 고정 열 너비 확충 */
         .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 180px; background: #ffffff !important; z-index: 10; border-left: 1px solid #ccc !important; text-align: left !important; padding-left: 10px !important; }
         .fix-col-2 { position: sticky !important; left: 180px !important; min-width: 150px; background: #ffffff !important; z-index: 10; text-align: left !important; padding-left: 10px !important; }
         .fix-col-3 { position: sticky !important; left: 330px !important; min-width: 60px; max-width: 70px; background: #ffffff !important; z-index: 10; }
@@ -43,6 +42,11 @@
         .editable-cell { cursor: pointer; }
         .editable-cell:hover { background-color: #e8f4fd !important; }
         .inline-edit-input { width: 90%; height: 26px; text-align: center; border: 2px solid #2980b9; border-radius: 4px; font-weight: bold; }
+
+        /* 🎯 드래그 앤 드롭 순서 변경 모달 전용 스타일 */
+        .sortable-list { list-style: none; padding: 0; margin: 0; }
+        .sortable-item { padding: 10px 14px; margin-bottom: 8px; background-color: #f8f9fa; border: 1px solid #ced4da; border-radius: 6px; cursor: grab; font-weight: bold; font-size: 13px; color: #2c3e50; display: flex; align-items: center; justify-content: space-between; }
+        .sortable-item.dragging { opacity: 0.5; background-color: #e8f4fd; border: 2px dashed #2980b9; }
     </style>
     <script>
         document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');
@@ -52,7 +56,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_stock_width_fixed&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_stock_order_v1&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -68,7 +72,11 @@
     </div>
 
     <div class="card">
-        <h2>🗂️ 독립 재고 품목 마스터 제어</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="margin:0;">🗂️ 독립 재고 품목 마스터 제어</h2>
+            <!-- 🎯 품목 표시 순서 관리 버튼 추가 -->
+            <button class="btn btn-purple" onclick="openStockSortModal()">📊 품목 표시순서 관리</button>
+        </div>
         <div class="flex-form-row">
             <div class="form-group">
                 <label>새 품목명</label>
@@ -114,6 +122,19 @@
         <h2>📊 전체 품목별 수량 변동 및 현재고 대장</h2>
         <div class="table-container">
             <table id="stockTable"></table>
+        </div>
+    </div>
+</div>
+
+<!-- 🎯 [신규] 재고 품목 순서 변경 전용 팝업 모달 -->
+<div id="stockSortModal" class="modal" style="display:none; position:fixed; z-index:1000000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.4); align-items:center; justify-content:center;">
+    <div class="modal-content" style="background:#fff; padding:25px; border-radius:8px; width:90%; max-width:550px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+        <h3 style="margin-top:0; color: #2c3e50;">↕️ 재고 품목 표시 순서 임의 조정</h3>
+        <p style="font-size:12px; color:#666; margin-bottom:15px;">항목을 마우스로 드래그하여 원하시는 순서대로 배치한 후 [순서 저장]을 누르세요.</p>
+        <ul class="sortable-list" id="stockSortableList"></ul>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+            <button class="btn btn-gray" onclick="closeStockSortModal()">취소</button>
+            <button class="btn btn-purple" onclick="saveStockItemOrder()">순서 저장</button>
         </div>
     </div>
 </div>
@@ -207,6 +228,70 @@
             renderDropdowns(); buildStockTable();
             syncWithGoogle(`독립 재고품목 삭제: ${iName}(${mName})`);
         }
+    }
+
+    /* 🎯 [신규] 재고 품목 순서 변경 드래그 앤 드롭 제어 함수들 */
+    function openStockSortModal() {
+        var listContainer = document.getElementById("stockSortableList");
+        if(!listContainer) return;
+        listContainer.innerHTML = "";
+
+        if(stockItems.length === 0) {
+            listContainer.innerHTML = "<li style='padding:15px; color:#888;'>등록된 품목이 없습니다.</li>";
+            document.getElementById("stockSortModal").style.display = "flex";
+            return;
+        }
+
+        stockItems.forEach(item => {
+            var li = document.createElement("li");
+            li.className = "sortable-item";
+            li.draggable = true;
+            li.setAttribute("data-item", item.itemName);
+            li.setAttribute("data-model", item.modelName);
+            li.innerHTML = `<span>📂 ${item.itemName} <small style="color:#8e44ad;">(${item.modelName})</small></span> <span>☰</span>`;
+            
+            li.addEventListener("dragstart", function() { li.classList.add("dragging"); });
+            li.addEventListener("dragend", function() { li.classList.remove("dragging"); });
+            listContainer.appendChild(li);
+        });
+
+        listContainer.addEventListener("dragover", function(e) {
+            e.preventDefault();
+            var draggingItem = document.querySelector(".dragging");
+            if(!draggingItem) return;
+            var siblings = Array.prototype.slice.call(listContainer.querySelectorAll(".sortable-item:not(.dragging)"));
+            var nextSibling = siblings.find(function(sibling) {
+                return e.clientY <= sibling.getBoundingClientRect().top + sibling.getBoundingClientRect().height / 2;
+            });
+            listContainer.insertBefore(draggingItem, nextSibling);
+        });
+
+        document.getElementById("stockSortModal").style.display = "flex";
+    }
+
+    function closeStockSortModal() {
+        document.getElementById("stockSortModal").style.display = "none";
+    }
+
+    function saveStockItemOrder() {
+        var listItems = Array.prototype.slice.call(document.querySelectorAll("#stockSortableList .sortable-item"));
+        var newOrderList = [];
+        
+        listItems.forEach(li => {
+            var iName = li.getAttribute("data-item");
+            var mName = li.getAttribute("data-model");
+            if(iName && mName) {
+                newOrderList.push({ itemName: iName, modelName: mName });
+            }
+        });
+
+        if(newOrderList.length > 0) {
+            stockItems = newOrderList;
+            renderDropdowns();
+            buildStockTable();
+            syncWithGoogle("재고 품목 표시 순서 변경 저장");
+        }
+        closeStockSortModal();
     }
 
     function addStockEntry(ioType) {
