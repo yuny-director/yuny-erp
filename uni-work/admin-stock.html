@@ -26,13 +26,13 @@
         th, td { padding: 10px 8px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; border-left: none !important; border-top: none !important; }
         th { background-color: #f8f9fa !important; font-weight: bold; position: sticky !important; top: 0 !important; z-index: 30 !important; border-top: 1px solid #ccc !important; }
         
-        /* 🎯 [개편] 품목명, 모델명 추가에 따른 4단 고정 레이아웃 */
-        .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 120px; max-width: 150px; background: #ffffff !important; z-index: 10; border-left: 1px solid #ccc !important; }
-        .fix-col-2 { position: sticky !important; left: 120px !important; min-width: 120px; max-width: 150px; background: #ffffff !important; z-index: 10; }
-        .fix-col-3 { position: sticky !important; left: 240px !important; min-width: 60px; max-width: 70px; background: #ffffff !important; z-index: 10; }
-        .fix-col-4 { position: sticky !important; left: 300px !important; min-width: 90px; max-width: 100px; background: #fafafa !important; z-index: 10; border-right: 2px solid #aaa !important; }
+        /* 🎯 [수정] 긴 품목명과 모델명이 잘리지 않도록 고정 열 너비 확충 */
+        .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 180px; background: #ffffff !important; z-index: 10; border-left: 1px solid #ccc !important; text-align: left !important; padding-left: 10px !important; }
+        .fix-col-2 { position: sticky !important; left: 180px !important; min-width: 150px; background: #ffffff !important; z-index: 10; text-align: left !important; padding-left: 10px !important; }
+        .fix-col-3 { position: sticky !important; left: 330px !important; min-width: 60px; max-width: 70px; background: #ffffff !important; z-index: 10; }
+        .fix-col-4 { position: sticky !important; left: 390px !important; min-width: 90px; max-width: 100px; background: #fafafa !important; z-index: 10; border-right: 2px solid #aaa !important; }
         
-        th.fix-col-1, th.fix-col-2, th.fix-col-3, th.fix-col-4 { z-index: 40 !important; }
+        th.fix-col-1, th.fix-col-2, th.fix-col-3, th.fix-col-4 { z-index: 40 !important; text-align: center !important; padding-left: 0 !important; }
         
         .row-now-stock { background-color: #fff9db !important; font-weight: bold; color: #e67e22; }
         .row-now-stock td { background-color: #fff9db !important; }
@@ -52,7 +52,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_stock_independent&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_stock_width_fixed&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -67,17 +67,16 @@
         </div>
     </div>
 
-    <!-- 🎯 신규 독립 기능: 자체 재고 품목 및 모델 관리 -->
     <div class="card">
         <h2>🗂️ 독립 재고 품목 마스터 제어</h2>
         <div class="flex-form-row">
             <div class="form-group">
                 <label>새 품목명</label>
-                <input type="text" id="newStockItemName" placeholder="예: 스포이드" style="width: 130px;">
+                <input type="text" id="newStockItemName" placeholder="예: 스포이드" style="width: 180px;">
             </div>
             <div class="form-group">
                 <label>새 모델명</label>
-                <input type="text" id="newStockModelName" placeholder="예: 핑크 50ml" style="width: 130px;">
+                <input type="text" id="newStockModelName" placeholder="예: 핑크 50ml" style="width: 150px;">
             </div>
             <button class="btn btn-purple" onclick="addStockItemMaster()">품목 등록</button>
             
@@ -85,7 +84,7 @@
             
             <div class="form-group">
                 <label style="visibility:hidden; display:block;">삭제패딩</label>
-                <select id="delStockItemSelect" style="width: 180px; height:38px;"></select>
+                <select id="delStockItemSelect" style="width: 220px; height:38px;"></select>
             </div>
             <button class="btn btn-gray" onclick="deleteStockItemMaster()">품목 삭제</button>
         </div>
@@ -100,7 +99,7 @@
             </div>
             <div class="form-group">
                 <label>대상 품목 선택 (품목명 - 모델명)</label>
-                <select id="stockItemSelect" style="width: 220px;"></select>
+                <select id="stockItemSelect" style="width: 260px;"></select>
             </div>
             <div class="form-group">
                 <label>기록 수량</label>
@@ -120,8 +119,7 @@
 </div>
 
 <script>
-    // 🎯 정산표 의존성 완전 제거, 독자적인 상태 변수 운용
-    var stockItems = []; // 예: [{ itemName: "스포이드", modelName: "핑크" }]
+    var stockItems = []; 
     var stockEntries = []; 
     var isDataLoaded = false;
 
@@ -140,11 +138,9 @@
     function loadData() {
         var cacheUrl = GOOGLE_SCRIPT_URL + (GOOGLE_SCRIPT_URL.indexOf('?') > -1 ? '&' : '?') + 't=' + Date.now();
         fetch(cacheUrl).then(r => r.json()).then(data => {
-            // DB에서 stockItems와 stockEntries만 독립 수신
             stockItems = Array.isArray(data.stockItems) ? data.stockItems : [];
             stockEntries = Array.isArray(data.stockEntries) ? data.stockEntries : [];
 
-            // 💡 구 데이터 호환성 보정 (예전 item 단일 필드만 있는 경우)
             stockEntries.forEach(e => {
                 if (e.item && !e.itemName) {
                     e.itemName = e.item;
@@ -158,7 +154,7 @@
             handleTopNavbarSessionName();
             document.getElementById('loadingStatus').innerText = "✅ 재고원장 동기화 완료";
         }).catch(err => {
-            document.getElementById('loadingStatus').innerText = "❌ 데이터 동기화 지연 (DB 확인 요망)";
+            document.getElementById('loadingStatus').innerText = "❌ 데이터 동기화 지연";
         });
     }
 
@@ -171,7 +167,7 @@
             updater: "관리자", 
             summary: msg, 
             stockEntries: stockEntries,
-            stockItems: stockItems // 독립 관리 품목 리스트 동기화
+            stockItems: stockItems
         };
         
         fetch(GOOGLE_SCRIPT_URL, { 
@@ -184,7 +180,6 @@
         .catch(err => { document.getElementById('loadingStatus').innerText = "❌ 실시간 저장 실패"; });
     }
 
-    // --- 🎯 신규 기능: 재고 품목 및 모델 마스터 제어 ---
     function addStockItemMaster() {
         var iName = document.getElementById('newStockItemName').value.trim();
         var mName = document.getElementById('newStockModelName').value.trim();
@@ -213,7 +208,6 @@
             syncWithGoogle(`독립 재고품목 삭제: ${iName}(${mName})`);
         }
     }
-    // ----------------------------------------------------
 
     function addStockEntry(ioType) {
         var date = document.getElementById('stockWorkDate').value;
@@ -265,7 +259,6 @@
             var iName = itemInfo.itemName;
             var mName = itemInfo.modelName;
 
-            // 1) 전월 이월 재고 연산
             var carryOverStock = 0;
             stockEntries.forEach(e => {
                 if (e.itemName === iName && e.modelName === mName && e.date < currentMonthStart) {
@@ -275,7 +268,6 @@
                 }
             });
 
-            // 2) 당월 순수 합계
             var monthInSum = 0, monthOutSum = 0;
             dateSet.forEach(dateFull => {
                 var inEnt = stockEntries.find(e => e.itemName === iName && e.modelName === mName && e.type === 'in' && e.date === dateFull);
@@ -285,8 +277,7 @@
             });
             var finalMonthStock = carryOverStock + monthInSum - monthOutSum;
 
-            // 1. 입고 Row
-            var inRow = `<tr><td class="fix-col-1" rowspan="3" style="font-weight:bold; vertical-align:middle; text-align:left; padding-left:15px; border-bottom: 2px solid #888 !important; color: #2c3e50;">${iName}</td>`;
+            var inRow = `<tr><td class="fix-col-1" rowspan="3" style="font-weight:bold; vertical-align:middle; border-bottom: 2px solid #888 !important; color: #2c3e50;">${iName}</td>`;
             inRow += `<td class="fix-col-2" rowspan="3" style="font-weight:bold; vertical-align:middle; color: #8e44ad; border-bottom: 2px solid #888 !important;">${mName}</td>`;
             inRow += `<td class="fix-col-3 text-in">입고</td><td class="fix-col-4 text-in">${monthInSum.toLocaleString()}개</td>`;
             
@@ -297,7 +288,6 @@
             });
             inRow += `</tr>`; bodyHtml += inRow;
 
-            // 2. 출고 Row
             var outRow = `<tr><td class="fix-col-3 text-out">출고</td><td class="fix-col-4 text-out">${monthOutSum.toLocaleString()}개</td>`;
             dateSet.forEach(dateFull => {
                 var ent = stockEntries.find(e => e.itemName === iName && e.modelName === mName && e.type === 'out' && e.date === dateFull);
@@ -306,7 +296,6 @@
             });
             outRow += `</tr>`; bodyHtml += outRow;
 
-            // 3. 현재고 Row
             var nowRow = `<tr class="row-now-stock"><td class="fix-col-3" style="border-bottom: 2px solid #888 !important;">현재고</td><td class="fix-col-4" style="border-bottom: 2px solid #888 !important;" title="전월 이월재고: ${carryOverStock.toLocaleString()}개">${finalMonthStock.toLocaleString()}개</td>`;
             var runningStock = carryOverStock; 
             dateSet.forEach(dateFull => {
