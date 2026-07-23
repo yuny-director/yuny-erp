@@ -61,7 +61,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_stock_encoding_fixed&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_stock_sort_v1&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -151,7 +151,25 @@
     </div>
 
     <div class="card">
-        <h2>📊 전체 품목별 수량 변동 및 현재고 대장</h2>
+        <!-- 🎯 [신규] 표 정렬 기준 선택 드롭다운 영역 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="margin:0;">📊 전체 품목별 수량 변동 및 현재고 대장</h2>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 13px; font-weight: bold; color: #2c3e50;">🔀 대장 정렬 기준 :</label>
+                <select id="stockTableSortOption" style="width: 180px; height: 36px; font-weight: bold;" onchange="buildStockTable()">
+                    <option value="custom">지정된 표시순서 (기본)</option>
+                    <option value="name_asc">품목명 오름차순 (가~하)</option>
+                    <option value="name_desc">품목명 내림차순 (하~가)</option>
+                    <option value="model_asc">모델명 오름차순 (가~하)</option>
+                    <option value="model_desc">모델명 내림차순 (하~가)</option>
+                    <option value="stock_desc">현재고 높은순 ⬇</option>
+                    <option value="stock_asc">현재고 낮은순 ⬆</option>
+                    <option value="out_desc">당월 출고 높은순 ⬇</option>
+                    <option value="out_asc">당월 출고 낮은순 ⬆</option>
+                </select>
+            </div>
+        </div>
+
         <div class="table-container">
             <table id="stockTable"></table>
         </div>
@@ -252,7 +270,6 @@
         link.click();
     }
 
-    // 🎯 [수정] UTF-8 및 EUC-KR 스마트 인코딩 자동 감지 읽기 방식 도입
     function processCSVUpload() {
         var fileInput = document.getElementById('csvFileInput');
         var file = fileInput.files[0];
@@ -265,12 +282,10 @@
             var buffer = e.target.result;
             var text = "";
 
-            // 1단계: UTF-8 테스트 해독
             try {
                 var decoderUtf8 = new TextDecoder('utf-8', { fatal: true });
                 text = decoderUtf8.decode(buffer);
             } catch(err) {
-                // UTF-8 해석에 실패(한글 깨짐 감지) 시 EUC-KR(ANSI) 방식으로 재해독
                 var decoderEuc = new TextDecoder('euc-kr');
                 text = decoderEuc.decode(buffer);
             }
@@ -314,7 +329,6 @@
             alert(`성공적으로 ${addedCount}건의 데이터가 한글 깨짐 없이 정밀 등록되었습니다!`);
         };
 
-        // ArrayBuffer 원본으로 파일 로드
         reader.readAsArrayBuffer(file);
     }
 
@@ -498,6 +512,7 @@
         syncWithGoogle(`재고 입력 - ${iName}(${mName}) [${ioType === 'in' ? '입고' : '출고'}] ${qty}개 등록`);
     }
 
+    // 🎯 [수정] 정렬 선택 드롭다운 옵션에 따른 동적 정렬 로직 대입
     function buildStockTable() {
         var table = document.getElementById('stockTable'); if(!table) return;
         table.innerHTML = "";
@@ -519,10 +534,8 @@
         }
         var currentMonthStart = selYear + "-" + strMonth + "-01";
 
-        var headerHtml = `<thead><tr><th class="fix-col-1">품목명</th><th class="fix-col-2">모델명</th><th class="fix-col-3">구분</th><th class="fix-col-4">총 수량 계</th>${dateSet.map(d => `<th style="min-width:65px;">${d.substring(5).replace("-","/")}</th>`).join('')}</tr></thead>`;
-        var bodyHtml = "<tbody>";
-        
-        stockItems.forEach(itemInfo => {
+        // 1단계: 품목별 수량 연산 데이터 맵 생성
+        var itemCalculatedList = stockItems.map(itemInfo => {
             var iName = itemInfo.itemName;
             var mName = itemInfo.modelName;
 
@@ -542,7 +555,52 @@
                 if (inEnt) monthInSum += Number(inEnt.qty) || 0;
                 if (outEnt) monthOutSum += Number(outEnt.qty) || 0;
             });
+
             var finalMonthStock = carryOverStock + monthInSum - monthOutSum;
+
+            return {
+                itemName: iName,
+                modelName: mName,
+                carryOverStock: carryOverStock,
+                monthInSum: monthInSum,
+                monthOutSum: monthOutSum,
+                finalMonthStock: finalMonthStock
+            };
+        });
+
+        // 2단계: 정렬 옵션 드롭다운 값 추출 및 정렬 수행
+        var sortOptEl = document.getElementById("stockTableSortOption");
+        var sortOpt = sortOptEl ? sortOptEl.value : "custom";
+
+        if (sortOpt === "name_asc") {
+            itemCalculatedList.sort((a, b) => a.itemName.localeCompare(b.itemName, 'ko'));
+        } else if (sortOpt === "name_desc") {
+            itemCalculatedList.sort((a, b) => b.itemName.localeCompare(a.itemName, 'ko'));
+        } else if (sortOpt === "model_asc") {
+            itemCalculatedList.sort((a, b) => a.modelName.localeCompare(b.modelName, 'ko'));
+        } else if (sortOpt === "model_desc") {
+            itemCalculatedList.sort((a, b) => b.modelName.localeCompare(a.modelName, 'ko'));
+        } else if (sortOpt === "stock_desc") {
+            itemCalculatedList.sort((a, b) => b.finalMonthStock - a.finalMonthStock);
+        } else if (sortOpt === "stock_asc") {
+            itemCalculatedList.sort((a, b) => a.finalMonthStock - b.finalMonthStock);
+        } else if (sortOpt === "out_desc") {
+            itemCalculatedList.sort((a, b) => b.monthOutSum - a.monthOutSum);
+        } else if (sortOpt === "out_asc") {
+            itemCalculatedList.sort((a, b) => a.monthOutSum - b.monthOutSum);
+        }
+
+        // 3단계: 정렬된 데이터 기준 표 출력
+        var headerHtml = `<thead><tr><th class="fix-col-1">품목명</th><th class="fix-col-2">모델명</th><th class="fix-col-3">구분</th><th class="fix-col-4">총 수량 계</th>${dateSet.map(d => `<th style="min-width:65px;">${d.substring(5).replace("-","/")}</th>`).join('')}</tr></thead>`;
+        var bodyHtml = "<tbody>";
+        
+        itemCalculatedList.forEach(calcItem => {
+            var iName = calcItem.itemName;
+            var mName = calcItem.modelName;
+            var carryOverStock = calcItem.carryOverStock;
+            var monthInSum = calcItem.monthInSum;
+            var monthOutSum = calcItem.monthOutSum;
+            var finalMonthStock = calcItem.finalMonthStock;
 
             var inRow = `<tr><td class="fix-col-1" rowspan="3" style="font-weight:bold; vertical-align:middle; border-bottom: 2px solid #888 !important; color: #2c3e50;">${iName}</td>`;
             inRow += `<td class="fix-col-2" rowspan="3" style="font-weight:bold; vertical-align:middle; color: #8e44ad; border-bottom: 2px solid #888 !important;">${mName}</td>`;
