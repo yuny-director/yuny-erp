@@ -1,4 +1,4 @@
-// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (접속자 로그인 세션 명확화 반영판)
+// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (메뉴순서: 재고표 -> 유니워크정산표 변경판)
 (function() {
     function initNavbar() {
         var navbarContainer = document.getElementById('global-navbar');
@@ -77,8 +77,9 @@
                 <a href="../cost/cost.html" class="${isCost ? 'active-menu' : ''}">📉 원가관리</a>
                 <a href="../sales/sales.html" class="${isSales ? 'active-menu' : ''}">💰 매출관리</a>
                 <a href="../margin/margin.html" class="${isMargin ? 'active-menu' : ''}">📝 마진관리</a>
+                <!-- 🎯 [순서 및 이름 변경] 📦 재고표 -> 🛠️ 유니워크(정산표) -->
+                <a href="../uni-work/admin-stock.html" class="${isStock ? 'active-menu' : ''}">📦 재고표</a>
                 <a href="../uni-work/admin-total.html" class="${isTotal ? 'active-menu' : ''}">🛠️ 유니워크(정산표)</a>
-                <a href="../uni-work/admin-stock.html" class="${isStock ? 'active-menu' : ''}">📦 유니워크(재고표)</a>
             </div>
             <div class="navbar-user-info">
                 <span class="navbar-user-name-text" id="navbar-user-name">관리자님 접속중</span>
@@ -146,7 +147,6 @@
     }
 })();
 
-// 🎯 [접속자명 정확화] 로그인 계정명을 최우선으로 가져오도록 수정
 window.updateNavbarUserDisplay = function() {
     var nameEl = document.getElementById('navbar-user-name');
     if (!nameEl) return;
