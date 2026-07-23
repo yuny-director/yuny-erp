@@ -48,6 +48,11 @@
         .sortable-list { list-style: none; padding: 0; margin: 0; }
         .sortable-item { padding: 10px 14px; margin-bottom: 8px; background-color: #f8f9fa; border: 1px solid #ced4da; border-radius: 6px; cursor: grab; font-weight: bold; font-size: 13px; color: #2c3e50; display: flex; align-items: center; justify-content: space-between; }
         .sortable-item.dragging { opacity: 0.5; background-color: #e8f4fd; border: 2px dashed #2980b9; }
+
+        /* 🎯 다중 삭제 박스 전용 스타일 */
+        .multi-delete-container { max-height: 160px; overflow-y: auto; border: 1px solid #ced4da; border-radius: 6px; padding: 10px; background: #fafafa; margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+        .multi-delete-item { display: flex; align-items: center; gap: 6px; background: white; padding: 6px 10px; border: 1px solid #e9ecef; border-radius: 4px; font-size: 12px; font-weight: bold; color: #333; cursor: pointer; }
+        .multi-delete-item:hover { background: #fff5f5; border-color: #ffa8a8; }
     </style>
     <script>
         document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');
@@ -57,7 +62,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_stock_excel_v2&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_stock_multi_del_v1&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -73,7 +78,6 @@
         </div>
     </div>
 
-    <!-- 🎯 엑셀 대량 업로드 제어 카드 (개별 샘플 다운로드 버튼 적용) -->
     <div class="card" style="background-color: #f8f9fa; border: 1px solid #ced4da;">
         <h2 style="margin-top:0;">📂 엑셀(CSV) 데이터 대량 업로드</h2>
         <div class="flex-form-row">
@@ -95,12 +99,14 @@
         </div>
     </div>
 
+    <!-- 🎯 [업그레이드] 품목 등록 및 체크박스 일괄 다중 삭제 마스터 제어 폼 -->
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h2 style="margin:0;">🗂️ 독립 재고 품목 마스터 제어</h2>
             <button class="btn btn-purple" onclick="openStockSortModal()">📊 품목 표시순서 관리</button>
         </div>
-        <div class="flex-form-row">
+        
+        <div class="flex-form-row" style="margin-bottom: 15px;">
             <div class="form-group">
                 <label>새 품목명</label>
                 <input type="text" id="newStockItemName" placeholder="예: 스포이드" style="width: 180px;">
@@ -109,15 +115,23 @@
                 <label>새 모델명</label>
                 <input type="text" id="newStockModelName" placeholder="예: 핑크 50ml" style="width: 150px;">
             </div>
-            <button class="btn btn-purple" onclick="addStockItemMaster()">품목 등록</button>
-            
-            <div class="divider">|</div>
-            
-            <div class="form-group">
-                <label style="visibility:hidden; display:block;">삭제패딩</label>
-                <select id="delStockItemSelect" style="width: 220px; height:38px;"></select>
+            <button class="btn btn-purple" onclick="addStockItemMaster()">품목 단일 등록</button>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #e9ecef; margin: 15px 0;">
+
+        <!-- 🎯 다중 일괄 삭제 제어판 -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: bold; font-size: 13px; color: #e74c3c;">🗑️ 품목 선택 다중 일괄 삭제 (잘못 등록된 품목 여러 개를 체크 후 삭제하세요)</span>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-gray" style="height: 32px; font-size: 12px; padding: 0 10px;" onclick="toggleAllMultiDeleteCheckboxes(true)">☑️ 전체 선택</button>
+                <button class="btn btn-gray" style="height: 32px; font-size: 12px; padding: 0 10px;" onclick="toggleAllMultiDeleteCheckboxes(false)">⬜ 전체 해제</button>
+                <button class="btn btn-red" style="height: 32px; font-size: 12px; padding: 0 12px;" onclick="deleteSelectedStockItemsMulti()">🗑️ 선택 항목 일괄 삭제</button>
             </div>
-            <button class="btn btn-gray" onclick="deleteStockItemMaster()">품목 삭제</button>
+        </div>
+
+        <div class="multi-delete-container" id="multiDeleteBox">
+            <!-- 자바스크립트로 체크박스 목록이 자동 생성됩니다 -->
         </div>
     </div>
 
@@ -193,6 +207,7 @@
 
             isDataLoaded = true;
             renderDropdowns();
+            renderMultiDeleteBox();
             buildStockTable();
             handleTopNavbarSessionName();
             document.getElementById('loadingStatus').innerText = "✅ 재고원장 동기화 완료";
@@ -223,9 +238,8 @@
         .catch(err => { document.getElementById('loadingStatus').innerText = "❌ 실시간 저장 실패"; });
     }
 
-    // 🎯 [수정] 각각의 양식별 다운로드 함수 처리
     function downloadCSVTemplate(targetType) {
-        var csvContent = "\uFEFF"; // UTF-8 BOM
+        var csvContent = "\uFEFF";
         var fileName = "";
 
         if(targetType === 'item') {
@@ -286,6 +300,7 @@
 
             fileInput.value = "";
             renderDropdowns();
+            renderMultiDeleteBox();
             buildStockTable();
             syncWithGoogle(`CSV 대량 업로드 완료 (${addedCount}건 처리)`);
             alert(`성공적으로 ${addedCount}건의 데이터가 반영되었습니다!`);
@@ -332,20 +347,64 @@
         document.getElementById('newStockItemName').value = "";
         document.getElementById('newStockModelName').value = "";
         
-        renderDropdowns(); buildStockTable();
+        renderDropdowns(); renderMultiDeleteBox(); buildStockTable();
         syncWithGoogle(`독립 재고품목 등록: ${iName}(${mName})`);
     }
 
-    function deleteStockItemMaster() {
-        var val = document.getElementById('delStockItemSelect').value;
-        if(!val) return;
-        var parts = val.split("|");
-        var iName = parts[0], mName = parts[1];
-        
-        if(confirm(`[${iName}] - [${mName}] 품목을 재고 관리에서 삭제하시겠습니까?`)) {
-            stockItems = stockItems.filter(x => !(x.itemName === iName && x.modelName === mName));
-            renderDropdowns(); buildStockTable();
-            syncWithGoogle(`독립 재고품목 삭제: ${iName}(${mName})`);
+    // 🎯 [신규] 체크박스 목록 그리기
+    function renderMultiDeleteBox() {
+        var box = document.getElementById('multiDeleteBox');
+        if(!box) return;
+        box.innerHTML = "";
+
+        if(stockItems.length === 0) {
+            box.innerHTML = "<div style='color:#888; font-size:12px; padding:10px;'>등록된 품목이 없습니다.</div>";
+            return;
+        }
+
+        stockItems.forEach((item, idx) => {
+            var valStr = item.itemName + "|" + item.modelName;
+            var label = document.createElement('label');
+            label.className = "multi-delete-item";
+            label.innerHTML = `<input type="checkbox" class="chk-multi-del" value="${valStr}"> <span>${item.itemName} (${item.modelName})</span>`;
+            box.appendChild(label);
+        });
+    }
+
+    // 🎯 [신규] 전체 선택 / 해제
+    function toggleAllMultiDeleteCheckboxes(status) {
+        var chks = document.querySelectorAll('.chk-multi-del');
+        chks.forEach(c => c.checked = status);
+    }
+
+    // 🎯 [신규] 체크된 품목들 일괄 다중 삭제 기능
+    function deleteSelectedStockItemsMulti() {
+        var checkedList = Array.prototype.slice.call(document.querySelectorAll('.chk-multi-del:checked'));
+        if(checkedList.length === 0) {
+            alert("삭제할 품목을 하나 이상 선택해주세요!");
+            return;
+        }
+
+        if(confirm(`선택하신 ${checkedList.length}개의 품목을 정말로 일괄 삭제하시겠습니까?\n(해당 품목의 입출고 기록도 함께 정돈됩니다)`)) {
+            var deleteKeys = checkedList.map(c => c.value); // ["품목명|모델명", ...]
+
+            // 1. stockItems에서 제거
+            stockItems = stockItems.filter(item => {
+                var key = item.itemName + "|" + item.modelName;
+                return deleteKeys.indexOf(key) === -1;
+            });
+
+            // 2. 관련된 입출고 내역도 정리
+            stockEntries = stockEntries.filter(entry => {
+                var key = entry.itemName + "|" + entry.modelName;
+                return deleteKeys.indexOf(key) === -1;
+            });
+
+            renderDropdowns();
+            renderMultiDeleteBox();
+            buildStockTable();
+            syncWithGoogle(`다중 일괄 품목 삭제: ${checkedList.length}건 처리`);
+            alert(`선택한 ${checkedList.length}개 품목이 성공적으로 삭제되었습니다.`);
         }
     }
 
@@ -406,6 +465,7 @@
         if(newOrderList.length > 0) {
             stockItems = newOrderList;
             renderDropdowns();
+            renderMultiDeleteBox();
             buildStockTable();
             syncWithGoogle("재고 품목 표시 순서 변경 저장");
         }
@@ -542,14 +602,12 @@
 
     function renderDropdowns() {
         var sI = document.getElementById('stockItemSelect');
-        var dI = document.getElementById('delStockItemSelect');
-        if(!sI || !dI) return;
+        if(!sI) return;
         
-        sI.innerHTML = ""; dI.innerHTML = "";
+        sI.innerHTML = "";
         
         if(stockItems.length === 0) {
             sI.innerHTML = `<option value="">품목을 등록해주세요</option>`;
-            dI.innerHTML = `<option value="">품목을 등록해주세요</option>`;
             return;
         }
 
@@ -557,7 +615,6 @@
             var valStr = i.itemName + "|" + i.modelName;
             var displayStr = i.itemName + " - " + i.modelName;
             sI.innerHTML += `<option value="${valStr}">${displayStr}</option>`; 
-            dI.innerHTML += `<option value="${valStr}">${displayStr}</option>`; 
         });
     }
 
