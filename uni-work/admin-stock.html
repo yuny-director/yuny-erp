@@ -20,6 +20,8 @@
         .btn-red { background-color: #e74c3c; } .btn-red:hover { background-color: #c0392b; }
         .btn-purple { background-color: #9b59b6; } .btn-purple:hover { background-color: #8e44ad; }
         .btn-gray { background-color: #7f8c8d; } .btn-gray:hover { background-color: #6c7a7d; }
+        .btn-blue { background-color: #2980b9; } .btn-blue:hover { background-color: #1f618d; }
+        .btn-orange { background-color: #e67e22; } .btn-orange:hover { background-color: #d35400; }
         
         .table-container { width: 100%; max-height: 70vh; overflow: auto !important; border: 1px solid #ccc; border-radius: 6px; background: white; -webkit-overflow-scrolling: touch; }
         table { border-collapse: separate !important; border-spacing: 0 !important; font-size: 13px; width: auto; min-width: 100%; table-layout: fixed; }
@@ -43,7 +45,6 @@
         .editable-cell:hover { background-color: #e8f4fd !important; }
         .inline-edit-input { width: 90%; height: 26px; text-align: center; border: 2px solid #2980b9; border-radius: 4px; font-weight: bold; }
 
-        /* 🎯 드래그 앤 드롭 순서 변경 모달 전용 스타일 */
         .sortable-list { list-style: none; padding: 0; margin: 0; }
         .sortable-item { padding: 10px 14px; margin-bottom: 8px; background-color: #f8f9fa; border: 1px solid #ced4da; border-radius: 6px; cursor: grab; font-weight: bold; font-size: 13px; color: #2c3e50; display: flex; align-items: center; justify-content: space-between; }
         .sortable-item.dragging { opacity: 0.5; background-color: #e8f4fd; border: 2px dashed #2980b9; }
@@ -56,25 +57,47 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_stock_order_v1&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_stock_excel_v1&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
     <div class="card" style="background-color: #fff9db; border: 2px solid #fab005; padding: 12px 25px;">
-        <div class="flex-form-row" style="margin-bottom: 0; align-items: center;">
+        <div class="flex-form-row" style="margin-bottom: 0; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <label style="color: #e67e22; font-weight: bold; margin: 0;">📅 원장 선택 연월 :</label>
                 <select id="filterYear" style="width: 100px; height:36px;"></select>
                 <select id="filterMonth" style="width: 80px; height:36px;"></select>
+                <span id="loadingStatus" style="font-weight: bold; color: #27ae60; font-size:14px; margin-left: 15px; display: inline-flex; align-items: center;">🔄 데이터 로드 중...</span>
             </div>
-            <span id="loadingStatus" style="font-weight: bold; color: #27ae60; font-size:14px; margin-left: 15px; display: inline-flex; align-items: center;">🔄 데이터 로드 중...</span>
+            <!-- 🎯 엑셀 다운로드 버튼 배치 -->
+            <button class="btn btn-blue" onclick="downloadStockExcel()">📥 현재 화면 엑셀(CSV) 다운로드</button>
+        </div>
+    </div>
+
+    <!-- 🎯 엑셀 대량 업로드 제어 카드 -->
+    <div class="card" style="background-color: #f8f9fa; border: 1px solid #ced4da;">
+        <h2 style="margin-top:0;">📂 엑셀(CSV) 데이터 대량 업로드</h2>
+        <div class="flex-form-row">
+            <div class="form-group">
+                <label>업로드 구분</label>
+                <select id="uploadType" style="width: 160px;">
+                    <option value="item">품목 마스터 등록</option>
+                    <option value="entry">입·출고 내역 등록</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>CSV 파일 선택</label>
+                <input type="file" id="csvFileInput" accept=".csv" style="width: 250px; padding: 4px;">
+            </div>
+            <button class="btn btn-orange" onclick="processCSVUpload()">🚀 대량 업로드 실행</button>
+            <div class="divider">|</div>
+            <button class="btn btn-gray" onclick="downloadCSVTemplate()">📄 업로드 양식(샘플) 받기</button>
         </div>
     </div>
 
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h2 style="margin:0;">🗂️ 독립 재고 품목 마스터 제어</h2>
-            <!-- 🎯 품목 표시 순서 관리 버튼 추가 -->
             <button class="btn btn-purple" onclick="openStockSortModal()">📊 품목 표시순서 관리</button>
         </div>
         <div class="flex-form-row">
@@ -126,7 +149,6 @@
     </div>
 </div>
 
-<!-- 🎯 [신규] 재고 품목 순서 변경 전용 팝업 모달 -->
 <div id="stockSortModal" class="modal" style="display:none; position:fixed; z-index:1000000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.4); align-items:center; justify-content:center;">
     <div class="modal-content" style="background:#fff; padding:25px; border-radius:8px; width:90%; max-width:550px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
         <h3 style="margin-top:0; color: #2c3e50;">↕️ 재고 품목 표시 순서 임의 조정</h3>
@@ -201,6 +223,106 @@
         .catch(err => { document.getElementById('loadingStatus').innerText = "❌ 실시간 저장 실패"; });
     }
 
+    // 🎯 [신규] 엑셀(CSV) 샘플 양식 다운로드
+    function downloadCSVTemplate() {
+        var type = document.getElementById('uploadType').value;
+        var csvContent = "\uFEFF"; // UTF-8 BOM 한글 깨짐 방지
+        var fileName = "";
+
+        if(type === 'item') {
+            csvContent += "품목명,모델명\n스포이드,핑크 50ml\n공병,투명 100ml\n";
+            fileName = "재고_품목등록_양식.csv";
+        } else {
+            csvContent += "일자,품목명,모델명,구분,수량\n2026-07-01,스포이드,핑크 50ml,입고,100\n2026-07-01,스포이드,핑크 50ml,출고,20\n";
+            fileName = "재고_입출고등록_양식.csv";
+        }
+
+        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        var link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        link.click();
+    }
+
+    // 🎯 [신규] CSV 파일 읽기 및 대량 등록 처리
+    function processCSVUpload() {
+        var fileInput = document.getElementById('csvFileInput');
+        var file = fileInput.files[0];
+        if(!file) { alert("업로드할 CSV 파일을 먼저 선택하세요!"); return; }
+
+        var type = document.getElementById('uploadType').value;
+        var reader = new FileReader();
+
+        reader.onload = function(e) {
+            var text = e.target.result;
+            var lines = text.split(/\r\n|\n/);
+            var addedCount = 0;
+
+            for(var i = 1; i < lines.length; i++) {
+                var line = lines[i].trim();
+                if(!line) continue;
+                var cols = line.split(",").map(c => c.trim().replace(/^"|"$/g, ''));
+
+                if(type === 'item') {
+                    var iName = cols[0], mName = cols[1];
+                    if(iName && mName) {
+                        var exists = stockItems.find(x => x.itemName === iName && x.modelName === mName);
+                        if(!exists) {
+                            stockItems.push({ itemName: iName, modelName: mName });
+                            addedCount++;
+                        }
+                    }
+                } else if(type === 'entry') {
+                    var date = cols[0], iName = cols[1], mName = cols[2], ioText = cols[3], qty = parseInt(cols[4]) || 0;
+                    var ioType = (ioText === '입고' || ioText === 'in') ? 'in' : ((ioText === '출고' || ioText === 'out') ? 'out' : '');
+
+                    if(date && iName && mName && ioType && qty > 0) {
+                        var idx = stockEntries.findIndex(x => x.date === date && x.itemName === iName && x.modelName === mName && x.type === ioType);
+                        var entry = { date: date, itemName: iName, modelName: mName, type: ioType, qty: qty };
+                        if(idx > -1) stockEntries[idx] = entry;
+                        else stockEntries.push(entry);
+                        addedCount++;
+                    }
+                }
+            }
+
+            fileInput.value = "";
+            renderDropdowns();
+            buildStockTable();
+            syncWithGoogle(`CSV 대량 업로드 완료 (${addedCount}건 처리)`);
+            alert(`성공적으로 ${addedCount}건의 데이터가 반영되었습니다!`);
+        };
+
+        reader.readAsText(file, 'EUC-KR'); // 한글 인코딩 지원
+    }
+
+    // 🎯 [신규] 현재 대장 표 화면 엑셀 다운로드
+    function downloadStockExcel() {
+        var selYear = document.getElementById("filterYear").value;
+        var selMonth = document.getElementById("filterMonth").value;
+        var table = document.getElementById('stockTable');
+        if(!table) return;
+
+        var csvContent = "\uFEFF"; // UTF-8 BOM
+        var rows = table.querySelectorAll("tr");
+
+        rows.forEach(row => {
+            var cols = row.querySelectorAll("th, td");
+            var rowData = [];
+            cols.forEach(col => {
+                var text = col.innerText.replace(/\n/g, ' ').replace(/,/g, '');
+                rowData.push('"' + text + '"');
+            });
+            csvContent += rowData.join(",") + "\n";
+        });
+
+        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        var link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `YUNY_ERP_재고원장_${selYear}년${selMonth}월.csv`;
+        link.click();
+    }
+
     function addStockItemMaster() {
         var iName = document.getElementById('newStockItemName').value.trim();
         var mName = document.getElementById('newStockModelName').value.trim();
@@ -230,7 +352,6 @@
         }
     }
 
-    /* 🎯 [신규] 재고 품목 순서 변경 드래그 앤 드롭 제어 함수들 */
     function openStockSortModal() {
         var listContainer = document.getElementById("stockSortableList");
         if(!listContainer) return;
