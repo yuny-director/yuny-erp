@@ -49,7 +49,6 @@
         .sortable-item { padding: 10px 14px; margin-bottom: 8px; background-color: #f8f9fa; border: 1px solid #ced4da; border-radius: 6px; cursor: grab; font-weight: bold; font-size: 13px; color: #2c3e50; display: flex; align-items: center; justify-content: space-between; }
         .sortable-item.dragging { opacity: 0.5; background-color: #e8f4fd; border: 2px dashed #2980b9; }
 
-        /* 🎯 다중 삭제 박스 전용 스타일 */
         .multi-delete-container { max-height: 160px; overflow-y: auto; border: 1px solid #ced4da; border-radius: 6px; padding: 10px; background: #fafafa; margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
         .multi-delete-item { display: flex; align-items: center; gap: 6px; background: white; padding: 6px 10px; border: 1px solid #e9ecef; border-radius: 4px; font-size: 12px; font-weight: bold; color: #333; cursor: pointer; }
         .multi-delete-item:hover { background: #fff5f5; border-color: #ffa8a8; }
@@ -62,7 +61,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_stock_multi_del_v1&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_stock_encoding_fixed&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -99,7 +98,6 @@
         </div>
     </div>
 
-    <!-- 🎯 [업그레이드] 품목 등록 및 체크박스 일괄 다중 삭제 마스터 제어 폼 -->
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h2 style="margin:0;">🗂️ 독립 재고 품목 마스터 제어</h2>
@@ -120,7 +118,6 @@
 
         <hr style="border: 0; border-top: 1px solid #e9ecef; margin: 15px 0;">
 
-        <!-- 🎯 다중 일괄 삭제 제어판 -->
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <span style="font-weight: bold; font-size: 13px; color: #e74c3c;">🗑️ 품목 선택 다중 일괄 삭제 (잘못 등록된 품목 여러 개를 체크 후 삭제하세요)</span>
             <div style="display: flex; gap: 8px;">
@@ -130,9 +127,7 @@
             </div>
         </div>
 
-        <div class="multi-delete-container" id="multiDeleteBox">
-            <!-- 자바스크립트로 체크박스 목록이 자동 생성됩니다 -->
-        </div>
+        <div class="multi-delete-container" id="multiDeleteBox"></div>
     </div>
 
     <div class="card">
@@ -257,6 +252,7 @@
         link.click();
     }
 
+    // 🎯 [수정] UTF-8 및 EUC-KR 스마트 인코딩 자동 감지 읽기 방식 도입
     function processCSVUpload() {
         var fileInput = document.getElementById('csvFileInput');
         var file = fileInput.files[0];
@@ -266,7 +262,19 @@
         var reader = new FileReader();
 
         reader.onload = function(e) {
-            var text = e.target.result;
+            var buffer = e.target.result;
+            var text = "";
+
+            // 1단계: UTF-8 테스트 해독
+            try {
+                var decoderUtf8 = new TextDecoder('utf-8', { fatal: true });
+                text = decoderUtf8.decode(buffer);
+            } catch(err) {
+                // UTF-8 해석에 실패(한글 깨짐 감지) 시 EUC-KR(ANSI) 방식으로 재해독
+                var decoderEuc = new TextDecoder('euc-kr');
+                text = decoderEuc.decode(buffer);
+            }
+
             var lines = text.split(/\r\n|\n/);
             var addedCount = 0;
 
@@ -303,10 +311,11 @@
             renderMultiDeleteBox();
             buildStockTable();
             syncWithGoogle(`CSV 대량 업로드 완료 (${addedCount}건 처리)`);
-            alert(`성공적으로 ${addedCount}건의 데이터가 반영되었습니다!`);
+            alert(`성공적으로 ${addedCount}건의 데이터가 한글 깨짐 없이 정밀 등록되었습니다!`);
         };
 
-        reader.readAsText(file, 'EUC-KR');
+        // ArrayBuffer 원본으로 파일 로드
+        reader.readAsArrayBuffer(file);
     }
 
     function downloadStockExcel() {
@@ -351,7 +360,6 @@
         syncWithGoogle(`독립 재고품목 등록: ${iName}(${mName})`);
     }
 
-    // 🎯 [신규] 체크박스 목록 그리기
     function renderMultiDeleteBox() {
         var box = document.getElementById('multiDeleteBox');
         if(!box) return;
@@ -371,13 +379,11 @@
         });
     }
 
-    // 🎯 [신규] 전체 선택 / 해제
     function toggleAllMultiDeleteCheckboxes(status) {
         var chks = document.querySelectorAll('.chk-multi-del');
         chks.forEach(c => c.checked = status);
     }
 
-    // 🎯 [신규] 체크된 품목들 일괄 다중 삭제 기능
     function deleteSelectedStockItemsMulti() {
         var checkedList = Array.prototype.slice.call(document.querySelectorAll('.chk-multi-del:checked'));
         if(checkedList.length === 0) {
@@ -386,15 +392,13 @@
         }
 
         if(confirm(`선택하신 ${checkedList.length}개의 품목을 정말로 일괄 삭제하시겠습니까?\n(해당 품목의 입출고 기록도 함께 정돈됩니다)`)) {
-            var deleteKeys = checkedList.map(c => c.value); // ["품목명|모델명", ...]
+            var deleteKeys = checkedList.map(c => c.value);
 
-            // 1. stockItems에서 제거
             stockItems = stockItems.filter(item => {
                 var key = item.itemName + "|" + item.modelName;
                 return deleteKeys.indexOf(key) === -1;
             });
 
-            // 2. 관련된 입출고 내역도 정리
             stockEntries = stockEntries.filter(entry => {
                 var key = entry.itemName + "|" + entry.modelName;
                 return deleteKeys.indexOf(key) === -1;
