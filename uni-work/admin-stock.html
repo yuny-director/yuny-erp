@@ -45,7 +45,7 @@
         .editable-cell:hover { background-color: #e8f4fd !important; }
         .inline-edit-input { width: 90%; height: 26px; text-align: center; border: 2px solid #2980b9; border-radius: 4px; font-weight: bold; }
 
-        .sortable-list { list-style: none; padding: 0; margin: 0; }
+        .sortable-list { list-style: none; padding: 0; margin: 0; max-height: 55vh; overflow-y: auto; padding-right: 5px; }
         .sortable-item { padding: 10px 14px; margin-bottom: 8px; background-color: #f8f9fa; border: 1px solid #ced4da; border-radius: 6px; cursor: grab; font-weight: bold; font-size: 13px; color: #2c3e50; display: flex; align-items: center; justify-content: space-between; }
         .sortable-item.dragging { opacity: 0.5; background-color: #e8f4fd; border: 2px dashed #2980b9; }
 
@@ -61,7 +61,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_stock_sort_v1&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_stock_modal_fixed&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -151,7 +151,6 @@
     </div>
 
     <div class="card">
-        <!-- 🎯 [신규] 표 정렬 기준 선택 드롭다운 영역 -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h2 style="margin:0;">📊 전체 품목별 수량 변동 및 현재고 대장</h2>
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -176,12 +175,21 @@
     </div>
 </div>
 
-<div id="stockSortModal" class="modal" style="display:none; position:fixed; z-index:1000000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.4); align-items:center; justify-content:center;">
-    <div class="modal-content" style="background:#fff; padding:25px; border-radius:8px; width:90%; max-width:550px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
-        <h3 style="margin-top:0; color: #2c3e50;">↕️ 재고 품목 표시 순서 임의 조정</h3>
-        <p style="font-size:12px; color:#666; margin-bottom:15px;">항목을 마우스로 드래그하여 원하시는 순서대로 배치한 후 [순서 저장]을 누르세요.</p>
-        <ul class="sortable-list" id="stockSortableList"></ul>
-        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+<!-- 🎯 [수정] 모달 높이 고정(max-height: 85vh) 및 내부 스크롤 적용 구조 -->
+<div id="stockSortModal" class="modal" style="display:none; position:fixed; z-index:1000000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
+    <div class="modal-content" style="background:#fff; padding:25px; border-radius:10px; width:90%; max-width:580px; max-height:85vh; display:flex; flex-direction:column; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing:border-box;">
+        <div style="flex-shrink:0;">
+            <h3 style="margin-top:0; margin-bottom:8px; color: #2c3e50;">↕️ 재고 품목 표시 순서 임의 조정</h3>
+            <p style="font-size:12px; color:#666; margin-bottom:15px;">항목을 마우스로 드래그하여 원하시는 순서대로 배치한 후 하단의 [순서 저장]을 누르세요.</p>
+        </div>
+        
+        <!-- 품목 리스트 영역 스크롤 제어 -->
+        <div style="flex:1; overflow-y:auto; padding-right:5px; margin-bottom:15px; border:1px solid #e9ecef; border-radius:6px; padding:10px; background:#f8f9fa;">
+            <ul class="sortable-list" id="stockSortableList" style="max-height:none;"></ul>
+        </div>
+        
+        <!-- 하단 버튼 영역 고정 -->
+        <div style="display: flex; justify-content: flex-end; gap: 8px; flex-shrink:0; border-top:1px solid #eee; padding-top:15px;">
             <button class="btn btn-gray" onclick="closeStockSortModal()">취소</button>
             <button class="btn btn-purple" onclick="saveStockItemOrder()">순서 저장</button>
         </div>
@@ -326,7 +334,7 @@
             renderMultiDeleteBox();
             buildStockTable();
             syncWithGoogle(`CSV 대량 업로드 완료 (${addedCount}건 처리)`);
-            alert(`성공적으로 ${addedCount}건의 데이터가 한글 깨짐 없이 정밀 등록되었습니다!`);
+            alert(`성공적으로 ${addedCount}건의 데이터가 정밀 등록되었습니다!`);
         };
 
         reader.readAsArrayBuffer(file);
@@ -512,7 +520,6 @@
         syncWithGoogle(`재고 입력 - ${iName}(${mName}) [${ioType === 'in' ? '입고' : '출고'}] ${qty}개 등록`);
     }
 
-    // 🎯 [수정] 정렬 선택 드롭다운 옵션에 따른 동적 정렬 로직 대입
     function buildStockTable() {
         var table = document.getElementById('stockTable'); if(!table) return;
         table.innerHTML = "";
@@ -534,7 +541,6 @@
         }
         var currentMonthStart = selYear + "-" + strMonth + "-01";
 
-        // 1단계: 품목별 수량 연산 데이터 맵 생성
         var itemCalculatedList = stockItems.map(itemInfo => {
             var iName = itemInfo.itemName;
             var mName = itemInfo.modelName;
@@ -568,7 +574,6 @@
             };
         });
 
-        // 2단계: 정렬 옵션 드롭다운 값 추출 및 정렬 수행
         var sortOptEl = document.getElementById("stockTableSortOption");
         var sortOpt = sortOptEl ? sortOptEl.value : "custom";
 
@@ -590,7 +595,6 @@
             itemCalculatedList.sort((a, b) => a.monthOutSum - b.monthOutSum);
         }
 
-        // 3단계: 정렬된 데이터 기준 표 출력
         var headerHtml = `<thead><tr><th class="fix-col-1">품목명</th><th class="fix-col-2">모델명</th><th class="fix-col-3">구분</th><th class="fix-col-4">총 수량 계</th>${dateSet.map(d => `<th style="min-width:65px;">${d.substring(5).replace("-","/")}</th>`).join('')}</tr></thead>`;
         var bodyHtml = "<tbody>";
         
