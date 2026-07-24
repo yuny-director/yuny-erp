@@ -1,4 +1,4 @@
-// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (계정 생성 시 유니워크 정산표 작업자 명단 자동 연동판)
+// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (작업자 계정 메뉴 및 권한 숨김 + 상단 가림 보정판)
 (function() {
     function initNavbar() {
         var navbarContainer = document.getElementById('global-navbar');
@@ -13,6 +13,10 @@
         var isMargin = currentPath.indexOf('margin') > -1;
         var isTotal = currentPath.indexOf('admin-total') > -1;
         var isStock = currentPath.indexOf('admin-stock') > -1;
+
+        // 접속 권한 확인 (worker 인지 admin 인지)
+        var userRole = localStorage.getItem('login_user_role') || "admin";
+        var isWorkerRole = (userRole === "worker");
 
         var navHtml = `
         <style>
@@ -71,23 +75,28 @@
         
         <div class="custom-navbar">
             <div class="custom-navbar-left">
-                <a href="../dashboard/dashboard.html" class="navbar-brand">YUNY_ERP</a>
-                <a href="../dashboard/dashboard.html" class="${isDashboard ? 'active-menu' : ''}">📊 대시보드</a>
-                <a href="../ads/ads.html" class="${isAds ? 'active-menu' : ''}">📢 광고관리</a>
-                <a href="../cost/cost.html" class="${isCost ? 'active-menu' : ''}">📉 원가관리</a>
-                <a href="../sales/sales.html" class="${isSales ? 'active-menu' : ''}">💰 매출관리</a>
-                <a href="../margin/margin.html" class="${isMargin ? 'active-menu' : ''}">📝 마진관리</a>
-                <a href="../uni-work/admin-stock.html" class="${isStock ? 'active-menu' : ''}">📦 재고표</a>
-                <a href="../uni-work/admin-total.html" class="${isTotal ? 'active-menu' : ''}">🛠️ 유니워크(정산표)</a>
+                <span class="navbar-brand">YUNY_ERP</span>
+                ${!isWorkerRole ? `
+                    <a href="../dashboard/dashboard.html" class="${isDashboard ? 'active-menu' : ''}">📊 대시보드</a>
+                    <a href="../ads/ads.html" class="${isAds ? 'active-menu' : ''}">📢 광고관리</a>
+                    <a href="../cost/cost.html" class="${isCost ? 'active-menu' : ''}">📉 원가관리</a>
+                    <a href="../sales/sales.html" class="${isSales ? 'active-menu' : ''}">💰 매출관리</a>
+                    <a href="../margin/margin.html" class="${isMargin ? 'active-menu' : ''}">📝 마진관리</a>
+                    <a href="../uni-work/admin-stock.html" class="${isStock ? 'active-menu' : ''}">📦 재고표</a>
+                    <a href="../uni-work/admin-total.html" class="${isTotal ? 'active-menu' : ''}">🛠️ 유니워크(정산표)</a>
+                ` : ''}
             </div>
             <div class="navbar-user-info">
-                <span class="navbar-user-name-text" id="navbar-user-name">관리자님 접속중</span>
-                <button class="btn-nav-action" onclick="window.openAccountManagerModal()">⚙️ 계정 권한 설정</button>
+                <span class="navbar-user-name-text" id="navbar-user-name">작업자님 접속중</span>
+                ${!isWorkerRole ? `
+                    <button class="btn-nav-action" onclick="window.openAccountManagerModal()">⚙️ 계정 권한 설정</button>
+                ` : ''}
                 <button class="btn-nav-action btn-nav-orange" onclick="window.resetMyPassword()">🔑 비번 변경</button>
                 <button class="btn-nav-action btn-nav-red" onclick="window.logoutSystem()">로그아웃</button>
             </div>
         </div>
 
+        ${!isWorkerRole ? `
         <div id="accountModal" class="account-modal-overlay">
             <div class="account-modal-card">
                 <div class="account-modal-header">
@@ -138,6 +147,7 @@
                 </div>
             </div>
         </div>
+        ` : ''}
         `;
 
         navbarContainer.innerHTML = navHtml;
@@ -154,7 +164,7 @@
 window.updateNavbarUserDisplay = function() {
     var nameEl = document.getElementById('navbar-user-name');
     if (!nameEl) return;
-    var activeName = localStorage.getItem('login_user_name') || "관리자";
+    var activeName = localStorage.getItem('login_user_name') || "작업자";
     nameEl.innerText = activeName + "님 접속중";
 };
 
@@ -175,14 +185,6 @@ window.renderAccountTable = function() {
     tbody.innerHTML = "";
     
     var currentUsers = window.userList || (typeof userList !== "undefined" ? userList : []);
-    
-    if (!currentUsers || currentUsers.length === 0) {
-        currentUsers = [
-            { id: "admin", pw: "1234", role: "admin", name: "관리자" },
-            { id: "이재호", pw: "1234", role: "worker", name: "이재호" }
-        ];
-        window.userList = currentUsers;
-    }
 
     currentUsers.forEach(function(u, idx) {
         var tr = document.createElement('tr');
@@ -232,7 +234,6 @@ window.saveAccountItem = function() {
     if (pwInput) pwInput.value = "";
     if (nameInput) nameInput.value = "";
 
-    // 🎯 [핵심 추가] 유니워크 정산표(admin-total.html)의 작업자 명단(workersPool)에도 자동 추가
     if (window.workersPool && Array.isArray(window.workersPool)) {
         if (window.workersPool.indexOf(name) === -1) {
             window.workersPool.push(name);
@@ -264,7 +265,6 @@ window.deleteAccountItem = function(idx) {
     }
 };
 
-// 🎯 계정 동기화 시 정산표 화면 및 구글 시트 DB 자동 반영
 window.syncAccountDataWithGoogle = function() {
     var scriptUrl = window.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbyPWv070zApltQFMeq6HUxFAnnBcZfpAXHz5n_vwnmX34kCXqadFumI1BfmJRWu0OZE/exec";
     var targetList = window.userList || userList || [];
@@ -277,7 +277,6 @@ window.syncAccountDataWithGoogle = function() {
     })
     .then(function(res) { return res.json(); })
     .then(function() {
-        // 현재 위치가 유니워크 정산표 페이지인 경우 명단 드롭다운 및 표 실시간 업데이트
         if (typeof window.renderDropdowns === 'function') window.renderDropdowns();
         if (typeof window.buildPivotTable === 'function') window.buildPivotTable();
         if (typeof window.syncWithGoogle === 'function' && window.workersPool) {
@@ -289,7 +288,7 @@ window.syncAccountDataWithGoogle = function() {
 };
 
 window.resetMyPassword = function() {
-    var activeName = localStorage.getItem('login_user_name') || "관리자";
+    var activeName = localStorage.getItem('login_user_name') || "작업자";
     var newPw = prompt(`[${activeName}] 계정의 변경할 새 비밀번호를 입력하세요:`);
     if (newPw) {
         if (!window.userList) window.userList = [];
@@ -297,7 +296,7 @@ window.resetMyPassword = function() {
         if (found) {
             found.pw = newPw.trim();
         } else {
-            window.userList.push({ id: activeName, pw: newPw.trim(), name: activeName, role: "admin" });
+            window.userList.push({ id: activeName, pw: newPw.trim(), name: activeName, role: "worker" });
         }
         window.syncAccountDataWithGoogle();
     }
