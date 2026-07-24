@@ -64,7 +64,6 @@
         .rate-on { background-color: #2bc891 !important; color: white !important; }
         .rate-off { background-color: #e74c3c !important; color: white !important; }
 
-        /* 🎯 [재고표와 스타일 통일] 드래그 앤 드롭 품목 순서 정렬 모달 스타일 */
         .sortable-list { list-style: none; padding: 0; margin: 0; }
         .sortable-item { padding: 10px 14px; margin-bottom: 8px; background-color: #f8f9fa; border: 1px solid #ced4da; border-radius: 6px; cursor: grab; font-weight: bold; font-size: 13px; color: #2c3e50; display: flex; align-items: center; justify-content: space-between; }
         .sortable-item.dragging { opacity: 0.5; background-color: #e8f4fd; border: 2px dashed #2980b9; }
@@ -77,7 +76,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_total_modal_fix&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_total_master_edit_v1&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -96,7 +95,11 @@
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h2 style="font-size:18px; margin: 0;">⚙️ 마스터 제어 콘솔</h2>
-            <button class="btn btn-purple" id="btnSortModal">📊 품목 표시순서 관리</button>
+            <div style="display: flex; gap: 8px;">
+                <!-- 🎯 [신규] 명단 / 품목명 / 단가 / 시급 수정 모달 버튼 추가 -->
+                <button class="btn btn-purple" id="btnMasterEditModal">✏️ 명단/품목/단가/시급 수정</button>
+                <button class="btn btn-purple" id="btnSortModal">📊 품목 표시순서 관리</button>
+            </div>
         </div>
         <div class="flex-form-row">
             <div class="form-group">
@@ -182,7 +185,39 @@
     </div>
 </div>
 
-<!-- 🎯 [수정] 재고표와 100% 동일하게 모달 디자인, 드래그 카드, 스크롤바 제어 개선 -->
+<!-- 🎯 [신규] 명단/품목/단가/시급 수정 전용 팝업 모달 -->
+<div id="masterEditModal" class="modal" style="display:none; position:fixed; z-index:1000000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
+    <div class="modal-content" style="background:#fff; padding:25px; border-radius:10px; width:90%; max-width:520px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing:border-box;">
+        <h3 style="margin-top:0; margin-bottom:8px; color: #2c3e50;">✏️ 마스터 정보 (명단 / 품목명 / 단가 / 시급) 수정</h3>
+        <p style="font-size:12px; color:#666; margin-bottom:15px;">수정할 항목 종류를 선택하신 후 내용을 변경해 주세요.<br>(이름이나 품목명 변경 시 과거 기록도 함께 안전하게 이전됩니다)</p>
+
+        <div class="form-group" style="margin-bottom: 15px; width: 100%;">
+            <label>수정 구분 선택</label>
+            <select id="editModeSelect" style="width: 100%; height:38px;" onchange="window.onMasterEditModeChange()">
+                <option value="worker_name">👷 작업자 이름 수정</option>
+                <option value="item_name">📂 품목명 수정</option>
+                <option value="item_cost">💵 기본 단가 수정</option>
+                <option value="worker_rate">⏱️ 작업자 시급 수정</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 15px; width: 100%;">
+            <label id="lblEditTargetSelect">수정 대상 선택</label>
+            <select id="editTargetSelect" style="width: 100%; height:38px;" onchange="window.onMasterEditTargetChange()"></select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px; width: 100%;">
+            <label id="lblEditValueInput">변경할 내용 입력</label>
+            <input type="text" id="editValueInput" style="width: 100%; height:38px;">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 8px; border-top:1px solid #eee; padding-top:15px;">
+            <button class="btn btn-gray" id="btnCloseMasterEditModal">취소</button>
+            <button class="btn btn-purple" id="btnSaveMasterEdit">변경사항 저장</button>
+        </div>
+    </div>
+</div>
+
 <div id="sortModal" class="modal" style="display:none; position:fixed; z-index:1000000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
     <div class="modal-content" style="background:#fff; padding:25px; border-radius:10px; width:90%; max-width:580px; max-height:85vh; display:flex; flex-direction:column; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing:border-box;">
         <div style="flex-shrink:0;">
@@ -251,6 +286,11 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("btnCloseSortModal").addEventListener("click", window.closeSortModal);
     document.getElementById("btnSaveItemOrder").addEventListener("click", window.saveItemOrder);
     
+    // 🎯 [신규] 명단/품목/단가/시급 수정 이벤트 리스너
+    document.getElementById("btnMasterEditModal").addEventListener("click", window.openMasterEditModal);
+    document.getElementById("btnCloseMasterEditModal").addEventListener("click", window.closeMasterEditModal);
+    document.getElementById("btnSaveMasterEdit").addEventListener("click", window.saveMasterEdit);
+
     document.getElementById("rateWorkerSelect").addEventListener("change", window.updateRateSettingHint);
     document.getElementById("admItemSelect").addEventListener("change", window.updateAdminCostHint);
 
@@ -313,6 +353,153 @@ window.syncWithGoogle = function(msg, callback) {
     });
 };
 
+// 🎯 [신규] 명단/품목/단가/시급 통합 수정 모달 로직
+window.openMasterEditModal = function() {
+    document.getElementById("editModeSelect").value = "worker_name";
+    window.onMasterEditModeChange();
+    document.getElementById("masterEditModal").style.display = "flex";
+};
+
+window.closeMasterEditModal = function() {
+    document.getElementById("masterEditModal").style.display = "none";
+};
+
+window.onMasterEditModeChange = function() {
+    var mode = document.getElementById("editModeSelect").value;
+    var targetSel = document.getElementById("editTargetSelect");
+    var lblTarget = document.getElementById("lblEditTargetSelect");
+    var lblValue = document.getElementById("lblEditValueInput");
+    var valInput = document.getElementById("editValueInput");
+
+    targetSel.innerHTML = "";
+    valInput.value = "";
+
+    if (mode === "worker_name" || mode === "worker_rate") {
+        lblTarget.innerText = "수정할 작업자 선택";
+        var workers = Array.isArray(window.workersPool) ? window.workersPool : [];
+        workers.forEach(function(w) {
+            targetSel.innerHTML += '<option value="' + w + '">' + w + '</option>';
+        });
+        if (mode === "worker_name") {
+            lblValue.innerText = "변경할 작업자 이름 입력";
+            valInput.type = "text";
+        } else {
+            lblValue.innerText = "변경할 기본 시급 입력 (원)";
+            valInput.type = "number";
+        }
+    } else if (mode === "item_name" || mode === "item_cost") {
+        lblTarget.innerText = "수정할 품목 선택";
+        var items = Object.keys(window.itemPrices || {}).sort(window.customItemSort);
+        items.forEach(function(i) {
+            targetSel.innerHTML += '<option value="' + i + '">' + i + '</option>';
+        });
+        if (mode === "item_name") {
+            lblValue.innerText = "변경할 품목명 입력";
+            valInput.type = "text";
+        } else {
+            lblValue.innerText = "변경할 기본 단가 입력 (원)";
+            valInput.type = "number";
+        }
+    }
+    window.onMasterEditTargetChange();
+};
+
+window.onMasterEditTargetChange = function() {
+    var mode = document.getElementById("editModeSelect").value;
+    var targetVal = document.getElementById("editTargetSelect").value;
+    var valInput = document.getElementById("editValueInput");
+
+    if (!targetVal) return;
+
+    if (mode === "worker_name") {
+        valInput.value = targetVal;
+    } else if (mode === "worker_rate") {
+        var rateConfig = window.hourlyRates[targetVal] || { rate: 9620 };
+        valInput.value = rateConfig.rate || 9620;
+    } else if (mode === "item_name") {
+        valInput.value = targetVal;
+    } else if (mode === "item_cost") {
+        valInput.value = window.itemPrices[targetVal] || 0;
+    }
+};
+
+window.saveMasterEdit = function() {
+    var mode = document.getElementById("editModeSelect").value;
+    var targetVal = document.getElementById("editTargetSelect").value;
+    var newVal = document.getElementById("editValueInput").value.trim();
+
+    if (!targetVal) { alert("수정 대상을 먼저 선택해 주세요!"); return; }
+    if (!newVal) { alert("변경할 내용을 입력해 주세요!"); return; }
+
+    if (mode === "worker_name") {
+        var oldName = targetVal;
+        var newName = newVal;
+        if (oldName === newName) { alert("변경된 이름이 동일합니다."); return; }
+        if (window.workersPool.indexOf(newName) > -1) { alert("이미 존재하는 작업자 이름입니다."); return; }
+
+        // 1. workersPool 명단 변경
+        var wIdx = window.workersPool.indexOf(oldName);
+        if (wIdx > -1) window.workersPool[wIdx] = newName;
+
+        // 2. hourlyRates 객체 키 변경
+        if (window.hourlyRates[oldName]) {
+            window.hourlyRates[newName] = window.hourlyRates[oldName];
+            delete window.hourlyRates[oldName];
+        }
+
+        // 3. rawEntries 내역 작업자명 변경
+        window.rawEntries.forEach(function(e) {
+            if (e.name === oldName) e.name = newName;
+        });
+
+        window.syncWithGoogle("작업자명 변경: " + oldName + " -> " + newName);
+        alert("[" + oldName + "] 작업자 이름이 [" + newName + "] 로 변경되었습니다.");
+
+    } else if (mode === "item_name") {
+        var oldItem = targetVal;
+        var newItem = newVal;
+        if (oldItem === newItem) { alert("변경된 품목명이 동일합니다."); return; }
+        if (window.itemPrices[newItem] !== undefined) { alert("이미 존재하는 품목명입니다."); return; }
+
+        // 1. itemPrices 단가 객체 키 변경
+        window.itemPrices[newItem] = window.itemPrices[oldItem];
+        delete window.itemPrices[oldItem];
+
+        // 2. myItemOrder 품목 순서 리스트 내 명칭 변경
+        var oIdx = window.myItemOrder.indexOf(oldItem);
+        if (oIdx > -1) window.myItemOrder[oIdx] = newItem;
+
+        // 3. rawEntries 내역 품목명 변경
+        window.rawEntries.forEach(function(e) {
+            if (e.item === oldItem) e.item = newItem;
+        });
+
+        window.syncWithGoogle("품목명 변경: " + oldItem + " -> " + newItem);
+        alert("[" + oldItem + "] 품목명이 [" + newItem + "] 로 변경되었습니다.");
+
+    } else if (mode === "item_cost") {
+        var item = targetVal;
+        var newCost = Number(newVal) || 0;
+        window.itemPrices[item] = newCost;
+
+        window.syncWithGoogle("기본단가 변경: " + item + " (" + newCost + "원)");
+        alert("[" + item + "] 기본 단가가 " + newCost.toLocaleString() + "원으로 변경되었습니다.");
+
+    } else if (mode === "worker_rate") {
+        var worker = targetVal;
+        var newRate = Number(newVal) || 0;
+        if (!window.hourlyRates[worker]) window.hourlyRates[worker] = { rate: 9620, customDays: {} };
+        window.hourlyRates[worker].rate = newRate;
+
+        window.syncWithGoogle("시급 변경: " + worker + " (" + newRate + "원)");
+        alert("[" + worker + "] 시급이 " + newRate.toLocaleString() + "원으로 변경되었습니다.");
+    }
+
+    window.closeMasterEditModal();
+    window.renderDropdowns();
+    window.buildPivotTable();
+};
+
 window.addNewWorker = function() {
     var inputEl = document.getElementById('newWorkerName');
     var n = inputEl ? inputEl.value.trim() : "";
@@ -369,7 +556,6 @@ window.deleteItem = function() {
     }
 };
 
-// 🎯 [수정] 모달 열기 및 드래그 앤 드롭 카드 렌더링
 window.openSortModal = function() {
     var listContainer = document.getElementById("sortableList"); if(!listContainer) return;
     listContainer.innerHTML = "";
@@ -409,7 +595,6 @@ window.openSortModal = function() {
 
 window.closeSortModal = function() { document.getElementById("sortModal").style.display = "none"; };
 
-// 🎯 [수정] 품목 순서 저장
 window.saveItemOrder = function() {
     var items = Array.prototype.slice.call(document.querySelectorAll("#sortableList .sortable-item"));
     window.myItemOrder = items.map(function(li) { return li.getAttribute("data-item"); }).filter(Boolean);
