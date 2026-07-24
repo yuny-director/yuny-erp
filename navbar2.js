@@ -1,4 +1,4 @@
-// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (작업자 성함 등록 및 네비바 접속 표시 반영)
+// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (계정 생성 시 유니워크 정산표 작업자 명단 자동 연동판)
 (function() {
     function initNavbar() {
         var navbarContainer = document.getElementById('global-navbar');
@@ -88,7 +88,6 @@
             </div>
         </div>
 
-        <!-- 🎯 [신규] 계정 권한 설정 모달 (작업자 성함 입력 필드 포함) -->
         <div id="accountModal" class="account-modal-overlay">
             <div class="account-modal-card">
                 <div class="account-modal-header">
@@ -107,7 +106,6 @@
                                 <label for="accInputPw">비밀번호</label>
                                 <input type="password" id="accInputPw" name="acc_user_pw" placeholder="비밀번호" autocomplete="new-password">
                             </div>
-                            <!-- 🎯 신규 필드: 작업자 성함 -->
                             <div class="account-field-box">
                                 <label for="accInputName">작업자 성함</label>
                                 <input type="text" id="accInputName" placeholder="예: 홍길동" autocomplete="off">
@@ -153,7 +151,6 @@
     }
 })();
 
-// 🎯 접속중 이름 표기 함수 (성함 우선 사용)
 window.updateNavbarUserDisplay = function() {
     var nameEl = document.getElementById('navbar-user-name');
     if (!nameEl) return;
@@ -189,7 +186,7 @@ window.renderAccountTable = function() {
 
     currentUsers.forEach(function(u, idx) {
         var tr = document.createElement('tr');
-        var displayName = u.name || u.id; // 성함이 없으면 ID 사용
+        var displayName = u.name || u.id;
         tr.innerHTML = `
             <td style="font-weight:bold;">${u.id}</td>
             <td style="color:#2c3e50; font-weight:bold;">${displayName}</td>
@@ -220,7 +217,7 @@ window.saveAccountItem = function() {
         return;
     }
     
-    if (!name) name = id; // 작업자 성함 미입력 시 ID를 기본 성함으로 적용
+    if (!name) name = id;
 
     if (!window.userList) window.userList = [];
     var existingIdx = window.userList.findIndex(function(u) { return u.id === id; });
@@ -234,6 +231,13 @@ window.saveAccountItem = function() {
     if (idInput) idInput.value = "";
     if (pwInput) pwInput.value = "";
     if (nameInput) nameInput.value = "";
+
+    // 🎯 [핵심 추가] 유니워크 정산표(admin-total.html)의 작업자 명단(workersPool)에도 자동 추가
+    if (window.workersPool && Array.isArray(window.workersPool)) {
+        if (window.workersPool.indexOf(name) === -1) {
+            window.workersPool.push(name);
+        }
+    }
 
     window.renderAccountTable();
     window.syncAccountDataWithGoogle();
@@ -260,10 +264,12 @@ window.deleteAccountItem = function(idx) {
     }
 };
 
+// 🎯 계정 동기화 시 정산표 화면 및 구글 시트 DB 자동 반영
 window.syncAccountDataWithGoogle = function() {
     var scriptUrl = window.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbyPWv070zApltQFMeq6HUxFAnnBcZfpAXHz5n_vwnmX34kCXqadFumI1BfmJRWu0OZE/exec";
     var targetList = window.userList || userList || [];
     var payload = { action: "syncUsers", userList: targetList };
+    
     fetch(scriptUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
@@ -271,7 +277,14 @@ window.syncAccountDataWithGoogle = function() {
     })
     .then(function(res) { return res.json(); })
     .then(function() {
-        alert("계정원장이 성공적으로 동기화되었습니다.");
+        // 현재 위치가 유니워크 정산표 페이지인 경우 명단 드롭다운 및 표 실시간 업데이트
+        if (typeof window.renderDropdowns === 'function') window.renderDropdowns();
+        if (typeof window.buildPivotTable === 'function') window.buildPivotTable();
+        if (typeof window.syncWithGoogle === 'function' && window.workersPool) {
+            window.syncWithGoogle("계정 연동 작업자 명단 자동 추가 완료");
+        } else {
+            alert("계정원장이 성공적으로 동기화되었습니다.");
+        }
     });
 };
 
