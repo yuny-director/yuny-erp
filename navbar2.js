@@ -1,4 +1,4 @@
-// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (작업자 성함 실시간 자동 감지 연동판)
+// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (계정 아이디/성함 정밀 표시 보정판)
 (function() {
     function initNavbar() {
         var navbarContainer = document.getElementById('global-navbar');
@@ -87,7 +87,7 @@
                 ` : ''}
             </div>
             <div class="navbar-user-info">
-                <span class="navbar-user-name-text" id="navbar-user-name">접속자 표시중</span>
+                <span class="navbar-user-name-text" id="navbar-user-name">접속자 확인 중...</span>
                 ${!isWorkerRole ? `
                     <button class="btn-nav-action" onclick="window.openAccountManagerModal()">⚙️ 계정 권한 설정</button>
                 ` : ''}
@@ -161,24 +161,12 @@
     }
 })();
 
-// 🎯 [핵심 보완] 접속자 성함 감지 및 연동 표시 함수
+// 🎯 로그인 세션의 성함을 정확히 출력
 window.updateNavbarUserDisplay = function(customName) {
     var nameEl = document.getElementById('navbar-user-name');
     if (!nameEl) return;
     
-    var activeName = customName || localStorage.getItem('login_user_name');
-    
-    // 만약 저장된 성함이 없으면 작업자 화면의 드롭다운 선택값 우선 감지
-    if (!activeName || activeName === "작업자" || activeName === "관리자") {
-        var wSel = document.getElementById('workerNameSelect');
-        if (wSel && wSel.value) {
-            activeName = wSel.value;
-            localStorage.setItem('login_user_name', activeName);
-        } else {
-            activeName = activeName || "작업자";
-        }
-    }
-    
+    var activeName = customName || localStorage.getItem('login_user_name') || "작업자";
     nameEl.innerText = activeName + "님 접속중";
 };
 

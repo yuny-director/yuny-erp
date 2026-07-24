@@ -62,12 +62,18 @@
         .then(data => {
             btn.disabled = false;
             if (data.result === "success") {
-                var displayName = data.name || u; // 성함이 있으면 성함, 없으면 ID
-                localStorage.setItem('login_user_role', data.role);
-                localStorage.setItem('login_user_name', displayName);
+                // 기존 남아있던 세션 정보 완전 삭제
+                localStorage.removeItem('login_user_name');
+                localStorage.removeItem('login_user_role');
+
+                // 백엔드에서 넘겨준 정확한 성함(name) 사용, 없으면 ID(u)로 대체
+                var activeName = data.name || u;
+                
+                localStorage.setItem('login_user_role', data.role || "worker");
+                localStorage.setItem('login_user_name', activeName);
 
                 msg.style.color = "#27ae60";
-                msg.innerText = "✅ 로그인 성공! 페이지 이동 중...";
+                msg.innerText = "✅ [" + activeName + "]님 로그인 성공! 이동 중...";
 
                 setTimeout(function() {
                     if (data.role === "admin") {
