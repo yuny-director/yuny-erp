@@ -41,11 +41,10 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_cost_master_v1&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_cost_master_model_fix_v4&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
-    <!-- 컨트롤 패널 -->
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h2 style="font-size:18px; margin: 0; color:#2c3e50;">📉 [원가관리] 대/중/소 카테고리 및 상품 마스터 제어 센터</h2>
@@ -55,15 +54,14 @@
             </div>
         </div>
 
-        <!-- 상품 신규 등록 폼 -->
         <div class="flex-form-row">
             <div class="form-group">
                 <label>대카테고리</label>
-                <select id="selCatLarge" style="width:130px;" onchange="updateCatMediumDropdown()"></select>
+                <select id="selCatLarge" style="width:130px;"></select>
             </div>
             <div class="form-group">
                 <label>중카테고리</label>
-                <select id="selCatMedium" style="width:130px;" onchange="updateCatSmallDropdown()"></select>
+                <select id="selCatMedium" style="width:130px;"></select>
             </div>
             <div class="form-group">
                 <label>소카테고리</label>
@@ -75,7 +73,7 @@
             </div>
             <div class="form-group">
                 <label>모델명 / 규격</label>
-                <input type="text" id="inputModelName" placeholder="예: 핑크 30ml" style="width:140px;">
+                <input type="text" id="inputModelName" placeholder="예: SAN-RDC-C-CN" style="width:140px;">
             </div>
             <div class="form-group">
                 <label>기본 원가 (원)</label>
@@ -85,7 +83,6 @@
         </div>
     </div>
 
-    <!-- 상품 마스터 원장 테이블 -->
     <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <h3 style="margin:0; font-size:16px; color:#2c3e50;">📋 상품 마스터 및 원가 등록 원장 목록</h3>
@@ -111,7 +108,52 @@
     </div>
 </div>
 
-<!-- 🏷️ 1. 카테고리(대/중/소) 관리 모달 -->
+<div id="editMasterModal" class="modal-overlay">
+    <div class="modal-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #2c3e50; padding-bottom:8px;">
+            <h3 style="margin:0; color:#2c3e50;">✏️ 상품 마스터 정보 수정</h3>
+            <span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeEditMasterModal()">&times;</span>
+        </div>
+        
+        <input type="hidden" id="editTargetIndex">
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-bottom:15px;">
+            <div class="form-group">
+                <label>대카테고리</label>
+                <select id="editCatLarge" style="width:100%;"></select>
+            </div>
+            <div class="form-group">
+                <label>중카테고리</label>
+                <select id="editCatMedium" style="width:100%;"></select>
+            </div>
+            <div class="form-group">
+                <label>소카테고리</label>
+                <select id="editCatSmall" style="width:100%;"></select>
+            </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-bottom:20px;">
+            <div class="form-group">
+                <label>품목명</label>
+                <input type="text" id="editItemName" style="width:100%;">
+            </div>
+            <div class="form-group">
+                <label>모델명 / 규격</label>
+                <input type="text" id="editModelName" style="width:100%;">
+            </div>
+            <div class="form-group">
+                <label>기본 원가 (원)</label>
+                <input type="number" id="editItemCost" style="width:100%;">
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button class="btn btn-gray" onclick="closeEditMasterModal()">취소</button>
+            <button class="btn btn-purple" onclick="saveEditStockItemMaster()">변경사항 저장</button>
+        </div>
+    </div>
+</div>
+
 <div id="categoryModal" class="modal-overlay">
     <div class="modal-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #2c3e50; padding-bottom:8px;">
@@ -150,7 +192,6 @@
     </div>
 </div>
 
-<!-- 📥 2. 품목 마스터 CSV 대량 업로드 모달 -->
 <div id="csvModal" class="modal-overlay">
     <div class="modal-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #2c3e50; padding-bottom:8px;">
@@ -158,7 +199,7 @@
             <span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeCsvModal()">&times;</span>
         </div>
         <p style="font-size:12px; color:#666; margin-bottom:15px;">
-            CSV 파일 서식: <b>[대카테고리, 중카테고리, 소카테고리, 품목명, 모델명, 원가]</b> 순서로 입력해 주세요. (첫 줄 헤더 포함)
+            CSV 파일 서식: <b>[대카테고리, 중카테고리, 소카테고리, 품목명, 모델명, 원가]</b> 순서
         </p>
         <div class="form-group" style="margin-bottom:15px;">
             <input type="file" id="csvFileInput" accept=".csv" style="height:auto; padding:8px;">
@@ -222,7 +263,6 @@
         });
     }
 
-    // 🏷️ 카테고리 드롭다운 렌더링
     function renderCategoryDropdowns() {
         var selL = document.getElementById('selCatLarge');
         var selM = document.getElementById('selCatMedium');
@@ -232,18 +272,12 @@
         selM.innerHTML = '<option value="">선택 안함</option>';
         selS.innerHTML = '<option value="">선택 안함</option>';
 
-        window.categories.filter(c => c.level === 'large').forEach(c => {
-            selL.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-        });
-        window.categories.filter(c => c.level === 'medium').forEach(c => {
-            selM.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-        });
-        window.categories.filter(c => c.level === 'small').forEach(c => {
-            selS.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-        });
+        window.categories.filter(c => c.level === 'large').forEach(c => { selL.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
+        window.categories.filter(c => c.level === 'medium').forEach(c => { selM.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
+        window.categories.filter(c => c.level === 'small').forEach(c => { selS.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
     }
 
-    // 📋 원가 관리 상품 마스터 테이블 렌더링
+    // 📋 상품 마스터 원장 테이블 렌더링 (modelName 호환 완료)
     function renderCostMasterTable() {
         var tbody = document.getElementById('costMasterTableBody');
         tbody.innerHTML = "";
@@ -254,16 +288,21 @@
         }
 
         window.stockItems.forEach((item, idx) => {
+            var itemName = item.itemName || item.name || item.item || "이름없음";
+            // 🎯 [핵심] 기존 DB의 modelName 키 호환
+            var modelName = item.modelName || item.model || item.spec || "-";
+            var costVal = Number(item.cost || item.price || 0);
+
             var tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><b>${item.catLarge || '-'}</b></td>
                 <td>${item.catMedium || '-'}</td>
                 <td>${item.catSmall || '-'}</td>
-                <td style="font-weight:bold; color:#2c3e50;">${item.name}</td>
-                <td>${item.model || '-'}</td>
-                <td style="color:#27ae60; font-weight:bold;">${Number(item.cost || 0).toLocaleString()}원</td>
+                <td style="font-weight:bold; color:#2c3e50;">${itemName}</td>
+                <td style="color:#2980b9; font-weight:bold;">${modelName}</td>
+                <td style="color:#27ae60; font-weight:bold;">${costVal.toLocaleString()}원</td>
                 <td>
-                    <button class="btn btn-purple" style="height:26px; padding:0 8px; font-size:11px;" onclick="editStockItemMaster(${idx})">수정</button>
+                    <button class="btn btn-purple" style="height:26px; padding:0 8px; font-size:11px;" onclick="openEditMasterModal(${idx})">수정</button>
                     <button class="btn btn-danger" style="height:26px; padding:0 8px; font-size:11px;" onclick="deleteStockItemMaster(${idx})">삭제</button>
                 </td>
             `;
@@ -271,7 +310,6 @@
         });
     }
 
-    // ➕ 품목 마스터 신규 추가
     function addStockItemMaster() {
         var catLarge = document.getElementById('selCatLarge').value;
         var catMedium = document.getElementById('selCatMedium').value;
@@ -286,7 +324,9 @@
             catLarge: catLarge,
             catMedium: catMedium,
             catSmall: catSmall,
+            itemName: name,
             name: name,
+            modelName: model,
             model: model,
             cost: cost
         });
@@ -298,43 +338,73 @@
         syncCostMasterWithGoogle("상품 마스터 추가: " + name);
     }
 
-    // ✏️ 품목 마스터 수정
-    function editStockItemMaster(idx) {
+    function openEditMasterModal(idx) {
         var item = window.stockItems[idx];
         if (!item) return;
 
-        var newName = prompt("변경할 품목명:", item.name);
-        if (newName === null) return;
-        var newModel = prompt("변경할 모델명/규격:", item.model || "");
-        if (newModel === null) return;
-        var newCost = prompt("변경할 기본 원가(원):", item.cost || 0);
-        if (newCost === null) return;
+        document.getElementById('editTargetIndex').value = idx;
 
-        item.name = newName.trim();
-        item.model = newModel.trim();
-        item.cost = Number(newCost) || 0;
+        var eL = document.getElementById('editCatLarge');
+        var eM = document.getElementById('editCatMedium');
+        var eS = document.getElementById('editCatSmall');
 
-        syncCostMasterWithGoogle("상품 마스터 수정: " + item.name);
+        eL.innerHTML = '<option value="">선택 안함</option>';
+        eM.innerHTML = '<option value="">선택 안함</option>';
+        eS.innerHTML = '<option value="">선택 안함</option>';
+
+        window.categories.filter(c => c.level === 'large').forEach(c => { eL.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
+        window.categories.filter(c => c.level === 'medium').forEach(c => { eM.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
+        window.categories.filter(c => c.level === 'small').forEach(c => { eS.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
+
+        eL.value = item.catLarge || "";
+        eM.value = item.catMedium || "";
+        eS.value = item.catSmall || "";
+
+        document.getElementById('editItemName').value = item.itemName || item.name || item.item || "";
+        document.getElementById('editModelName').value = item.modelName || item.model || item.spec || "";
+        document.getElementById('editItemCost').value = Number(item.cost || item.price || 0);
+
+        document.getElementById('editMasterModal').style.display = 'flex';
     }
 
-    // 🗑️ 품목 마스터 삭제
+    function closeEditMasterModal() {
+        document.getElementById('editMasterModal').style.display = 'none';
+    }
+
+    function saveEditStockItemMaster() {
+        var idx = document.getElementById('editTargetIndex').value;
+        var item = window.stockItems[idx];
+        if (!item) return;
+
+        var newName = document.getElementById('editItemName').value.trim();
+        var newModel = document.getElementById('editModelName').value.trim();
+        if (!newName) { alert("품목명을 입력해 주세요!"); return; }
+
+        item.catLarge = document.getElementById('editCatLarge').value;
+        item.catMedium = document.getElementById('editCatMedium').value;
+        item.catSmall = document.getElementById('editCatSmall').value;
+        item.itemName = newName;
+        item.name = newName;
+        item.modelName = newModel;
+        item.model = newModel;
+        item.cost = Number(document.getElementById('editItemCost').value) || 0;
+
+        closeEditMasterModal();
+        syncCostMasterWithGoogle("상품 마스터 상세 수정: " + item.name);
+    }
+
     function deleteStockItemMaster(idx) {
         var item = window.stockItems[idx];
         if (!item) return;
-        if (confirm(`[${item.name} / ${item.model || '규격없음'}] 품목 마스터를 삭제하시겠습니까?`)) {
+        var displayName = item.itemName || item.name || item.item || "선택 품목";
+        if (confirm(`[${displayName}] 품목 마스터를 삭제하시겠습니까?`)) {
             window.stockItems.splice(idx, 1);
             syncCostMasterWithGoogle("상품 마스터 삭제");
         }
     }
 
-    // 🏷️ 카테고리 관리 모달 제어
-    function openCategoryModal() {
-        renderCategoryTable();
-        document.getElementById('categoryModal').style.display = 'flex';
-    }
-    function closeCategoryModal() {
-        document.getElementById('categoryModal').style.display = 'none';
-    }
+    function openCategoryModal() { renderCategoryTable(); document.getElementById('categoryModal').style.display = 'flex'; }
+    function closeCategoryModal() { document.getElementById('categoryModal').style.display = 'none'; }
 
     function renderCategoryTable() {
         var tbody = document.getElementById('categoryTableBody');
@@ -370,16 +440,12 @@
         }
     }
 
-    // 📥 CSV 대량 업로드 제어
     function openCsvModal() { document.getElementById('csvModal').style.display = 'flex'; }
     function closeCsvModal() { document.getElementById('csvModal').style.display = 'none'; }
 
     function processCsvUpload() {
         var fileInput = document.getElementById('csvFileInput');
-        if (!fileInput.files || fileInput.files.length === 0) {
-            alert("CSV 파일을 선택해 주세요!");
-            return;
-        }
+        if (!fileInput.files || fileInput.files.length === 0) { alert("CSV 파일을 선택해 주세요!"); return; }
 
         var file = fileInput.files[0];
         var reader = new FileReader();
@@ -405,7 +471,9 @@
                             catLarge: catL,
                             catMedium: catM,
                             catSmall: catS,
+                            itemName: name,
                             name: name,
+                            modelName: model,
                             model: model,
                             cost: cost
                         });
