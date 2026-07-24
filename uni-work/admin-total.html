@@ -76,7 +76,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_total_master_edit_v1&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_total_worker_only_v1&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -96,7 +96,6 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h2 style="font-size:18px; margin: 0;">⚙️ 마스터 제어 콘솔</h2>
             <div style="display: flex; gap: 8px;">
-                <!-- 🎯 [신규] 명단 / 품목명 / 단가 / 시급 수정 모달 버튼 추가 -->
                 <button class="btn btn-purple" id="btnMasterEditModal">✏️ 명단/품목/단가/시급 수정</button>
                 <button class="btn btn-purple" id="btnSortModal">📊 품목 표시순서 관리</button>
             </div>
@@ -185,7 +184,6 @@
     </div>
 </div>
 
-<!-- 🎯 [신규] 명단/품목/단가/시급 수정 전용 팝업 모달 -->
 <div id="masterEditModal" class="modal" style="display:none; position:fixed; z-index:1000000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
     <div class="modal-content" style="background:#fff; padding:25px; border-radius:10px; width:90%; max-width:520px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing:border-box;">
         <h3 style="margin-top:0; margin-bottom:8px; color: #2c3e50;">✏️ 마스터 정보 (명단 / 품목명 / 단가 / 시급) 수정</h3>
@@ -237,7 +235,6 @@
 </div>
 
 <script>
-// 전역 변수
 window.workersPool = [];
 window.itemPrices = {};
 window.rawEntries = [];
@@ -273,7 +270,6 @@ document.addEventListener("DOMContentLoaded", function() {
     ySel.onchange = window.buildPivotTable;
     mSel.onchange = window.buildPivotTable;
 
-    // 이벤트 리스너 바인딩
     document.getElementById("btnAddWorker").addEventListener("click", window.addNewWorker);
     document.getElementById("btnAddItem").addEventListener("click", window.addNewItem);
     document.getElementById("btnDelWorker").addEventListener("click", window.deleteWorker);
@@ -286,7 +282,6 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("btnCloseSortModal").addEventListener("click", window.closeSortModal);
     document.getElementById("btnSaveItemOrder").addEventListener("click", window.saveItemOrder);
     
-    // 🎯 [신규] 명단/품목/단가/시급 수정 이벤트 리스너
     document.getElementById("btnMasterEditModal").addEventListener("click", window.openMasterEditModal);
     document.getElementById("btnCloseMasterEditModal").addEventListener("click", window.closeMasterEditModal);
     document.getElementById("btnSaveMasterEdit").addEventListener("click", window.saveMasterEdit);
@@ -310,6 +305,23 @@ window.loadData = function() {
         window.userList = Array.isArray(data.userList) ? data.userList : [];
         if(data.itemOrder && Array.isArray(data.itemOrder)) { window.myItemOrder = data.itemOrder; }
         
+        // 🎯 [수정] 계정 중 role이 'worker'인 사람만 정산 대상 명단(workersPool)에 연동 (admin 계정 제외)
+        if (Array.isArray(window.userList)) {
+            // 기존 admin 계정이 포함되어 있다면 정산 명단에서 제거
+            var adminNames = window.userList.filter(function(u) { return u.role === 'admin'; }).map(function(u) { return u.name || u.id; });
+            window.workersPool = window.workersPool.filter(function(w) { return adminNames.indexOf(w) === -1 && w !== 'admin'; });
+
+            // role이 worker인 계정 성함만 추가
+            window.userList.forEach(function(u) {
+                if (u.role === 'worker') {
+                    var nameStr = u.name || u.id;
+                    if (nameStr && window.workersPool.indexOf(nameStr) === -1) {
+                        window.workersPool.push(nameStr);
+                    }
+                }
+            });
+        }
+
         window.renderDropdowns();
         window.buildPivotTable();
         if (typeof window.updateNavbarUserDisplay === 'function') window.updateNavbarUserDisplay();
@@ -353,7 +365,6 @@ window.syncWithGoogle = function(msg, callback) {
     });
 };
 
-// 🎯 [신규] 명단/품목/단가/시급 통합 수정 모달 로직
 window.openMasterEditModal = function() {
     document.getElementById("editModeSelect").value = "worker_name";
     window.onMasterEditModeChange();
@@ -437,17 +448,14 @@ window.saveMasterEdit = function() {
         if (oldName === newName) { alert("변경된 이름이 동일합니다."); return; }
         if (window.workersPool.indexOf(newName) > -1) { alert("이미 존재하는 작업자 이름입니다."); return; }
 
-        // 1. workersPool 명단 변경
         var wIdx = window.workersPool.indexOf(oldName);
         if (wIdx > -1) window.workersPool[wIdx] = newName;
 
-        // 2. hourlyRates 객체 키 변경
         if (window.hourlyRates[oldName]) {
             window.hourlyRates[newName] = window.hourlyRates[oldName];
             delete window.hourlyRates[oldName];
         }
 
-        // 3. rawEntries 내역 작업자명 변경
         window.rawEntries.forEach(function(e) {
             if (e.name === oldName) e.name = newName;
         });
@@ -461,15 +469,12 @@ window.saveMasterEdit = function() {
         if (oldItem === newItem) { alert("변경된 품목명이 동일합니다."); return; }
         if (window.itemPrices[newItem] !== undefined) { alert("이미 존재하는 품목명입니다."); return; }
 
-        // 1. itemPrices 단가 객체 키 변경
         window.itemPrices[newItem] = window.itemPrices[oldItem];
         delete window.itemPrices[oldItem];
 
-        // 2. myItemOrder 품목 순서 리스트 내 명칭 변경
         var oIdx = window.myItemOrder.indexOf(oldItem);
         if (oIdx > -1) window.myItemOrder[oIdx] = newItem;
 
-        // 3. rawEntries 내역 품목명 변경
         window.rawEntries.forEach(function(e) {
             if (e.item === oldItem) e.item = newItem;
         });
