@@ -3,143 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YUNY_ERP - 작업자 전용 입력 및 명세서</title>
+    <title>YUNY_ERP - 작업자 데이터 입력</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; }
+        html { margin: 0; padding: 0; background-color: #f4f6f9; font-family: Arial, sans-serif; }
+        /* 🎯 [수정] 네비게이션바 높이에 가리지 않도록 padding-top: 65px 적용 */
+        body { margin: 0; padding: 0; padding-top: 65px !important; background-color: #f4f6f9; font-family: Arial, sans-serif; }
+
         .content { padding: 15px; }
-        
-        .flex-form-row { 
-            display: flex; 
-            flex-wrap: wrap; 
-            align-items: flex-end; 
-            gap: 12px; 
-            margin-bottom: 15px;
-        }
-        
+        .flex-form-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 15px; }
         .card { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 25px; }
         .form-group { display: flex; flex-direction: column; }
         .form-group label { margin-bottom: 6px; font-weight: bold; font-size: 14px; color: #333; height: 16px; line-height: 16px; }
+        .form-group input, .form-group select { padding: 0 10px; border: 1px solid #ccc; border-radius: 4px; width: 150px; height: 38px; box-sizing: border-box; font-size: 14px !important; font-family: Arial, sans-serif; background-color: #ffffff; }
         
-        .form-group input, .form-group select { 
-            padding: 0 10px; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
-            width: 160px; 
-            height: 38px; 
-            box-sizing: border-box; 
-            font-size: 14px !important;
-            font-family: Arial, sans-serif;
-            background-color: #ffffff;
-        }
-        
-        .btn { 
-            padding: 0 18px; 
-            background-color: #27ae60; 
-            color: white; 
-            border: none; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            height: 38px; 
-            font-size: 14px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
-            box-sizing: border-box;
-            margin-bottom: 0px;
-        }
+        .btn { padding: 0 18px; background-color: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; height: 38px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s; box-sizing: border-box; }
         .btn:hover { background-color: #219653; }
-        .btn-blue { background-color: #2980b9 !important; }
-        .btn-blue:hover { background-color: #2471a3 !important; }
-        .btn-orange { background-color: #e67e22 !important; }
-        .btn-orange:hover { background-color: #d35400 !important; }
-        .btn-dark { background-color: #2c3e50 !important; }
-        .btn-dark:hover { background-color: #1a252f !important; }
+        .btn-blue { background-color: #2980b9; }
+        .btn-blue:hover { background-color: #1f618d; }
+        .btn-orange { background-color: #e67e22; }
+        .btn-orange:hover { background-color: #d35400; }
+        .btn-dark { background-color: #2c3e50; }
+        .btn-dark:hover { background-color: #34495e; }
 
-        .table-container { 
-            width: 100%; 
-            max-height: 65vh; 
-            overflow: auto !important; 
-            border: 1px solid #ccc; 
-            border-radius: 6px; 
-            background: white; 
-            -webkit-overflow-scrolling: touch;
-        }
+        .table-container { width: 100%; max-height: 70vh; overflow: auto !important; border: 1px solid #ccc; border-radius: 6px; background: white; -webkit-overflow-scrolling: touch; }
+        table { border-collapse: separate !important; border-spacing: 0 !important; font-size: 13px; width: auto; min-width: 100%; table-layout: fixed; }
+        th, td { padding: 10px 8px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; }
+        th { background-color: #f8f9fa !important; font-weight: bold; position: sticky !important; top: 0 !important; z-index: 30 !important; }
         
-        table { 
-            border-collapse: separate !important; 
-            border-spacing: 0 !important; 
-            font-size: 13px; 
-            width: auto; 
-            min-width: 100%; 
-            table-layout: fixed; 
-        }
-        
-        th, td { 
-            padding: 10px 6px; 
-            text-align: center; 
-            white-space: nowrap; 
-            box-sizing: border-box; 
-            border-right: 1px solid #ccc !important;
-            border-bottom: 1px solid #ccc !important;
-            border-left: none !important;
-            border-top: none !important;
-        }
-        
-        th { 
-            background-color: #f8f9fa !important; 
-            font-weight: bold; 
-            position: sticky !important; 
-            top: 0 !important; 
-            z-index: 30 !important; 
-            border-top: 1px solid #ccc !important;
-        }
-        
-        .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 80px; max-width: 90px; background: #ffffff !important; z-index: 10; border-left: 1px solid #ccc !important; }
-        .fix-col-2 { position: sticky !important; left: 80px !important; min-width: 65px; max-width: 70px; background: #ffffff !important; z-index: 10; }
-        .fix-col-3 { 
-            position: sticky !important; 
-            left: 145px !important; 
-            min-width: 95px; 
-            max-width: 110px; 
-            background: #edf2ff !important; 
-            z-index: 10; 
-            font-weight: bold; 
-            border-right: 2px solid #999 !important; 
-        }
+        .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 110px; max-width: 130px; background: #ffffff !important; z-index: 10; font-weight: bold; text-align: center !important; }
+        .fix-col-2 { position: sticky !important; left: 110px !important; min-width: 75px; max-width: 85px; background: #ffffff !important; z-index: 10; font-weight: bold; color: #27ae60; }
+        .fix-col-3 { position: sticky !important; left: 185px !important; min-width: 95px; max-width: 105px; background: #f4fce3 !important; z-index: 10; font-weight: bold; border-right: 2px solid #aaa !important; }
         
         th.fix-col-1, th.fix-col-2, th.fix-col-3 { z-index: 40 !important; }
-        th.fix-col-3 { border-right: 2px solid #999 !important; }
-        
-        .worker-text { color: #27ae60; font-weight: bold; }
-        .time-text { color: #364fc7; font-weight: bold; }
-        
-        tbody tr:hover td { background-color: #f1f3f5 !important; }
-        tbody tr:hover td.fix-col-1, tbody tr:hover td.fix-col-2 { background-color: #f1f3f5 !important; }
-        tbody tr:hover td.fix-col-3 { background-color: #dbe4ff !important; }
-
+        .row-attendance { background-color: #edf2ff !important; font-weight: bold; color: #364fc7; }
+        .row-attendance td { background-color: #edf2ff !important; }
         .divider { color: #ccc; font-size: 18px; margin: 0 5px; align-self: flex-end; padding-bottom: 10px; }
-        .lock-input { background-color: #f1f3f5 !important; color: #868e96 !important; cursor: not-allowed; }
     </style>
-    <script src="../config.js"></script>
+    <script>
+        document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');
+    </script>
 </head>
 <body>
 
 <div id="global-navbar"></div>
-<script src="../navbar2.js?v=2026_worker_main_fixed"></script>
+<script>
+    document.write('<script src="../navbar2.js?v=2026_worker_input_nav_fixed&t=' + Date.now() + '"><\/script>');
+</script>
 
 <div class="content">
-    <div class="card" style="background-color: #fff9db; border: 2px solid #fab005; padding: 15px 25px;">
-        <div class="flex-form-row" style="margin-bottom: 0;">
+    <div class="card" style="background-color: #fff9db; border: 2px solid #fab005; padding: 12px 25px;">
+        <div class="flex-form-row" style="margin-bottom: 0; align-items: center;">
             <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px;">
-                <label style="color: #e67e22; margin-bottom: 0; font-size: 14px; font-weight: bold;">📊 정산 명세 확인 연월 선택 :</label>
-                <select id="filterYear" style="width: 95px; height:36px;"></select>
-                <select id="filterMonth" style="width: 75px; height:36px;"></select>
-                <label style="color: #555; margin-bottom: 0; font-size: 14px; font-weight: bold; margin-left:15px;">기록 전송일 선택 :</label>
-                <input type="date" id="globalWorkDate" style="width: 140px; height:36px;">
+                <label style="color: #e67e22; margin-bottom: 0; font-size: 14px; font-weight: bold;">📅 생산 및 근태 기록 연월 :</label>
+                <select id="filterYear" style="width: 100px; height:36px;"></select>
+                <select id="filterMonth" style="width: 80px; height:36px;"></select>
+                <input type="date" id="workDate" style="width: 150px; height:36px; margin-left: 10px;">
             </div>
-            <span id="loadingStatus" style="font-weight: bold; color: #27ae60; font-size:13px; margin-left:10px; padding-bottom: 2px;">🔄 데이터 동기화 중...</span>
+            <span id="loadingStatus" style="font-weight: bold; color: #27ae60; font-size:14px; margin-left: 15px; display: inline-flex; align-items: center;">🔄 시스템 동기화 완료</span>
         </div>
     </div>
 
@@ -147,44 +67,58 @@
         <div class="flex-form-row">
             <div class="form-group">
                 <label>본인 이름</label>
-                <select id="workerNameSelect" onchange="onWorkerChanged()" style="width:130px; background-color:#edf2ff; font-weight:bold;"></select>
+                <select id="workerNameSelect" style="width: 130px;"></select>
             </div>
             <div class="form-group">
                 <label>작업 품목 선택</label>
-                <select id="workerItemSelect" style="width:150px;"></select>
+                <select id="itemSelect" style="width: 160px;"></select>
             </div>
             <div class="form-group">
                 <label>생산 수량</label>
-                <input type="number" id="workerQty" value="100" style="width:100px;">
+                <input type="number" id="workQty" value="100" style="width: 100px;">
             </div>
-            <button class="btn" onclick="sendWorkerQtyData()">작업물량 전송</button>
+            <button class="btn" onclick="submitWorkData()">작업물량 전송</button>
+
             <div class="divider">|</div>
+
             <div class="form-group">
                 <label>출근 시간 기록</label>
-                <input type="text" id="workStartTime" placeholder="출근 전" class="lock-input" readonly style="width:110px;">
+                <input type="text" id="startTimeInput" placeholder="출근 전" readonly style="width: 130px; background-color: #f8f9fa;">
             </div>
-            <button class="btn btn-blue" onclick="stampCurrentTime('start')">출근 도장</button>
+            <button class="btn btn-blue" onclick="recordTime('start')">출근 도장</button>
+
             <div class="form-group">
                 <label>퇴근 시간 기록</label>
-                <input type="text" id="workEndTime" placeholder="퇴근 전" class="lock-input" readonly style="width:110px;">
+                <input type="text" id="endTimeInput" placeholder="퇴근 전" readonly style="width: 130px; background-color: #f8f9fa;">
             </div>
-            <button class="btn btn-orange" onclick="stampCurrentTime('end')">퇴근 도장</button>
-            <button class="btn btn-dark" onclick="sendAttendanceData()">출퇴근 전송</button>
+            <button class="btn btn-orange" onclick="recordTime('end')">퇴근 도장</button>
+
+            <button class="btn btn-dark" onclick="submitAttendanceData()">출퇴근 전송</button>
         </div>
     </div>
 
     <div class="card">
-        <h2 style="font-size:18px; margin-top:0;">📊 본인의 일자별 수량 및 근태 리포트 (개인 전용)</h2>
+        <h2>📊 본인의 일자별 수량 및 근태 리포트 (개인 전용)</h2>
         <div class="table-container">
-            <table id="workerPivotTable"></table>
+            <table id="workerTable"></table>
         </div>
     </div>
 </div>
 
 <script>
-    var workersPool = []; var itemPrices = {}; var rawEntries = []; var hourlyRates = {}; var userList = [];
-    // 👑 초기화 단계에서 구글 서버 연동 락 해제
+    var workersPool = [];
+    var itemPrices = {};
+    var rawEntries = [];
     var myItemOrder = [];
+
+    function customItemSort(a, b) {
+        if (!myItemOrder || !Array.isArray(myItemOrder)) return 0;
+        var idxA = myItemOrder.indexOf(a);
+        var idxB = myItemOrder.indexOf(b);
+        if (idxA === -1) idxA = 999;
+        if (idxB === -1) idxB = 999;
+        return idxA - idxB;
+    }
 
     window.onload = function() {
         var now = new Date(); var currentYear = now.getFullYear(); var currentMonth = now.getMonth() + 1;
@@ -193,204 +127,186 @@
         var mSel = document.getElementById("filterMonth");
         for(var m = 1; m <= 12; m++) { mSel.innerHTML += `<option value="${m}" ${m===currentMonth?'selected':''}>${m}월</option>`; }
         
-        var tzOffset = now.getTimezoneOffset() * 60000;
-        document.getElementById('globalWorkDate').value = new Date(now.getTime() - tzOffset).toISOString().split('T')[0]; 
-        ySel.onchange = buildWorkerPivotTable; mSel.onchange = buildWorkerPivotTable;
+        document.getElementById('workDate').value = now.toISOString().split('T')[0];
+        ySel.onchange = buildWorkerTable; mSel.onchange = buildWorkerTable;
+        document.getElementById('workerNameSelect').onchange = buildWorkerTable;
+        
         loadData();
     };
 
     function loadData() {
-        // 🔒 [캐시 원천 파괴] 구글 서버가 찌꺼기 데이터를 주지 못하도록 강제 최신화 난수 주입
-        var cacheBusterUrl = GOOGLE_SCRIPT_URL + (GOOGLE_SCRIPT_URL.indexOf('?') > -1 ? '&' : '?') + 't=' + new Date().getTime();
-        
-        fetch(cacheBusterUrl).then(r => r.json()).then(data => {
-            workersPool = data.workersPool || []; itemPrices = data.itemPrices || {};
-            rawEntries = data.rawEntries || []; hourlyRates = data.hourlyRates || {};
-            userList = data.userList || [];
-            
-            // 🔄 [동기화 매핑 완료] 구글 시트 B6 셀에 적힌 마스터 순서를 작업자 화면 변수에 실시간 이식
-            if(data.itemOrder && Array.isArray(data.itemOrder) && data.itemOrder.length > 0) {
-                myItemOrder = data.itemOrder;
-            } else {
-                myItemOrder = ["스포이드", "공병", "미스트(핑크)", "미스트(보라)", "지정품목"];
-            }
-            
-            initWorkerNameSelect();
+        var scriptUrl = GOOGLE_SCRIPT_URL + (GOOGLE_SCRIPT_URL.indexOf('?') > -1 ? '&' : '?') + 't=' + Date.now();
+        fetch(scriptUrl).then(r => r.json()).then(data => {
+            workersPool = Array.isArray(data.workersPool) ? data.workersPool : [];
+            itemPrices = data.itemPrices || {};
+            rawEntries = Array.isArray(data.rawEntries) ? data.rawEntries : [];
+            myItemOrder = Array.isArray(data.itemOrder) ? data.itemOrder : [];
+
             renderDropdowns();
-            buildWorkerPivotTable();
-            handleTopNavbarSessionName();
+            buildWorkerTable();
+            handleSessionName();
             document.getElementById('loadingStatus').innerText = "✅ 시스템 동기화 완료";
+        }).catch(err => {
+            document.getElementById('loadingStatus').innerText = "❌ 데이터 동기화 지연";
         });
     }
 
-    function initWorkerNameSelect() {
-        var sel = document.getElementById('workerNameSelect');
-        var mySessionName = localStorage.getItem('login_user_name') || localStorage.getItem('last_worker_name') || "";
-        if(!mySessionName || mySessionName.trim() === "") {
-            mySessionName = "이재호"; 
-        }
-        sel.innerHTML = `<option value="${mySessionName}">${mySessionName}</option>`;
-        localStorage.setItem('last_worker_name', mySessionName);
-        onWorkerChanged();
-    }
-
-    function onWorkerChanged() {
-        updateTimeStampsOnUI();
-        buildWorkerPivotTable();
-    }
-
     function renderDropdowns() {
-        var wI = document.getElementById('workerItemSelect');
-        wI.innerHTML = "";
+        var wSel = document.getElementById('workerNameSelect');
+        var iSel = document.getElementById('itemSelect');
+        wSel.innerHTML = ""; iSel.innerHTML = "";
+
+        workersPool.forEach(w => { wSel.innerHTML += `<option value="${w}">${w}</option>`; });
         
-        // 👑 [드롭다운 정렬 강제 매핑] 구글에서 받아온 B6 셀 마스터 순서 배열에 맞춰 정렬
-        var allItems = Object.keys(itemPrices);
-        var sorted = [];
-        myItemOrder.forEach(item => { if(allItems.includes(item)) sorted.push(item); });
-        allItems.forEach(item => { if(!sorted.includes(item)) sorted.push(item); });
-        
-        sorted.forEach(i => { wI.innerHTML += `<option value="${i}">${i}</option>`; });
+        var items = Object.keys(itemPrices);
+        items.sort(customItemSort);
+        items.forEach(i => { iSel.innerHTML += `<option value="${i}">${i}</option>`; });
+
+        var savedName = localStorage.getItem('login_user_name');
+        if (savedName && workersPool.includes(savedName)) {
+            wSel.value = savedName;
+        }
     }
 
-    function buildWorkerPivotTable() {
-        var table = document.getElementById('workerPivotTable'); table.innerHTML = "";
+    function handleSessionName() {
+        var activeName = localStorage.getItem('login_user_name') || "작업자";
+        if(typeof window.updateNavbarUserDisplay === 'function') {
+            window.updateNavbarUserDisplay();
+        }
+    }
+
+    function recordTime(type) {
+        var now = new Date();
+        var hours = now.getHours();
+        var minutes = now.getMinutes();
+        var ampm = hours >= 12 ? '오후' : '오전';
+        hours = hours % 12; hours = hours ? hours : 12;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        var timeStr = ampm + ' ' + hours + ':' + minutes;
+
+        if (type === 'start') document.getElementById('startTimeInput').value = timeStr;
+        else document.getElementById('endTimeInput').value = timeStr;
+    }
+
+    function submitWorkData() {
+        var date = document.getElementById('workDate').value;
         var name = document.getElementById('workerNameSelect').value;
-        if(!name) return;
+        var item = document.getElementById('itemSelect').value;
+        var qty = parseInt(document.getElementById('workQty').value) || 0;
+
+        if(!date || !name || !item || qty <= 0) { alert("올바른 작업 데이터를 입력해주세요."); return; }
+
+        var entry = { date: date, type: 'worker', name: name, item: item, qty: qty };
+        var idx = rawEntries.findIndex(x => x.date === date && x.name === name && x.item === item && x.type === 'worker');
         
-        var selYear = parseInt(document.getElementById("filterYear").value);
+        if(idx > -1) rawEntries[idx] = entry;
+        else rawEntries.push(entry);
+
+        buildWorkerTable();
+        syncWithGoogle(`${name}님 [${item}] ${qty}개 입력 완료`);
+    }
+
+    function submitAttendanceData() {
+        var date = document.getElementById('workDate').value;
+        var name = document.getElementById('workerNameSelect').value;
+        var sTime = document.getElementById('startTimeInput').value;
+        var eTime = document.getElementById('endTimeInput').value;
+
+        if(!sTime && !eTime) { alert("출근 도장 또는 퇴근 도장을 먼저 찍어주세요!"); return; }
+
+        var timeStr = (sTime || "미입력") + " ~ " + (eTime || "미입력");
+        var entry = { date: date, type: 'attendance', name: name, item: '통합근무', time: timeStr };
+        
+        var idx = rawEntries.findIndex(x => x.date === date && x.name === name && x.type === 'attendance');
+        if(idx > -1) rawEntries[idx] = entry;
+        else rawEntries.push(entry);
+
+        buildWorkerTable();
+        syncWithGoogle(`${name}님 출퇴근 [${timeStr}] 전송 완료`);
+        alert("출퇴근 시간 기록이 전송되었습니다.");
+    }
+
+    function syncWithGoogle(msg) {
+        document.getElementById('loadingStatus').innerText = "📤 데이터 저장 중...";
+        var payload = { action: "syncAll", updater: document.getElementById('workerNameSelect').value, summary: msg, rawEntries: rawEntries };
+        fetch(GOOGLE_SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) })
+        .then(res => res.json())
+        .then(() => { document.getElementById('loadingStatus').innerText = "✅ 저장 완료!"; setTimeout(loadData, 300); })
+        .catch(err => { document.getElementById('loadingStatus').innerText = "❌ 저장 완료"; });
+    }
+
+    function calculateHours(timeStr) {
+        if(!timeStr || timeStr === "-" || !timeStr.includes("~") || timeStr.includes("미입력")) return 0;
+        try {
+            var parts = timeStr.split("~");
+            var parseTime = function(t) {
+                t = t.trim(); var isPm = t.includes("오후"); var clean = t.replace("오전","").replace("오후","").trim();
+                var hm = clean.split(":"); var h = Number(hm[0]); var m = Number(hm[1]) || 0;
+                if(isPm && h < 12) h += 12; if(!isPm && h === 12) h = 0; return h + (m / 60);
+            };
+            var diff = parseTime(parts[1]) - parseTime(parts[0]); return diff > 0 ? Number(diff.toFixed(1)) : 0;
+        } catch(e) { return 0; }
+    }
+
+    function buildWorkerTable() {
+        var table = document.getElementById('workerTable'); if(!table) return;
+        table.innerHTML = "";
+        
+        var activeWorker = document.getElementById('workerNameSelect').value;
+        if(!activeWorker) return;
+
+        var selYear = document.getElementById("filterYear").value;
         var selMonth = parseInt(document.getElementById("filterMonth").value);
         var lastDay = new Date(selYear, selMonth, 0).getDate();
         
         var dateSet = [];
         var strMonth = selMonth < 10 ? "0" + selMonth : String(selMonth);
-        for(var d = 1; d <= lastDay; d++) { dateSet.push(strMonth + "/" + (d < 10 ? "0" + d : String(d))); }
-        
-        var headerHtml = `<thead><tr><th class="fix-col-1">품목</th><th class="fix-col-2">구분</th><th class="fix-col-3">총 수량 / 시간</th>${dateSet.map(d => `<th style="min-width:60px;">${d}</th>`).join('')}</tr></thead>`;
+        for(var d = 1; d <= lastDay; d++) {
+            var strDay = d < 10 ? "0" + d : String(d);
+            dateSet.push(selYear + "-" + strMonth + "-" + strDay);
+        }
+
+        var nameEntries = rawEntries.filter(e => e.name === activeWorker);
+        var itemsOfName = Array.from(new Set(nameEntries.map(e => e.item).filter(i => i && i !== '통합근무')));
+        if(itemsOfName.length === 0) itemsOfName = Object.keys(itemPrices);
+        itemsOfName.sort(customItemSort);
+
+        var headerHtml = `<thead><tr><th class="fix-col-1">품목</th><th class="fix-col-2">구분</th><th class="fix-col-3">총 수량 / 시간</th>${dateSet.map(d => `<th style="min-width:65px;">${d.substring(5).replace("-","/")}</th>`).join('')}</tr></thead>`;
         var bodyHtml = "<tbody>";
-        
-        var nameEntries = rawEntries.filter(e => e.name === name);
-        var allItems = Object.keys(itemPrices);
-        
-        // 👑 [집계표 테이블 정렬 강제 매핑] 아래 표 순서도 구글 시트 B6 셀 순서대로 완벽 일치
-        var sortedItems = [];
-        myItemOrder.forEach(item => { if(allItems.includes(item)) sortedItems.push(item); });
-        allItems.forEach(item => { if(!sortedItems.includes(item)) sortedItems.push(item); });
-        
-        sortedItems.forEach(item => {
-            var sumWorkerQty = 0;
+
+        itemsOfName.forEach(item => {
+            var totalQty = 0;
             dateSet.forEach(d => {
-                var wEnt = nameEntries.find(e => e.item === item && e.type === 'worker' && e.date === selYear + "-" + d.replace("/", "-"));
-                if(wEnt) sumWorkerQty += Number(wEnt.qty);
+                var ent = nameEntries.find(e => e.item === item && e.type === 'worker' && e.date === d);
+                if(ent) totalQty += Number(ent.qty);
             });
-            
-            var rowHtml = `<tr><td class="fix-col-1" style="font-weight:bold;">${item}</td><td class="fix-col-2 worker-text">개인입력</td><td class="fix-col-3" style="background-color:#edf2ff !important; color:#0b7285 !important;">${sumWorkerQty}개</td>`;
+
+            var rowHtml = `<tr><td class="fix-col-1">${item}</td><td class="fix-col-2">개인입력</td><td class="fix-col-3">${totalQty.toLocaleString()}개</td>`;
             dateSet.forEach(d => {
-                var wEnt = nameEntries.find(e => e.item === item && e.type === 'worker' && e.date === selYear + "-" + d.replace("/", "-"));
-                rowHtml += `<td>${(wEnt && wEnt.qty) ? wEnt.qty + '개' : '-'}</td>`;
+                var ent = nameEntries.find(e => e.item === item && e.type === 'worker' && e.date === d);
+                rowHtml += `<td>${ent ? ent.qty : '-'}</td>`;
             });
-            bodyHtml += rowHtml + "</tr>";
+            rowHtml += `</tr>`; bodyHtml += rowHtml;
         });
 
         var totalHours = 0;
-        dateSet.forEach(d => {
-            var attEnt = nameEntries.find(e => e.type === 'attendance' && e.date === selYear + "-" + d.replace("/", "-"));
-            if(attEnt && attEnt.time) { totalHours += calculateHours(attEnt.time); }
-        });
-        
-        var attendanceRowHtml = `<tr style="background-color:#f1f3f5;">
-            <td class="fix-col-1" style="font-weight:bold; color:#364fc7;">통합근무</td>
-            <td class="fix-col-2 time-text">출퇴근확정</td>
-            <td class="fix-col-3" style="background-color:#dbe4ff !important; color:#364fc7 !important;">${totalHours.toFixed(1)}시간</td>`;
+        var attRowHtml = `<tr class="row-attendance"><td class="fix-col-1">통합근무</td><td class="fix-col-2">출퇴근확정</td>`;
+        var attCells = "";
         
         dateSet.forEach(d => {
-            var attEnt = nameEntries.find(e => e.type === 'attendance' && e.date === selYear + "-" + d.replace("/", "-"));
-            attendanceRowHtml += `<td class="time-text" style="font-size:11px;">${(attEnt && attEnt.time) ? attEnt.time : '-'}</td>`;
+            var ent = nameEntries.find(e => e.type === 'attendance' && e.date === d);
+            if(ent && ent.time) {
+                totalHours += calculateHours(ent.time);
+                attCells += `<td style="font-size:11px;">${ent.time}</td>`;
+            } else {
+                attCells += `<td>-</td>`;
+            }
         });
-        bodyHtml += attendanceRowHtml + "</tr>";
 
-        table.innerHTML = headerHtml + bodyHtml + "</tbody>";
-    }
+        attRowHtml += `<td class="fix-col-3">${totalHours.toFixed(1)}시간</td>` + attCells + `</tr>`;
+        bodyHtml += attRowHtml + "</tbody>";
 
-    function stampCurrentTime(type) {
-        var now = new Date();
-        var h = now.getHours(); var m = now.getMinutes();
-        var ampm = h >= 12 ? '오후' : '오전';
-        if(h > 12) h -= 12; if(h === 0) h = 12;
-        var displayTime = ampm + ' ' + h + ':' + (m < 10 ? '0' + m : m);
-        if(type === 'start') { document.getElementById('workStartTime').value = displayTime; } 
-        else { document.getElementById('workEndTime').value = displayTime; }
-    }
-
-    function updateTimeStampsOnUI() {
-        var name = document.getElementById('workerNameSelect').value;
-        var date = document.getElementById('globalWorkDate').value;
-        document.getElementById('workStartTime').value = "";
-        document.getElementById('workEndTime').value = "";
-        if(!name || !date) return;
-        var attEnt = rawEntries.find(e => e.date === date && e.name === name && e.type === 'attendance');
-        if(attEnt && attEnt.time && attEnt.time.indexOf('~') > -1) {
-            var parts = attEnt.time.split('~');
-            document.getElementById('workStartTime').value = parts[0].trim();
-            document.getElementById('workEndTime').value = parts[1].trim();
-        }
-    }
-
-    function sendWorkerQtyData() {
-        var name = document.getElementById('workerNameSelect').value;
-        var item = document.getElementById('workerItemSelect').value;
-        var qty = parseInt(document.getElementById('workerQty').value) || 0;
-        var date = document.getElementById('globalWorkDate').value;
-        if(!name) { alert("이름을 선택해 주세요!"); return; }
-        if(!item) { alert("품목을 선택해 주세요!"); return; }
-        if(qty <= 0) { alert("올바른 수량을 입력해 주세요!"); return; }
-        var entry = { date: date, type: 'worker', name: name, item: item, qty: qty };
-        var idx = rawEntries.findIndex(x => x.date === entry.date && x.name === entry.name && x.item === entry.item && x.type === 'worker');
-        if(idx > -1) rawEntries[idx] = entry; else rawEntries.push(entry);
-        buildWorkerPivotTable();
-        syncWithGoogle(`작업자 [${name}]가 ${item} 수량 ${qty}개 입력`);
-    }
-
-    function sendAttendanceData() {
-        var name = document.getElementById('workerNameSelect').value;
-        var start = document.getElementById('workStartTime').value.trim();
-        var end = document.getElementById('workEndTime').value.trim();
-        var date = document.getElementById('globalWorkDate').value;
-        if(!name) { alert("이름을 선택해 주세요!"); return; }
-        if(!start || !end) { alert("출근 및 퇴근 도장을 찍어주세요!"); return; }
-        var timeStr = start + " ~ " + end;
-        var entry = { date: date, type: 'attendance', name: name, item: '통합근무', time: timeStr };
-        var idx = rawEntries.findIndex(x => x.date === entry.date && x.name === entry.name && x.type === 'attendance');
-        if(idx > -1) rawEntries[idx] = entry; else rawEntries.push(entry);
-        buildWorkerPivotTable();
-        syncWithGoogle(`작업자 [${name}] 출퇴근 기록 [${timeStr}] 전송`);
-    }
-
-    function handleTopNavbarSessionName() {
-        setTimeout(function(){
-            var activeName = document.getElementById('workerNameSelect').value;
-            if(!activeName) { activeName = localStorage.getItem('last_worker_name') || localStorage.getItem('login_user_name') || "작업자"; }
-            var navUserEl = document.getElementById('navbar-user-name');
-            if(navUserEl) { navUserEl.innerText = activeName + '님 접속중'; }
-        }, 350);
-    }
-
-    function syncWithGoogle(msg) {
-        document.getElementById('loadingStatus').innerText = "📤 기록 원장 전송 중...";
-        var payload = { action: "syncAll", updater: document.getElementById('workerNameSelect').value || "작업자", summary: msg, workersPool: workersPool, itemPrices: itemPrices, rawEntries: rawEntries, hourlyRates: hourlyRates, itemOrder: myItemOrder };
-        fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }).then(() => loadData());
-    }
-
-    function calculateHours(timeStr) { 
-        if(!timeStr || timeStr === "-" || timeStr.indexOf("~") === -1 || timeStr.indexOf("미입력") > -1) return 0; 
-        try { 
-            var parts = timeStr.split("~"); 
-            var parseTime = function(t) { 
-                t = t.trim(); var isPm = t.indexOf("오후") > -1; var clean = t.replace("오전","").replace("오후","").trim(); 
-                var hm = clean.split(":"); var h = Number(hm[0]); var m = Number(hm[1]) || 0; 
-                if(isPm && h < 12) h += 12; if(!isPm && h === 12) h = 0; return h + (m / 60); 
-            }; 
-            var diff = parseTime(parts[1]) - parseTime(parts[0]); return diff > 0 ? Number(diff.toFixed(1)) : 0; 
-        } catch(e) { return 0; } 
+        table.innerHTML = headerHtml + bodyHtml;
     }
 </script>
 </body>
