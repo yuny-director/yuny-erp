@@ -1,4 +1,4 @@
-// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (메뉴순서: 재고표 -> 유니워크정산표 변경판)
+// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (작업자 성함 등록 및 네비바 접속 표시 반영)
 (function() {
     function initNavbar() {
         var navbarContainer = document.getElementById('global-navbar');
@@ -54,13 +54,13 @@
             .btn-nav-red:hover { background-color: #c0392b; color: white; }
 
             .account-modal-overlay { display: none; position: fixed; z-index: 1000000; left: 0; top: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.55); align-items: center; justify-content: center; }
-            .account-modal-card { background-color: #ffffff; padding: 25px; border-radius: 10px; width: 90%; max-width: 580px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
+            .account-modal-card { background-color: #ffffff; padding: 25px; border-radius: 10px; width: 90%; max-width: 680px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
             .account-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #2c3e50; }
             .account-modal-header h3 { margin: 0; font-size: 17px; color: #2c3e50; font-weight: bold; }
             .account-modal-close { cursor: pointer; font-size: 22px; font-weight: bold; color: #888; transition: color 0.2s; }
             .account-modal-close:hover { color: #e74c3c; }
 
-            .account-input-bar { display: flex; align-items: flex-end; gap: 10px; width: 100%; box-sizing: border-box; background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 15px; }
+            .account-input-bar { display: flex; align-items: flex-end; gap: 8px; width: 100%; box-sizing: border-box; background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 15px; }
             .account-field-box { display: flex; flex-direction: column; flex: 1; min-width: 0; }
             .account-field-box label { font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #495057; text-align: left; }
             .account-field-box input, .account-field-box select { height: 36px; padding: 0 8px; border: 1px solid #ced4da; border-radius: 4px; font-size: 13px; width: 100%; box-sizing: border-box; background: #fff; }
@@ -77,7 +77,6 @@
                 <a href="../cost/cost.html" class="${isCost ? 'active-menu' : ''}">📉 원가관리</a>
                 <a href="../sales/sales.html" class="${isSales ? 'active-menu' : ''}">💰 매출관리</a>
                 <a href="../margin/margin.html" class="${isMargin ? 'active-menu' : ''}">📝 마진관리</a>
-                <!-- 🎯 [순서 및 이름 변경] 📦 재고표 -> 🛠️ 유니워크(정산표) -->
                 <a href="../uni-work/admin-stock.html" class="${isStock ? 'active-menu' : ''}">📦 재고표</a>
                 <a href="../uni-work/admin-total.html" class="${isTotal ? 'active-menu' : ''}">🛠️ 유니워크(정산표)</a>
             </div>
@@ -89,10 +88,11 @@
             </div>
         </div>
 
+        <!-- 🎯 [신규] 계정 권한 설정 모달 (작업자 성함 입력 필드 포함) -->
         <div id="accountModal" class="account-modal-overlay">
             <div class="account-modal-card">
                 <div class="account-modal-header">
-                    <h3>🥷 [통합 계정 관리] 작업자 ID/PW 및 권한 등급 제어</h3>
+                    <h3>🥷 [통합 계정 관리] 작업자 ID/PW/성함 및 권한 등급 제어</h3>
                     <span class="account-modal-close" onclick="window.closeAccountManagerModal()">&times;</span>
                 </div>
                 
@@ -101,11 +101,16 @@
                         <div class="account-input-bar">
                             <div class="account-field-box">
                                 <label for="accInputId">ID</label>
-                                <input type="text" id="accInputId" name="acc_user_id" placeholder="아이디 입력" autocomplete="off">
+                                <input type="text" id="accInputId" name="acc_user_id" placeholder="아이디" autocomplete="off">
                             </div>
                             <div class="account-field-box">
                                 <label for="accInputPw">비밀번호</label>
                                 <input type="password" id="accInputPw" name="acc_user_pw" placeholder="비밀번호" autocomplete="new-password">
+                            </div>
+                            <!-- 🎯 신규 필드: 작업자 성함 -->
+                            <div class="account-field-box">
+                                <label for="accInputName">작업자 성함</label>
+                                <input type="text" id="accInputName" placeholder="예: 홍길동" autocomplete="off">
                             </div>
                             <div class="account-field-box">
                                 <label for="accInputRole">권한 등급</label>
@@ -118,11 +123,12 @@
                         </div>
                     </form>
 
-                    <div style="max-height: 250px; overflow-y: auto;">
+                    <div style="max-height: 260px; overflow-y: auto;">
                         <table class="account-table">
                             <thead>
                                 <tr>
-                                    <th>등록된 ID</th>
+                                    <th>등록 ID</th>
+                                    <th>작업자 성함</th>
                                     <th>비밀번호</th>
                                     <th>권한 등급</th>
                                     <th>관리 기능</th>
@@ -147,10 +153,11 @@
     }
 })();
 
+// 🎯 접속중 이름 표기 함수 (성함 우선 사용)
 window.updateNavbarUserDisplay = function() {
     var nameEl = document.getElementById('navbar-user-name');
     if (!nameEl) return;
-    var activeName = localStorage.getItem('login_user_name') || "admin";
+    var activeName = localStorage.getItem('login_user_name') || "관리자";
     nameEl.innerText = activeName + "님 접속중";
 };
 
@@ -174,16 +181,18 @@ window.renderAccountTable = function() {
     
     if (!currentUsers || currentUsers.length === 0) {
         currentUsers = [
-            { id: "admin", pw: "1234", role: "admin" },
-            { id: "이재호", pw: "1234", role: "worker" }
+            { id: "admin", pw: "1234", role: "admin", name: "관리자" },
+            { id: "이재호", pw: "1234", role: "worker", name: "이재호" }
         ];
         window.userList = currentUsers;
     }
 
     currentUsers.forEach(function(u, idx) {
         var tr = document.createElement('tr');
+        var displayName = u.name || u.id; // 성함이 없으면 ID 사용
         tr.innerHTML = `
             <td style="font-weight:bold;">${u.id}</td>
+            <td style="color:#2c3e50; font-weight:bold;">${displayName}</td>
             <td>••••</td>
             <td style="color:${u.role === 'admin' ? '#2980b9' : '#27ae60'}; font-weight:bold;">${u.role}</td>
             <td>
@@ -198,10 +207,12 @@ window.renderAccountTable = function() {
 window.saveAccountItem = function() {
     var idInput = document.getElementById('accInputId');
     var pwInput = document.getElementById('accInputPw');
+    var nameInput = document.getElementById('accInputName');
     var roleInput = document.getElementById('accInputRole');
     
     var id = idInput ? idInput.value.trim() : "";
     var pw = pwInput ? pwInput.value.trim() : "";
+    var name = nameInput ? nameInput.value.trim() : "";
     var role = roleInput ? roleInput.value : "worker";
     
     if (!id || !pw) {
@@ -209,17 +220,21 @@ window.saveAccountItem = function() {
         return;
     }
     
+    if (!name) name = id; // 작업자 성함 미입력 시 ID를 기본 성함으로 적용
+
     if (!window.userList) window.userList = [];
     var existingIdx = window.userList.findIndex(function(u) { return u.id === id; });
     
     if (existingIdx > -1) {
-        window.userList[existingIdx] = { id: id, pw: pw, role: role };
+        window.userList[existingIdx] = { id: id, pw: pw, name: name, role: role };
     } else {
-        window.userList.push({ id: id, pw: pw, role: role });
+        window.userList.push({ id: id, pw: pw, name: name, role: role });
     }
     
     if (idInput) idInput.value = "";
     if (pwInput) pwInput.value = "";
+    if (nameInput) nameInput.value = "";
+
     window.renderAccountTable();
     window.syncAccountDataWithGoogle();
 };
@@ -261,15 +276,15 @@ window.syncAccountDataWithGoogle = function() {
 };
 
 window.resetMyPassword = function() {
-    var activeName = localStorage.getItem('login_user_name') || "admin";
+    var activeName = localStorage.getItem('login_user_name') || "관리자";
     var newPw = prompt(`[${activeName}] 계정의 변경할 새 비밀번호를 입력하세요:`);
     if (newPw) {
         if (!window.userList) window.userList = [];
-        var found = window.userList.find(function(u) { return u.id === activeName; });
+        var found = window.userList.find(function(u) { return (u.name || u.id) === activeName; });
         if (found) {
             found.pw = newPw.trim();
         } else {
-            window.userList.push({ id: activeName, pw: newPw.trim(), role: "admin" });
+            window.userList.push({ id: activeName, pw: newPw.trim(), name: activeName, role: "admin" });
         }
         window.syncAccountDataWithGoogle();
     }
