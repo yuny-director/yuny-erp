@@ -2,51 +2,92 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>YUNY_ERP - 로그인</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YUNY_ERP - 통합 로그인</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; background-color: #2c3e50; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .login-box { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); width: 360px; text-align: center; }
-        .login-box h2 { margin-top: 0; color: #2c3e50; margin-bottom: 20px; }
-        .login-box input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .login-box button { width: 100%; padding: 12px; background: #1abc9c; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 16px; }
-        .status-text { color: #e67e22; font-weight: bold; font-size: 13px; margin-top: 10px; display: none; }
+        body { font-family: Arial, sans-serif; background-color: #2c3e50; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: white; padding: 40px 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); width: 320px; text-align: center; }
+        .login-card h2 { color: #1abc9c; margin-bottom: 25px; }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; color: #333; }
+        .form-group input { width: 100%; height: 38px; padding: 0 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        .btn-login { width: 100%; height: 40px; background-color: #1abc9c; color: white; border: none; border-radius: 4px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: background 0.2s; }
+        .btn-login:hover { background-color: #16a085; }
+        #msgBox { margin-top: 15px; font-size: 13px; font-weight: bold; }
     </style>
-    <script src="./config.js"></script>
+    <script>
+        document.write('<script src="config.js?t=' + Date.now() + '"><\/script>');
+    </script>
 </head>
 <body>
-<div class="login-box">
-    <h2>YUNY ERP</h2>
-    <input type="text" id="username" placeholder="아이디 입력 (한글 가능)">
-    <input type="password" id="password" placeholder="비밀번호 입력">
-    <button onclick="startLogin()">시스템 접속하기</button>
-    <div id="statusMsg" class="status-text">🔄 보안 인증 중...</div>
+
+<div class="login-card">
+    <h2>YUNY_ERP</h2>
+    <form id="loginForm" onsubmit="return handleLogin(event)">
+        <div class="form-group">
+            <label for="username">아이디 (ID)</label>
+            <input type="text" id="username" required placeholder="아이디 입력" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label for="password">비밀번호</label>
+            <input type="password" id="password" required placeholder="비밀번호 입력" autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn-login" id="btnLoginBtn">로그인</button>
+    </form>
+    <div id="msgBox"></div>
 </div>
+
 <script>
-    function startLogin() {
-        var id = document.getElementById('username').value.trim();
-        var pw = document.getElementById('password').value.trim();
-        if(!id || !pw) return;
-        document.getElementById('statusMsg').style.display = "block";
+    function handleLogin(e) {
+        e.preventDefault();
+        var u = document.getElementById('username').value.trim();
+        var p = document.getElementById('password').value.trim();
+        var msg = document.getElementById('msgBox');
+        var btn = document.getElementById('btnLoginBtn');
 
-        if(typeof GOOGLE_SCRIPT_URL === "undefined" || !GOOGLE_SCRIPT_URL) {
-            if(id === "admin" && pw === "1234") { saveSessionAndGo("admin", "관리자"); } else { saveSessionAndGo("worker", id); }
-            return;
-        }
+        if (!u || !p) { alert("아이디와 비밀번호를 입력해주세요."); return false; }
 
-        fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "login", username: id, password: pw }) })
-        .then(r => r.json()).then(res => {
-            if(res.result === "success") { saveSessionAndGo(res.role, res.name); } 
-            else { alert(res.message); document.getElementById('statusMsg').style.display = "none"; }
-        }).catch(() => {
-            if(id === "admin" && pw === "1234") { saveSessionAndGo("admin", "관리자"); } 
-            else { saveSessionAndGo("worker", id); }
+        msg.style.color = "#e67e22";
+        msg.innerText = "🔄 로그인 인증 중...";
+        btn.disabled = true;
+
+        var scriptUrl = window.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbyPWv070zApltQFMeq6HUxFAnnBcZfpAXHz5n_vwnmX34kCXqadFumI1BfmJRWu0OZE/exec";
+
+        fetch(scriptUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: "login", username: u, password: p })
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            if (data.result === "success") {
+                var displayName = data.name || u; // 성함이 있으면 성함, 없으면 ID
+                localStorage.setItem('login_user_role', data.role);
+                localStorage.setItem('login_user_name', displayName);
+
+                msg.style.color = "#27ae60";
+                msg.innerText = "✅ 로그인 성공! 페이지 이동 중...";
+
+                setTimeout(function() {
+                    if (data.role === "admin") {
+                        window.location.href = "uni-work/admin-total.html";
+                    } else {
+                        window.location.href = "uni-work/worker-input.html";
+                    }
+                }, 300);
+            } else {
+                msg.style.color = "#e74c3c";
+                msg.innerText = "❌ " + (data.message || "아이디 또는 비밀번호 오류입니다.");
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            msg.style.color = "#e74c3c";
+            msg.innerText = "❌ 서버 연동 실패. 다시 시도해 주세요.";
         });
-    }
-    function saveSessionAndGo(role, name) {
-        sessionStorage.setItem('erp_role', role);
-        sessionStorage.setItem('erp_username', name);
-        if(role === 'admin') { location.href = "uni-work/admin-total.html"; } 
-        else { location.href = "uni-work/worker-input.html"; }
+
+        return false;
     }
 </script>
 </body>

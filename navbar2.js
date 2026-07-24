@@ -1,4 +1,4 @@
-// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (작업자 페이지 메뉴 완전 차단 및 보안 보정판)
+// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (작업자 성함 실시간 자동 감지 연동판)
 (function() {
     function initNavbar() {
         var navbarContainer = document.getElementById('global-navbar');
@@ -14,7 +14,6 @@
         var isTotal = currentPath.indexOf('admin-total') > -1;
         var isStock = currentPath.indexOf('admin-stock') > -1;
         
-        // 🎯 [핵심 보완] 작업자 전용 페이지(worker-input, worker-time)이거나 role이 worker인 경우 메뉴 무조건 차단
         var isWorkerPage = currentPath.indexOf('worker-input') > -1 || currentPath.indexOf('worker-time') > -1;
         var userRole = localStorage.getItem('login_user_role') || "";
         var isWorkerRole = isWorkerPage || (userRole === "worker");
@@ -88,7 +87,7 @@
                 ` : ''}
             </div>
             <div class="navbar-user-info">
-                <span class="navbar-user-name-text" id="navbar-user-name">작업자님 접속중</span>
+                <span class="navbar-user-name-text" id="navbar-user-name">접속자 표시중</span>
                 ${!isWorkerRole ? `
                     <button class="btn-nav-action" onclick="window.openAccountManagerModal()">⚙️ 계정 권한 설정</button>
                 ` : ''}
@@ -162,10 +161,24 @@
     }
 })();
 
-window.updateNavbarUserDisplay = function() {
+// 🎯 [핵심 보완] 접속자 성함 감지 및 연동 표시 함수
+window.updateNavbarUserDisplay = function(customName) {
     var nameEl = document.getElementById('navbar-user-name');
     if (!nameEl) return;
-    var activeName = localStorage.getItem('login_user_name') || "작업자";
+    
+    var activeName = customName || localStorage.getItem('login_user_name');
+    
+    // 만약 저장된 성함이 없으면 작업자 화면의 드롭다운 선택값 우선 감지
+    if (!activeName || activeName === "작업자" || activeName === "관리자") {
+        var wSel = document.getElementById('workerNameSelect');
+        if (wSel && wSel.value) {
+            activeName = wSel.value;
+            localStorage.setItem('login_user_name', activeName);
+        } else {
+            activeName = activeName || "작업자";
+        }
+    }
+    
     nameEl.innerText = activeName + "님 접속중";
 };
 
