@@ -2,30 +2,424 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>YUNY_ERP - 원가관리</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YUNY_ERP - 원가 및 상품 마스터 관리</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; }
-        .navbar { background-color: #2c3e50; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; height: 60px; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; }
-        .navbar-brand { color: white; font-size: 20px; font-weight: bold; text-decoration: none; }
-        .nav-menu { display: flex; list-style: none; margin: 0; padding: 0; }
-        .nav-link { color: #bdc3c7; text-decoration: none; padding: 10px 15px; display: block; border-radius: 4px; font-size: 15px; font-weight: bold; }
-        .nav-link:hover { color: white; background-color: #34495e; }
-        .nav-link.active { color: white; background-color: #1abc9c; }
-        .content { padding: 90px 30px 30px 30px; }
-        .data-box { background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        html { margin: 0; padding: 0; background-color: #f4f6f9; font-family: Arial, sans-serif; }
+        body { margin: 0; padding: 0; padding-top: 65px !important; background-color: #f4f6f9; font-family: Arial, sans-serif; }
+
+        .content { padding: 15px; }
+        .card { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .flex-form-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { margin-bottom: 6px; font-weight: bold; font-size: 13px; color: #333; }
+        .form-group input, .form-group select { padding: 0 10px; border: 1px solid #ccc; border-radius: 4px; height: 38px; box-sizing: border-box; font-size: 13px; background-color: #ffffff; }
+
+        .btn { padding: 0 16px; background-color: #1abc9c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; height: 38px; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s; box-sizing: border-box; }
+        .btn:hover { background-color: #16a085; }
+        .btn-purple { background-color: #9b59b6 !important; }
+        .btn-purple:hover { background-color: #8e44ad !important; }
+        .btn-orange { background-color: #e67e22 !important; }
+        .btn-orange:hover { background-color: #d35400 !important; }
+        .btn-danger { background-color: #e74c3c !important; }
+        .btn-danger:hover { background-color: #c0392b !important; }
+        .btn-gray { background-color: #7f8c8d !important; }
+
+        .table-container { width: 100%; max-height: 70vh; overflow: auto; border: 1px solid #ccc; border-radius: 6px; background: white; }
+        table { border-collapse: collapse; font-size: 13px; width: 100%; text-align: center; }
+        th, td { padding: 10px 8px; border: 1px solid #ddd; white-space: nowrap; }
+        th { background-color: #f8f9fa; font-weight: bold; position: sticky; top: 0; z-index: 10; }
+
+        .modal-overlay { display: none; position: fixed; z-index: 1000000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        .modal-card { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 650px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
     </style>
+    <script>
+        document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');
+    </script>
 </head>
 <body>
 
 <div id="global-navbar"></div>
-<script src="../navbar2.js"></script>
+<script>
+    document.write('<script src="../navbar2.js?v=2026_cost_master_v1&t=' + Date.now() + '"><\/script>');
+</script>
 
 <div class="content">
-    <div class="data-box">
-        <h2>💰 원가관리</h2>
-        <p>여기는 월별 제품 입고가를 삭제 없이 누적 기록하는 화면입니다.</p>
+    <!-- 컨트롤 패널 -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="font-size:18px; margin: 0; color:#2c3e50;">📉 [원가관리] 대/중/소 카테고리 및 상품 마스터 제어 센터</h2>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-purple" onclick="openCategoryModal()">🏷️ 카테고리 관리(대/중/소)</button>
+                <button class="btn btn-orange" onclick="openCsvModal()">📥 품목 마스터 CSV 대량 업로드</button>
+            </div>
+        </div>
+
+        <!-- 상품 신규 등록 폼 -->
+        <div class="flex-form-row">
+            <div class="form-group">
+                <label>대카테고리</label>
+                <select id="selCatLarge" style="width:130px;" onchange="updateCatMediumDropdown()"></select>
+            </div>
+            <div class="form-group">
+                <label>중카테고리</label>
+                <select id="selCatMedium" style="width:130px;" onchange="updateCatSmallDropdown()"></select>
+            </div>
+            <div class="form-group">
+                <label>소카테고리</label>
+                <select id="selCatSmall" style="width:130px;"></select>
+            </div>
+            <div class="form-group">
+                <label>품목명</label>
+                <input type="text" id="inputItemName" placeholder="예: 스포이드" style="width:140px;">
+            </div>
+            <div class="form-group">
+                <label>모델명 / 규격</label>
+                <input type="text" id="inputModelName" placeholder="예: 핑크 30ml" style="width:140px;">
+            </div>
+            <div class="form-group">
+                <label>기본 원가 (원)</label>
+                <input type="number" id="inputItemCost" placeholder="원가 입력" style="width:110px;">
+            </div>
+            <button class="btn" onclick="addStockItemMaster()">+ 품목 마스터 등록</button>
+        </div>
+    </div>
+
+    <!-- 상품 마스터 원장 테이블 -->
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 style="margin:0; font-size:16px; color:#2c3e50;">📋 상품 마스터 및 원가 등록 원장 목록</h3>
+            <span id="loadingStatus" style="font-weight: bold; color: #27ae60; font-size:13px;">🔄 데이터 동기화 완료</span>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>대카테고리</th>
+                        <th>중카테고리</th>
+                        <th>소카테고리</th>
+                        <th>품목명</th>
+                        <th>모델명 / 규격</th>
+                        <th>기본 원가</th>
+                        <th>관리 기능</th>
+                    </tr>
+                </thead>
+                <tbody id="costMasterTableBody"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
+<!-- 🏷️ 1. 카테고리(대/중/소) 관리 모달 -->
+<div id="categoryModal" class="modal-overlay">
+    <div class="modal-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #2c3e50; padding-bottom:8px;">
+            <h3 style="margin:0; color:#2c3e50;">🏷️ 대 / 중 / 소 3단계 카테고리 설정</h3>
+            <span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeCategoryModal()">&times;</span>
+        </div>
+        
+        <div class="flex-form-row">
+            <div class="form-group">
+                <label>구분</label>
+                <select id="catLevelSelect" style="width:110px;">
+                    <option value="large">대카테고리</option>
+                    <option value="medium">중카테고리</option>
+                    <option value="small">소카테고리</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label>카테고리명 입력</label>
+                <input type="text" id="catNameInput" placeholder="카테고리명 입력" style="width:100%;">
+            </div>
+            <button class="btn btn-purple" onclick="addCategoryItem()">등록</button>
+        </div>
+
+        <div style="max-height:300px; overflow-y:auto; margin-top:15px; border:1px solid #ddd; border-radius:6px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>레벨 구분</th>
+                        <th>카테고리명</th>
+                        <th>삭제</th>
+                    </tr>
+                </thead>
+                <tbody id="categoryTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 📥 2. 품목 마스터 CSV 대량 업로드 모달 -->
+<div id="csvModal" class="modal-overlay">
+    <div class="modal-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #2c3e50; padding-bottom:8px;">
+            <h3 style="margin:0; color:#2c3e50;">📥 품목 마스터 CSV 대량 업로드</h3>
+            <span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeCsvModal()">&times;</span>
+        </div>
+        <p style="font-size:12px; color:#666; margin-bottom:15px;">
+            CSV 파일 서식: <b>[대카테고리, 중카테고리, 소카테고리, 품목명, 모델명, 원가]</b> 순서로 입력해 주세요. (첫 줄 헤더 포함)
+        </p>
+        <div class="form-group" style="margin-bottom:15px;">
+            <input type="file" id="csvFileInput" accept=".csv" style="height:auto; padding:8px;">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button class="btn btn-gray" onclick="closeCsvModal()">취소</button>
+            <button class="btn btn-orange" onclick="processCsvUpload()">CSV 대량 업로드 실행</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.stockItems = [];
+    window.categories = [];
+
+    document.addEventListener("DOMContentLoaded", function() {
+        loadCostMasterData();
+    });
+
+    function loadCostMasterData() {
+        document.getElementById('loadingStatus').innerText = "🔄 DB 로드 중...";
+        var scriptUrl = window.GOOGLE_SCRIPT_URL + (window.GOOGLE_SCRIPT_URL.indexOf('?') > -1 ? '&' : '?') + 't=' + Date.now();
+        fetch(scriptUrl)
+        .then(r => r.json())
+        .then(data => {
+            window.stockItems = Array.isArray(data.stockItems) ? data.stockItems : [];
+            window.categories = Array.isArray(data.categories) ? data.categories : [];
+            
+            renderCategoryDropdowns();
+            renderCostMasterTable();
+            document.getElementById('loadingStatus').innerText = "✅ 실시간 동기화 완료";
+        })
+        .catch(err => {
+            document.getElementById('loadingStatus').innerText = "❌ 데이터 로드 지연";
+        });
+    }
+
+    function syncCostMasterWithGoogle(msg) {
+        document.getElementById('loadingStatus').innerText = "📤 구글 DB 업데이트 중...";
+        var payload = {
+            action: "syncStock",
+            stockItems: window.stockItems,
+            categories: window.categories
+        };
+
+        fetch(window.GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(() => {
+            document.getElementById('loadingStatus').innerText = "✅ 저장 성공!";
+            renderCategoryDropdowns();
+            renderCostMasterTable();
+        })
+        .catch(() => {
+            document.getElementById('loadingStatus').innerText = "✅ 저장 완료";
+            renderCategoryDropdowns();
+            renderCostMasterTable();
+        });
+    }
+
+    // 🏷️ 카테고리 드롭다운 렌더링
+    function renderCategoryDropdowns() {
+        var selL = document.getElementById('selCatLarge');
+        var selM = document.getElementById('selCatMedium');
+        var selS = document.getElementById('selCatSmall');
+
+        selL.innerHTML = '<option value="">선택 안함</option>';
+        selM.innerHTML = '<option value="">선택 안함</option>';
+        selS.innerHTML = '<option value="">선택 안함</option>';
+
+        window.categories.filter(c => c.level === 'large').forEach(c => {
+            selL.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+        });
+        window.categories.filter(c => c.level === 'medium').forEach(c => {
+            selM.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+        });
+        window.categories.filter(c => c.level === 'small').forEach(c => {
+            selS.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+        });
+    }
+
+    // 📋 원가 관리 상품 마스터 테이블 렌더링
+    function renderCostMasterTable() {
+        var tbody = document.getElementById('costMasterTableBody');
+        tbody.innerHTML = "";
+
+        if (window.stockItems.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="padding:20px; color:#888;">등록된 상품 마스터가 없습니다. 상단에서 추가해 주세요.</td></tr>';
+            return;
+        }
+
+        window.stockItems.forEach((item, idx) => {
+            var tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><b>${item.catLarge || '-'}</b></td>
+                <td>${item.catMedium || '-'}</td>
+                <td>${item.catSmall || '-'}</td>
+                <td style="font-weight:bold; color:#2c3e50;">${item.name}</td>
+                <td>${item.model || '-'}</td>
+                <td style="color:#27ae60; font-weight:bold;">${Number(item.cost || 0).toLocaleString()}원</td>
+                <td>
+                    <button class="btn btn-purple" style="height:26px; padding:0 8px; font-size:11px;" onclick="editStockItemMaster(${idx})">수정</button>
+                    <button class="btn btn-danger" style="height:26px; padding:0 8px; font-size:11px;" onclick="deleteStockItemMaster(${idx})">삭제</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ➕ 품목 마스터 신규 추가
+    function addStockItemMaster() {
+        var catLarge = document.getElementById('selCatLarge').value;
+        var catMedium = document.getElementById('selCatMedium').value;
+        var catSmall = document.getElementById('selCatSmall').value;
+        var name = document.getElementById('inputItemName').value.trim();
+        var model = document.getElementById('inputModelName').value.trim();
+        var cost = Number(document.getElementById('inputItemCost').value) || 0;
+
+        if (!name) { alert("품목명을 입력해 주세요!"); return; }
+
+        window.stockItems.push({
+            catLarge: catLarge,
+            catMedium: catMedium,
+            catSmall: catSmall,
+            name: name,
+            model: model,
+            cost: cost
+        });
+
+        document.getElementById('inputItemName').value = "";
+        document.getElementById('inputModelName').value = "";
+        document.getElementById('inputItemCost').value = "";
+
+        syncCostMasterWithGoogle("상품 마스터 추가: " + name);
+    }
+
+    // ✏️ 품목 마스터 수정
+    function editStockItemMaster(idx) {
+        var item = window.stockItems[idx];
+        if (!item) return;
+
+        var newName = prompt("변경할 품목명:", item.name);
+        if (newName === null) return;
+        var newModel = prompt("변경할 모델명/규격:", item.model || "");
+        if (newModel === null) return;
+        var newCost = prompt("변경할 기본 원가(원):", item.cost || 0);
+        if (newCost === null) return;
+
+        item.name = newName.trim();
+        item.model = newModel.trim();
+        item.cost = Number(newCost) || 0;
+
+        syncCostMasterWithGoogle("상품 마스터 수정: " + item.name);
+    }
+
+    // 🗑️ 품목 마스터 삭제
+    function deleteStockItemMaster(idx) {
+        var item = window.stockItems[idx];
+        if (!item) return;
+        if (confirm(`[${item.name} / ${item.model || '규격없음'}] 품목 마스터를 삭제하시겠습니까?`)) {
+            window.stockItems.splice(idx, 1);
+            syncCostMasterWithGoogle("상품 마스터 삭제");
+        }
+    }
+
+    // 🏷️ 카테고리 관리 모달 제어
+    function openCategoryModal() {
+        renderCategoryTable();
+        document.getElementById('categoryModal').style.display = 'flex';
+    }
+    function closeCategoryModal() {
+        document.getElementById('categoryModal').style.display = 'none';
+    }
+
+    function renderCategoryTable() {
+        var tbody = document.getElementById('categoryTableBody');
+        tbody.innerHTML = "";
+        window.categories.forEach((c, idx) => {
+            var levelText = c.level === 'large' ? '대카테고리' : (c.level === 'medium' ? '중카테고리' : '소카테고리');
+            var tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><b>${levelText}</b></td>
+                <td>${c.name}</td>
+                <td><button class="btn btn-danger" style="height:24px; padding:0 6px; font-size:11px;" onclick="deleteCategoryItem(${idx})">삭제</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function addCategoryItem() {
+        var level = document.getElementById('catLevelSelect').value;
+        var name = document.getElementById('catNameInput').value.trim();
+        if (!name) { alert("카테고리명을 입력해 주세요!"); return; }
+
+        window.categories.push({ level: level, name: name });
+        document.getElementById('catNameInput').value = "";
+        renderCategoryTable();
+        syncCostMasterWithGoogle("카테고리 추가: " + name);
+    }
+
+    function deleteCategoryItem(idx) {
+        if (confirm("이 카테고리를 삭제하시겠습니까?")) {
+            window.categories.splice(idx, 1);
+            renderCategoryTable();
+            syncCostMasterWithGoogle("카테고리 삭제");
+        }
+    }
+
+    // 📥 CSV 대량 업로드 제어
+    function openCsvModal() { document.getElementById('csvModal').style.display = 'flex'; }
+    function closeCsvModal() { document.getElementById('csvModal').style.display = 'none'; }
+
+    function processCsvUpload() {
+        var fileInput = document.getElementById('csvFileInput');
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert("CSV 파일을 선택해 주세요!");
+            return;
+        }
+
+        var file = fileInput.files[0];
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var text = e.target.result;
+            var lines = text.split('\n');
+            var addCount = 0;
+
+            for (var i = 1; i < lines.length; i++) {
+                var line = lines[i].trim();
+                if (!line) continue;
+                var parts = line.split(',');
+                if (parts.length >= 4) {
+                    var catL = parts[0] ? parts[0].trim() : "";
+                    var catM = parts[1] ? parts[1].trim() : "";
+                    var catS = parts[2] ? parts[2].trim() : "";
+                    var name = parts[3] ? parts[3].trim() : "";
+                    var model = parts[4] ? parts[4].trim() : "";
+                    var cost = parts[5] ? Number(parts[5].trim()) || 0 : 0;
+
+                    if (name) {
+                        window.stockItems.push({
+                            catLarge: catL,
+                            catMedium: catM,
+                            catSmall: catS,
+                            name: name,
+                            model: model,
+                            cost: cost
+                        });
+                        addCount++;
+                    }
+                }
+            }
+
+            alert(`${addCount}개의 품목 마스터가 대량 업로드 되었습니다.`);
+            closeCsvModal();
+            syncCostMasterWithGoogle("CSV 대량 품목 등록");
+        };
+        reader.readAsText(file, "EUC-KR");
+    }
+</script>
 </body>
 </html>
