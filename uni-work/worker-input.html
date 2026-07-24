@@ -6,7 +6,6 @@
     <title>YUNY_ERP - 작업자 데이터 입력</title>
     <style>
         html { margin: 0; padding: 0; background-color: #f4f6f9; font-family: Arial, sans-serif; }
-        /* 🎯 [수정] 네비게이션바 높이에 가리지 않도록 padding-top: 65px 적용 */
         body { margin: 0; padding: 0; padding-top: 65px !important; background-color: #f4f6f9; font-family: Arial, sans-serif; }
 
         .content { padding: 15px; }
@@ -47,7 +46,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_worker_input_nav_fixed&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_worker_fixed_name_v1&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -65,9 +64,10 @@
 
     <div class="card">
         <div class="flex-form-row">
+            <!-- 🎯 [수정] 본인 이름 선택 드롭다운 -> 고정(readonly) 입력창으로 변경 -->
             <div class="form-group">
                 <label>본인 이름</label>
-                <select id="workerNameSelect" style="width: 130px;"></select>
+                <input type="text" id="workerNameInput" readonly style="width: 130px; background-color: #e9ecef; font-weight: bold; color: #2c3e50;">
             </div>
             <div class="form-group">
                 <label>작업 품목 선택</label>
@@ -129,7 +129,6 @@
         
         document.getElementById('workDate').value = now.toISOString().split('T')[0];
         ySel.onchange = buildWorkerTable; mSel.onchange = buildWorkerTable;
-        document.getElementById('workerNameSelect').onchange = buildWorkerTable;
         
         loadData();
     };
@@ -142,37 +141,32 @@
             rawEntries = Array.isArray(data.rawEntries) ? data.rawEntries : [];
             myItemOrder = Array.isArray(data.itemOrder) ? data.itemOrder : [];
 
+            setupWorkerIdentity();
             renderDropdowns();
             buildWorkerTable();
-            handleSessionName();
             document.getElementById('loadingStatus').innerText = "✅ 시스템 동기화 완료";
         }).catch(err => {
             document.getElementById('loadingStatus').innerText = "❌ 데이터 동기화 지연";
         });
     }
 
-    function renderDropdowns() {
-        var wSel = document.getElementById('workerNameSelect');
-        var iSel = document.getElementById('itemSelect');
-        wSel.innerHTML = ""; iSel.innerHTML = "";
-
-        workersPool.forEach(w => { wSel.innerHTML += `<option value="${w}">${w}</option>`; });
+    // 🎯 [핵심] 로그인한 본인 이름 고정 설정
+    function setupWorkerIdentity() {
+        var savedName = localStorage.getItem('login_user_name') || "작업자";
+        document.getElementById('workerNameInput').value = savedName;
         
-        var items = Object.keys(itemPrices);
-        items.sort(customItemSort);
-        items.forEach(i => { iSel.innerHTML += `<option value="${i}">${i}</option>`; });
-
-        var savedName = localStorage.getItem('login_user_name');
-        if (savedName && workersPool.includes(savedName)) {
-            wSel.value = savedName;
+        if (typeof window.updateNavbarUserDisplay === 'function') {
+            window.updateNavbarUserDisplay(savedName);
         }
     }
 
-    function handleSessionName() {
-        var activeName = localStorage.getItem('login_user_name') || "작업자";
-        if(typeof window.updateNavbarUserDisplay === 'function') {
-            window.updateNavbarUserDisplay();
-        }
+    function renderDropdowns() {
+        var iSel = document.getElementById('itemSelect');
+        iSel.innerHTML = "";
+
+        var items = Object.keys(itemPrices);
+        items.sort(customItemSort);
+        items.forEach(i => { iSel.innerHTML += `<option value="${i}">${i}</option>`; });
     }
 
     function recordTime(type) {
@@ -190,7 +184,7 @@
 
     function submitWorkData() {
         var date = document.getElementById('workDate').value;
-        var name = document.getElementById('workerNameSelect').value;
+        var name = document.getElementById('workerNameInput').value;
         var item = document.getElementById('itemSelect').value;
         var qty = parseInt(document.getElementById('workQty').value) || 0;
 
@@ -208,7 +202,7 @@
 
     function submitAttendanceData() {
         var date = document.getElementById('workDate').value;
-        var name = document.getElementById('workerNameSelect').value;
+        var name = document.getElementById('workerNameInput').value;
         var sTime = document.getElementById('startTimeInput').value;
         var eTime = document.getElementById('endTimeInput').value;
 
@@ -228,7 +222,8 @@
 
     function syncWithGoogle(msg) {
         document.getElementById('loadingStatus').innerText = "📤 데이터 저장 중...";
-        var payload = { action: "syncAll", updater: document.getElementById('workerNameSelect').value, summary: msg, rawEntries: rawEntries };
+        var name = document.getElementById('workerNameInput').value;
+        var payload = { action: "syncAll", updater: name, summary: msg, rawEntries: rawEntries };
         fetch(GOOGLE_SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) })
         .then(res => res.json())
         .then(() => { document.getElementById('loadingStatus').innerText = "✅ 저장 완료!"; setTimeout(loadData, 300); })
@@ -252,7 +247,7 @@
         var table = document.getElementById('workerTable'); if(!table) return;
         table.innerHTML = "";
         
-        var activeWorker = document.getElementById('workerNameSelect').value;
+        var activeWorker = document.getElementById('workerNameInput').value;
         if(!activeWorker) return;
 
         var selYear = document.getElementById("filterYear").value;
