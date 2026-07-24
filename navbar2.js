@@ -1,4 +1,4 @@
-// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (작업자 계정 메뉴 및 권한 숨김 + 상단 가림 보정판)
+// 🚨 YUNY_ERP 전역 네비게이션바 모듈 (작업자 페이지 메뉴 완전 차단 및 보안 보정판)
 (function() {
     function initNavbar() {
         var navbarContainer = document.getElementById('global-navbar');
@@ -13,10 +13,11 @@
         var isMargin = currentPath.indexOf('margin') > -1;
         var isTotal = currentPath.indexOf('admin-total') > -1;
         var isStock = currentPath.indexOf('admin-stock') > -1;
-
-        // 접속 권한 확인 (worker 인지 admin 인지)
-        var userRole = localStorage.getItem('login_user_role') || "admin";
-        var isWorkerRole = (userRole === "worker");
+        
+        // 🎯 [핵심 보완] 작업자 전용 페이지(worker-input, worker-time)이거나 role이 worker인 경우 메뉴 무조건 차단
+        var isWorkerPage = currentPath.indexOf('worker-input') > -1 || currentPath.indexOf('worker-time') > -1;
+        var userRole = localStorage.getItem('login_user_role') || "";
+        var isWorkerRole = isWorkerPage || (userRole === "worker");
 
         var navHtml = `
         <style>
@@ -235,7 +236,7 @@ window.saveAccountItem = function() {
     if (nameInput) nameInput.value = "";
 
     if (window.workersPool && Array.isArray(window.workersPool)) {
-        if (window.workersPool.indexOf(name) === -1) {
+        if (role === 'worker' && window.workersPool.indexOf(name) === -1) {
             window.workersPool.push(name);
         }
     }
