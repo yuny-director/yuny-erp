@@ -23,6 +23,7 @@
         .btn-orange:hover { background-color: #d35400 !important; }
         .btn-gray { background-color: #7f8c8d !important; }
 
+        /* 카테고리 분석 리포트 탭 */
         .cat-tab-bar { display: flex; gap: 6px; margin-bottom: 15px; border-bottom: 2px solid #2c3e50; padding-bottom: 5px; }
         .cat-tab-btn { padding: 8px 16px; font-weight: bold; font-size: 13px; border-radius: 6px 6px 0 0; cursor: pointer; border: 1px solid #ccc; border-bottom: none; background: #e9ecef; color: #495057; }
         .cat-tab-btn.active { background: #2c3e50; color: #fff; border-color: #2c3e50; }
@@ -32,25 +33,33 @@
         .cat-summary-title { font-weight: bold; font-size: 14px; color: #2c3e50; margin-bottom: 8px; border-bottom: 1px solid #dee2e6; padding-bottom: 4px; }
         .cat-summary-val { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
 
+        /* 메인 테이블 스타일 */
         .table-container { width: 100%; max-height: 65vh; overflow: auto !important; border: 1px solid #ccc; border-radius: 6px; background: white; -webkit-overflow-scrolling: touch; }
         table { border-collapse: separate !important; border-spacing: 0 !important; font-size: 12px; width: auto; min-width: 100%; table-layout: fixed; }
-        th, td { padding: 8px 6px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; }
+        th, td { padding: 8px 6px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; transition: background-color 0.15s ease; }
         th { background-color: #f8f9fa !important; font-weight: bold; position: sticky !important; top: 0 !important; z-index: 30 !important; }
 
-        .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 160px; max-width: 210px; background: #ffffff !important; z-index: 10; font-weight: bold; text-align: left !important; padding-left: 8px !important; white-space: normal !important; word-break: break-all; }
-        .fix-col-2 { position: sticky !important; left: 160px !important; min-width: 110px; max-width: 140px; background: #ffffff !important; z-index: 10; font-weight: bold; white-space: normal !important; word-break: break-all; color:#2980b9 !important; }
-        .fix-col-3 { position: sticky !important; left: 270px !important; min-width: 55px; max-width: 65px; background: #fafafa !important; z-index: 10; }
-        .fix-col-4 { position: sticky !important; left: 325px !important; min-width: 75px; max-width: 85px; background: #e7f5ff !important; z-index: 10; font-weight: bold; color: #1971c2; }
-        .fix-col-5 { position: sticky !important; left: 400px !important; min-width: 75px; max-width: 85px; background: #fff5f5 !important; z-index: 10; font-weight: bold; color: #e03131; }
-        .fix-col-6 { position: sticky !important; left: 475px !important; min-width: 85px; max-width: 95px; background: #e6fcf5 !important; z-index: 10; font-weight: bold; color: #099268; border-right: 2px solid #999 !important; }
+        .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 90px; max-width: 110px; background: #ffffff; z-index: 10; font-weight: bold; }
+        .fix-col-2 { position: sticky !important; left: 90px !important; min-width: 100px; max-width: 120px; background: #ffffff; z-index: 10; font-weight: bold; }
+        .fix-col-3 { position: sticky !important; left: 190px !important; min-width: 60px; max-width: 70px; background: #fafafa; z-index: 10; }
+        .fix-col-4 { position: sticky !important; left: 250px !important; min-width: 75px; max-width: 85px; background: #e7f5ff; z-index: 10; font-weight: bold; color: #1971c2; }
+        .fix-col-5 { position: sticky !important; left: 325px !important; min-width: 75px; max-width: 85px; background: #fff5f5; z-index: 10; font-weight: bold; color: #e03131; }
+        .fix-col-6 { position: sticky !important; left: 400px !important; min-width: 85px; max-width: 95px; background: #e6fcf5; z-index: 10; font-weight: bold; color: #099268; border-right: 2px solid #999 !important; }
 
-        th.fix-col-1, th.fix-col-2, th.fix-col-3, th.fix-col-4, th.fix-col-5, th.fix-col-6 { z-index: 40 !important; text-align: center !important; }
+        th.fix-col-1, th.fix-col-2, th.fix-col-3, th.fix-col-4, th.fix-col-5, th.fix-col-6 { z-index: 40 !important; }
 
         .row-in { color: #1971c2; font-weight: bold; }
         .row-out { color: #e03131; font-weight: bold; }
         .inline-edit-input { width: 90%; height: 24px; text-align: center; border: 2px solid #2980b9; border-radius: 4px; box-sizing: border-box; font-weight: bold; }
         .editable-cell { cursor: pointer; min-width: 45px; }
 
+        /* 🎯 [신규] 마우스 호버 품목(행) & 날짜(열) 하이라이트 스타일 */
+        .hover-row-group { background-color: #e8f4fd !important; } /* 품목 전체 행 하이라이트 */
+        .hover-col { background-color: #fff3bf !important; }      /* 날짜 전체 열 하이라이트 */
+        .hover-target { background-color: #ffe066 !important; font-weight: bold; } /* 교차 지점(마우스 위치) */
+        th.hover-col { background-color: #ffd8a8 !important; color: #d9480f !important; } /* 상단 날짜 헤더 강조 */
+
+        /* 드래그 정렬 리스트 모달 */
         .sortable-list { list-style: none; padding: 0; margin: 0; }
         .sortable-item { padding: 10px 14px; margin-bottom: 8px; background-color: #f8f9fa; border: 1px solid #ced4da; border-radius: 6px; cursor: grab; font-weight: bold; font-size: 13px; color: #2c3e50; display: flex; align-items: center; justify-content: space-between; }
         .sortable-item.dragging { opacity: 0.5; background-color: #e8f4fd; border: 2px dashed #2980b9; }
@@ -66,7 +75,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_admin_stock_db_linked_v5&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_admin_stock_hover_v2&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -108,7 +117,7 @@
             </div>
             <div class="form-group">
                 <label>품목 선택</label>
-                <select id="stockItemSelect" style="width:240px;"></select>
+                <select id="stockItemSelect" style="width:180px;"></select>
             </div>
             <div class="form-group">
                 <label>수량 (개)</label>
@@ -119,25 +128,7 @@
     </div>
 
     <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <h3 style="margin:0; color:#2c3e50;">📦 품목 마스터 연동 실시간 재고 대장표</h3>
-            
-            <div style="display:flex; align-items:center; gap:6px;">
-                <label style="font-weight:bold; font-size:13px; color:#2c3e50;">🔀 대장 정렬 기준 :</label>
-                <select id="sortOptionSelect" style="height:36px; font-weight:bold;" onchange="buildStockPivotTable()">
-                    <option value="custom">지정된 표시순서 (기본)</option>
-                    <option value="name_asc">품목명 오름차순 (가~하)</option>
-                    <option value="name_desc">품목명 내림차순 (하~가)</option>
-                    <option value="model_asc">모델명 오름차순 (가~하)</option>
-                    <option value="model_desc">모델명 내림차순 (하~가)</option>
-                    <option value="stock_desc">현재고 높은순 ⬇</option>
-                    <option value="stock_asc">현재고 낮은순 ⬆</option>
-                    <option value="out_desc">당월 출고 높은순 ⬇</option>
-                    <option value="out_asc">당월 출고 낮은순 ⬆</option>
-                </select>
-            </div>
-        </div>
-
+        <h3 style="margin-top:0; margin-bottom:12px; color:#2c3e50;">📦 품목 마스터 연동 실시간 재고 대장표</h3>
         <div class="table-container">
             <table id="stockPivotTable"></table>
         </div>
@@ -253,75 +244,13 @@
         });
     }
 
-    function getItemName(item) {
-        if (!item) return "이름없음";
-        return item.itemName || item.name || item.item || "이름없음";
-    }
-
-    function getItemModel(item) {
-        if (!item) return "-";
-        return item.modelName || item.model || item.spec || "-";
-    }
-
-    // 🎯 [핵심 보완] 기존 DB 내역 완벽 추출 필터 (item / itemName 모두 탐색)
-    function filterEntriesByItem(itemName) {
-        return window.stockEntries.filter(e => (e.item === itemName || e.itemName === itemName));
-    }
-
-    function getSortedStockItems() {
-        var items = window.stockItems.slice();
-        var sortOpt = document.getElementById('sortOptionSelect') ? document.getElementById('sortOptionSelect').value : 'custom';
-
-        var selYear = parseInt(document.getElementById("filterYear").value);
-        var selMonth = parseInt(document.getElementById("filterMonth").value);
-        var strMonth = selMonth < 10 ? "0" + selMonth : String(selMonth);
-        var monthPrefix = `${selYear}-${strMonth}`;
-
-        if (sortOpt === 'name_asc') {
-            items.sort((a, b) => getItemName(a).localeCompare(getItemName(b)));
-        } else if (sortOpt === 'name_desc') {
-            items.sort((a, b) => getItemName(b).localeCompare(getItemName(a)));
-        } else if (sortOpt === 'model_asc') {
-            items.sort((a, b) => getItemModel(a).localeCompare(getItemModel(b)));
-        } else if (sortOpt === 'model_desc') {
-            items.sort((a, b) => getItemModel(b).localeCompare(getItemModel(a)));
-        } else if (sortOpt === 'stock_desc') {
-            items.sort((a, b) => calcTotalStock(getItemName(b)) - calcTotalStock(getItemName(a)));
-        } else if (sortOpt === 'stock_asc') {
-            items.sort((a, b) => calcTotalStock(getItemName(a)) - calcTotalStock(getItemName(b)));
-        } else if (sortOpt === 'out_desc') {
-            items.sort((a, b) => calcMonthOut(getItemName(b), monthPrefix) - calcMonthOut(getItemName(a), monthPrefix));
-        } else if (sortOpt === 'out_asc') {
-            items.sort((a, b) => calcMonthOut(getItemName(a), monthPrefix) - calcMonthOut(getItemName(b), monthPrefix));
-        } else {
-            items.sort((a, b) => {
-                var nameA = getItemName(a);
-                var nameB = getItemName(b);
-                var idxA = window.itemOrder.indexOf(nameA);
-                var idxB = window.itemOrder.indexOf(nameB);
-                if (idxA === -1) idxA = 999;
-                if (idxB === -1) idxB = 999;
-                return idxA - idxB;
-            });
-        }
-        return items;
-    }
-
-    function calcTotalStock(itemName) {
-        var entries = filterEntriesByItem(itemName);
-        var inSum = 0, outSum = 0;
-        entries.forEach(e => {
-            if (e.type === 'in') inSum += Number(e.qty || 0);
-            if (e.type === 'out') outSum += Number(e.qty || 0);
-        });
-        return inSum - outSum;
-    }
-
-    function calcMonthOut(itemName, monthPrefix) {
-        var entries = filterEntriesByItem(itemName).filter(e => e.type === 'out' && e.date && e.date.startsWith(monthPrefix));
-        var sum = 0;
-        entries.forEach(e => { sum += Number(e.qty || 0); });
-        return sum;
+    function customStockSort(aName, bName) {
+        if (!window.itemOrder || !Array.isArray(window.itemOrder)) return 0;
+        var idxA = window.itemOrder.indexOf(aName);
+        var idxB = window.itemOrder.indexOf(bName);
+        if (idxA === -1) idxA = 999;
+        if (idxB === -1) idxB = 999;
+        return idxA - idxB;
     }
 
     function renderStockDropdowns() {
@@ -333,12 +262,11 @@
             return;
         }
 
-        var sorted = getSortedStockItems();
+        var sorted = window.stockItems.slice().sort((a, b) => customStockSort(a.name || a.item, b.name || b.item));
         sorted.forEach(i => {
-            var nameStr = getItemName(i);
-            var modelStr = getItemModel(i);
-            var modelText = modelStr !== "-" ? ` [${modelStr}]` : "";
-            sel.innerHTML += `<option value="${nameStr}">${nameStr}${modelText}</option>`;
+            var nameStr = i.name || i.item || "이름없음";
+            var modelStr = i.model ? ` (${i.model})` : "";
+            sel.innerHTML += `<option value="${nameStr}">${nameStr}${modelStr}</option>`;
         });
     }
 
@@ -362,7 +290,7 @@
         var catMap = {};
 
         window.stockItems.forEach(item => {
-            var itemName = getItemName(item);
+            var itemName = item.name || item.item || "";
             var catName = "미분류";
             if (window.currentCatLevelTab === 'large') catName = item.catLarge || "미분류";
             else if (window.currentCatLevelTab === 'medium') catName = item.catMedium || "미분류";
@@ -372,7 +300,7 @@
                 catMap[catName] = { totalStock: 0, monthIn: 0, monthOut: 0 };
             }
 
-            filterEntriesByItem(itemName).forEach(e => {
+            window.stockEntries.filter(e => e.item === itemName).forEach(e => {
                 var q = Number(e.qty || 0);
                 if (e.type === 'in') catMap[catName].totalStock += q;
                 else if (e.type === 'out') catMap[catName].totalStock -= q;
@@ -404,6 +332,7 @@
         });
     }
 
+    // 📦 메인 재고 피벗 대장표 빌드
     function buildStockPivotTable() {
         var table = document.getElementById('stockPivotTable');
         if (!table) return;
@@ -420,16 +349,17 @@
             dateSet.push(selYear + "-" + strMonth + "-" + strDay);
         }
 
-        var headerHtml = `<thead><tr><th class="fix-col-1">품목명</th><th class="fix-col-2">모델명</th><th class="fix-col-3">구분</th><th class="fix-col-4">당월 입고</th><th class="fix-col-5">당월 출고</th><th class="fix-col-6">현재 총재고</th>${dateSet.map(d => `<th style="min-width:55px;">${d.substring(5).replace("-","/")}</th>`).join('')}</tr></thead>`;
+        var headerHtml = `<thead><tr><th class="fix-col-1">품목명</th><th class="fix-col-2">모델명</th><th class="fix-col-3">구분</th><th class="fix-col-4">당월 입고</th><th class="fix-col-5">당월 출고</th><th class="fix-col-6">현재 총재고</th>${dateSet.map((d, i) => `<th style="min-width:55px;" data-col-idx="${i + 7}">${d.substring(5).replace("-","/")}</th>`).join('')}</tr></thead>`;
         var bodyHtml = "<tbody>";
 
-        var sortedItems = getSortedStockItems();
+        var sortedItems = window.stockItems.slice().sort((a, b) => customStockSort(a.name || a.item, b.name || b.item));
 
-        sortedItems.forEach(item => {
-            var name = getItemName(item);
-            var model = getItemModel(item);
+        sortedItems.forEach((item, itemIdx) => {
+            var name = item.name || item.item || "이름없음";
+            var model = item.model || item.spec || "-";
+            var groupClass = `item-group-${itemIdx}`;
 
-            var itemEntries = filterEntriesByItem(name);
+            var itemEntries = window.stockEntries.filter(e => e.item === name);
 
             var totalInAll = 0, totalOutAll = 0;
             itemEntries.forEach(e => {
@@ -446,30 +376,32 @@
                 if (outE) monthOutSum += Number(outE.qty || 0);
             });
 
-            var inRow = `<tr>
+            // 입고 행
+            var inRow = `<tr class="${groupClass}" data-group="${groupClass}">
                 <td class="fix-col-1" rowspan="2" style="vertical-align:middle;">${name}</td>
-                <td class="fix-col-2" rowspan="2" style="vertical-align:middle;">${model}</td>
+                <td class="fix-col-2" rowspan="2" style="vertical-align:middle; color:#666;">${model}</td>
                 <td class="fix-col-3 row-in">입고</td>
                 <td class="fix-col-4">${monthInSum.toLocaleString()}개</td>
                 <td class="fix-col-5">-</td>
                 <td class="fix-col-6" rowspan="2" style="vertical-align:middle; font-size:13px;">${currentTotalStock.toLocaleString()}개</td>`;
             
-            dateSet.forEach(d => {
+            dateSet.forEach((d, cIdx) => {
                 var e = itemEntries.find(x => x.type === 'in' && x.date === d);
                 var q = e ? e.qty : 0;
-                inRow += `<td class="editable-cell" onclick="makeStockCellEditable(this, '${d}', '${name}', 'in')">${q || '-'}</td>`;
+                inRow += `<td class="editable-cell" data-col-idx="${cIdx + 7}" onclick="makeStockCellEditable(this, '${d}', '${name}', 'in')">${q || '-'}</td>`;
             });
             inRow += `</tr>`;
 
-            var outRow = `<tr>
+            // 출고 행
+            var outRow = `<tr class="${groupClass}" data-group="${groupClass}">
                 <td class="fix-col-3 row-out">출고</td>
                 <td class="fix-col-4">-</td>
                 <td class="fix-col-5">${monthOutSum.toLocaleString()}개</td>`;
             
-            dateSet.forEach(d => {
+            dateSet.forEach((d, cIdx) => {
                 var e = itemEntries.find(x => x.type === 'out' && x.date === d);
                 var q = e ? e.qty : 0;
-                outRow += `<td class="editable-cell" onclick="makeStockCellEditable(this, '${d}', '${name}', 'out')">${q || '-'}</td>`;
+                outRow += `<td class="editable-cell" data-col-idx="${cIdx + 7}" onclick="makeStockCellEditable(this, '${d}', '${name}', 'out')">${q || '-'}</td>`;
             });
             outRow += `</tr>`;
 
@@ -480,6 +412,56 @@
         table.innerHTML = headerHtml + bodyHtml;
 
         renderCategorySummaryReport();
+        initTableHoverEffects(); // 🎯 마우스 호버 강조이벤트 등록
+    }
+
+    // 🎯 [신규] 마우스 위치에 따른 품목/날짜 동시 하이라이트 이벤트
+    function initTableHoverEffects() {
+        var table = document.getElementById('stockPivotTable');
+        if (!table) return;
+
+        table.addEventListener('mouseover', function(e) {
+            var td = e.target.closest('td, th');
+            if (!td) return;
+
+            // 기존 강조 클래스 모두 제거
+            clearTableHoverEffects();
+
+            var tr = td.parentElement;
+            var groupName = tr.getAttribute('data-group');
+            var colIdx = td.getAttribute('data-col-idx');
+
+            // 1. 동일 품목(행 그룹) 하이라이트
+            if (groupName) {
+                var groupRows = table.querySelectorAll(`tr[data-group="${groupName}"]`);
+                groupRows.forEach(r => {
+                    r.querySelectorAll('td').forEach(c => c.classList.add('hover-row-group'));
+                });
+            }
+
+            // 2. 동일 날짜(열) 하이라이트
+            if (colIdx) {
+                var colCells = table.querySelectorAll(`[data-col-idx="${colIdx}"]`);
+                colCells.forEach(c => c.classList.add('hover-col'));
+            }
+
+            // 3. 교차 지점(현재 마우스가 위치한 셀) 강력 강조
+            if (td.tagName === 'TD' && colIdx) {
+                td.classList.add('hover-target');
+            }
+        });
+
+        table.addEventListener('mouseleave', function() {
+            clearTableHoverEffects();
+        });
+    }
+
+    function clearTableHoverEffects() {
+        var table = document.getElementById('stockPivotTable');
+        if (!table) return;
+        table.querySelectorAll('.hover-row-group, .hover-col, .hover-target').forEach(el => {
+            el.classList.remove('hover-row-group', 'hover-col', 'hover-target');
+        });
     }
 
     function makeStockCellEditable(cell, dateFull, name, type) {
@@ -492,12 +474,12 @@
 
     function saveStockInlineQty(input, dateFull, name, type) {
         var newVal = parseInt(input.value) || 0;
-        var idx = window.stockEntries.findIndex(e => e.date === dateFull && (e.item === name || e.itemName === name) && e.type === type);
+        var idx = window.stockEntries.findIndex(e => e.date === dateFull && e.item === name && e.type === type);
 
         if (newVal === 0) {
             if (idx > -1) window.stockEntries.splice(idx, 1);
         } else {
-            var entry = { date: dateFull, item: name, itemName: name, type: type, qty: newVal };
+            var entry = { date: dateFull, item: name, type: type, qty: newVal };
             if (idx > -1) window.stockEntries[idx] = entry;
             else window.stockEntries.push(entry);
         }
@@ -513,8 +495,8 @@
 
         if (!date || !item || qty <= 0) { alert("올바른 입출고 데이터를 입력해 주세요."); return; }
 
-        var idx = window.stockEntries.findIndex(e => e.date === date && (e.item === item || e.itemName === item) && e.type === type);
-        var entry = { date: date, item: item, itemName: item, type: type, qty: qty };
+        var idx = window.stockEntries.findIndex(e => e.date === date && e.item === item && e.type === type);
+        var entry = { date: date, item: item, type: type, qty: qty };
 
         if (idx > -1) window.stockEntries[idx] = entry;
         else window.stockEntries.push(entry);
@@ -525,10 +507,10 @@
     function openSortModal() {
         var list = document.getElementById('sortableList');
         list.innerHTML = "";
-        var sorted = getSortedStockItems();
+        var sorted = window.stockItems.slice().sort((a, b) => customStockSort(a.name || a.item, b.name || b.item));
 
         sorted.forEach(i => {
-            var nameStr = getItemName(i);
+            var nameStr = i.name || i.item || "이름없음";
             var li = document.createElement('li');
             li.className = 'sortable-item';
             li.draggable = true;
@@ -585,8 +567,8 @@
                     var qty = parts[3] ? parseInt(parts[3].trim()) || 0 : 0;
 
                     if (date && name && qty > 0) {
-                        var idx = window.stockEntries.findIndex(x => (x.item === name || x.itemName === name) && x.date === date && x.type === type);
-                        var entry = { date: date, type: type, item: name, itemName: name, qty: qty };
+                        var idx = window.stockEntries.findIndex(x => x.date === date && x.item === name && x.type === type);
+                        var entry = { date: date, type: type, item: name, qty: qty };
                         if (idx > -1) window.stockEntries[idx] = entry;
                         else window.stockEntries.push(entry);
                         addCount++;
