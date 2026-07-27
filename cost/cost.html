@@ -41,7 +41,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_cost_comma_fix_v7&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_cost_safe_reset_v9&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -51,7 +51,7 @@
             <div style="display: flex; gap: 8px;">
                 <button class="btn btn-purple" onclick="openCategoryModal()">🏷️ 카테고리 관리(대/중/소)</button>
                 <button class="btn btn-orange" onclick="openCsvModal()">📥 품목 마스터 CSV 대량 업로드</button>
-                <button class="btn btn-danger" onclick="clearAllStockItemsMaster()">🗑️ 기존 마스터 전체 초기화</button>
+                <button class="btn btn-danger" onclick="openClearConfirmModal()">🗑️ 기존 마스터 전체 초기화</button>
             </div>
         </div>
 
@@ -109,6 +109,7 @@
     </div>
 </div>
 
+<!-- ✏️ 상품 마스터 수정 모달 -->
 <div id="editMasterModal" class="modal-overlay">
     <div class="modal-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #2c3e50; padding-bottom:8px;">
@@ -155,6 +156,7 @@
     </div>
 </div>
 
+<!-- 🏷️ 카테고리 관리 모달 -->
 <div id="categoryModal" class="modal-overlay">
     <div class="modal-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #2c3e50; padding-bottom:8px;">
@@ -193,6 +195,7 @@
     </div>
 </div>
 
+<!-- 📥 CSV 업로드 모달 -->
 <div id="csvModal" class="modal-overlay">
     <div class="modal-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #2c3e50; padding-bottom:8px;">
@@ -201,7 +204,7 @@
         </div>
         <p style="font-size:12px; color:#666; margin-bottom:15px;">
             CSV 파일 서식: <b>[대카테고리, 중카테고리, 소카테고리, 품목명, 모델명, 원가]</b> 순서<br>
-            * 원가 금액에 콤마(`,`)가 들어있어도 정확하게 정수 숫자로 자동 정제되어 반영됩니다.
+            * CSV 업로드 시 카테고리(대/중/소)가 드롭다운 마스터 목록에 자동 등록됩니다.
         </p>
         <div class="form-group" style="margin-bottom:15px;">
             <input type="file" id="csvFileInput" accept=".csv" style="height:auto; padding:8px;">
@@ -209,6 +212,31 @@
         <div style="display:flex; justify-content:flex-end; gap:8px;">
             <button class="btn btn-gray" onclick="closeCsvModal()">취소</button>
             <button class="btn btn-orange" onclick="processCsvUpload()">CSV 대량 업로드 실행</button>
+        </div>
+    </div>
+</div>
+
+<!-- 🚨 [신규] 2중 안전장치 전체 초기화 확인 모달 -->
+<div id="clearConfirmModal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 460px; border-top: 5px solid #e74c3c;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="margin:0; color:#c0392b; font-size:17px; display:flex; align-items:center; gap:6px;">⚠️ 마스터 전체 초기화 경고</h3>
+            <span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeClearConfirmModal()">&times;</span>
+        </div>
+        
+        <div style="background:#fff5f5; border:1px solid #ffc9c9; padding:12px; border-radius:6px; margin-bottom:15px; font-size:13px; color:#c0392b; line-height:1.5;">
+            <b>주의! 등록된 모든 상품 마스터 정보가 초기화됩니다.</b><br>
+            (※ 기존 입출고 수량 내역은 삭제되지 않고 유지됩니다)
+        </div>
+
+        <div class="form-group" style="margin-bottom:20px;">
+            <label style="color:#2c3e50;">초기화를 진행하시려면 아래에 <b>초기화</b> 라고 입력해 주세요:</label>
+            <input type="text" id="confirmTextPrompt" placeholder="초기화" style="margin-top:6px; text-align:center; font-weight:bold; font-size:14px; border:2px solid #e74c3c;">
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button class="btn btn-gray" onclick="closeClearConfirmModal()">취소</button>
+            <button class="btn btn-danger" onclick="executeClearAllStockItemsMaster()">확인 및 삭제 실행</button>
         </div>
     </div>
 </div>
@@ -230,6 +258,7 @@
             window.stockItems = Array.isArray(data.stockItems) ? data.stockItems : [];
             window.categories = Array.isArray(data.categories) ? data.categories : [];
             
+            autoExtractCategoriesFromItems();
             renderCategoryDropdowns();
             renderCostMasterTable();
             document.getElementById('loadingStatus').innerText = "✅ 실시간 동기화 완료";
@@ -237,6 +266,25 @@
         .catch(err => {
             document.getElementById('loadingStatus').innerText = "❌ 데이터 로드 지연";
         });
+    }
+
+    function autoExtractCategoriesFromItems() {
+        var added = false;
+        window.stockItems.forEach(item => {
+            if (item.catLarge && !window.categories.some(c => c.level === 'large' && c.name === item.catLarge)) {
+                window.categories.push({ level: 'large', name: item.catLarge });
+                added = true;
+            }
+            if (item.catMedium && !window.categories.some(c => c.level === 'medium' && c.name === item.catMedium)) {
+                window.categories.push({ level: 'medium', name: item.catMedium });
+                added = true;
+            }
+            if (item.catSmall && !window.categories.some(c => c.level === 'small' && c.name === item.catSmall)) {
+                window.categories.push({ level: 'small', name: item.catSmall });
+                added = true;
+            }
+        });
+        return added;
     }
 
     function syncCostMasterWithGoogle(msg) {
@@ -265,11 +313,26 @@
         });
     }
 
-    function clearAllStockItemsMaster() {
-        if (confirm("정말로 모든 상품 마스터 목록을 초기화(삭제)하시겠습니까?\n(기존 입출고 내역은 안전하게 유지됩니다)")) {
-            window.stockItems = [];
-            syncCostMasterWithGoogle("상품 마스터 전체 초기화");
+    // 🎯 [신규] 2중 안전장치 전체 초기화 모달 제어
+    function openClearConfirmModal() {
+        document.getElementById('confirmTextPrompt').value = "";
+        document.getElementById('clearConfirmModal').style.display = 'flex';
+    }
+
+    function closeClearConfirmModal() {
+        document.getElementById('clearConfirmModal').style.display = 'none';
+    }
+
+    function executeClearAllStockItemsMaster() {
+        var text = document.getElementById('confirmTextPrompt').value.trim();
+        if (text !== "초기화") {
+            alert("확인 문구가 일치하지 않습니다. '초기화'를 정확히 입력해 주세요.");
+            return;
         }
+
+        window.stockItems = [];
+        closeClearConfirmModal();
+        syncCostMasterWithGoogle("상품 마스터 전체 초기화 실행");
     }
 
     function renderCategoryDropdowns() {
@@ -355,6 +418,7 @@
         document.getElementById('inputModelName').value = "";
         document.getElementById('inputItemCost').value = "";
 
+        autoExtractCategoriesFromItems();
         syncCostMasterWithGoogle("상품 마스터 저장: " + name);
     }
 
@@ -413,6 +477,7 @@
         item.cost = cost;
 
         closeEditMasterModal();
+        autoExtractCategoriesFromItems();
         syncCostMasterWithGoogle("상품 마스터 상세 수정: " + item.name);
     }
 
@@ -449,7 +514,9 @@
         var name = document.getElementById('catNameInput').value.trim();
         if (!name) { alert("카테고리명을 입력해 주세요!"); return; }
 
-        window.categories.push({ level: level, name: name });
+        if (!window.categories.some(c => c.level === level && c.name === name)) {
+            window.categories.push({ level: level, name: name });
+        }
         document.getElementById('catNameInput').value = "";
         renderCategoryTable();
         syncCostMasterWithGoogle("카테고리 추가: " + name);
@@ -466,7 +533,6 @@
     function openCsvModal() { document.getElementById('csvModal').style.display = 'flex'; }
     function closeCsvModal() { document.getElementById('csvModal').style.display = 'none'; }
 
-    // 🎯 [핵심 정밀 파서] 큰따옴표 내의 콤마(,) 보존 + 숫자 특수문자 제거 파싱
     function parseCSVLine(line) {
         var result = [];
         var start = 0;
@@ -525,12 +591,20 @@
                     var catS = parts[2] ? parts[2].trim() : "";
                     var name = parts[3] ? parts[3].trim() : "";
                     var model = parts[4] ? parts[4].trim() : "";
-                    
-                    // 원가에서 쉼표(,) 및 특수문자 완벽 제거 후 숫자 파싱
                     var rawCost = parts[5] ? parts[5].trim() : "0";
                     var cost = Number(rawCost.replace(/[^0-9]/g, '')) || 0;
 
                     if (name) {
+                        if (catL && !window.categories.some(c => c.level === 'large' && c.name === catL)) {
+                            window.categories.push({ level: 'large', name: catL });
+                        }
+                        if (catM && !window.categories.some(c => c.level === 'medium' && c.name === catM)) {
+                            window.categories.push({ level: 'medium', name: catM });
+                        }
+                        if (catS && !window.categories.some(c => c.level === 'small' && c.name === catS)) {
+                            window.categories.push({ level: 'small', name: catS });
+                        }
+
                         var existingIdx = window.stockItems.findIndex(item => {
                             var curName = item.itemName || item.name || item.item;
                             var curModel = item.modelName || item.model || item.spec;
@@ -562,9 +636,9 @@
                 }
             }
 
-            alert(`처리 완료:\n- 신규 등록: ${insertedCount}건\n- 기존 항목 업데이트: ${updatedCount}건`);
+            alert(`처리 완료:\n- 신규 품목 등록: ${insertedCount}건\n- 기존 품목 업데이트: ${updatedCount}건\n- 카테고리 마스터 자동 추출 적용 완료!`);
             closeCsvModal();
-            syncCostMasterWithGoogle("CSV 콤마 보정 대량 업로드 완료");
+            syncCostMasterWithGoogle("CSV 카테고리 자동 추출 업로드 완료");
         };
 
         reader.readAsArrayBuffer(file);
