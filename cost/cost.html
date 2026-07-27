@@ -41,7 +41,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_cost_master_model_fix_v4&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_cost_comma_fix_v7&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -51,6 +51,7 @@
             <div style="display: flex; gap: 8px;">
                 <button class="btn btn-purple" onclick="openCategoryModal()">🏷️ 카테고리 관리(대/중/소)</button>
                 <button class="btn btn-orange" onclick="openCsvModal()">📥 품목 마스터 CSV 대량 업로드</button>
+                <button class="btn btn-danger" onclick="clearAllStockItemsMaster()">🗑️ 기존 마스터 전체 초기화</button>
             </div>
         </div>
 
@@ -199,7 +200,8 @@
             <span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeCsvModal()">&times;</span>
         </div>
         <p style="font-size:12px; color:#666; margin-bottom:15px;">
-            CSV 파일 서식: <b>[대카테고리, 중카테고리, 소카테고리, 품목명, 모델명, 원가]</b> 순서
+            CSV 파일 서식: <b>[대카테고리, 중카테고리, 소카테고리, 품목명, 모델명, 원가]</b> 순서<br>
+            * 원가 금액에 콤마(`,`)가 들어있어도 정확하게 정수 숫자로 자동 정제되어 반영됩니다.
         </p>
         <div class="form-group" style="margin-bottom:15px;">
             <input type="file" id="csvFileInput" accept=".csv" style="height:auto; padding:8px;">
@@ -263,6 +265,13 @@
         });
     }
 
+    function clearAllStockItemsMaster() {
+        if (confirm("정말로 모든 상품 마스터 목록을 초기화(삭제)하시겠습니까?\n(기존 입출고 내역은 안전하게 유지됩니다)")) {
+            window.stockItems = [];
+            syncCostMasterWithGoogle("상품 마스터 전체 초기화");
+        }
+    }
+
     function renderCategoryDropdowns() {
         var selL = document.getElementById('selCatLarge');
         var selM = document.getElementById('selCatMedium');
@@ -277,7 +286,6 @@
         window.categories.filter(c => c.level === 'small').forEach(c => { selS.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
     }
 
-    // 📋 상품 마스터 원장 테이블 렌더링 (modelName 호환 완료)
     function renderCostMasterTable() {
         var tbody = document.getElementById('costMasterTableBody');
         tbody.innerHTML = "";
@@ -289,7 +297,6 @@
 
         window.stockItems.forEach((item, idx) => {
             var itemName = item.itemName || item.name || item.item || "이름없음";
-            // 🎯 [핵심] 기존 DB의 modelName 키 호환
             var modelName = item.modelName || item.model || item.spec || "-";
             var costVal = Number(item.cost || item.price || 0);
 
@@ -316,11 +323,18 @@
         var catSmall = document.getElementById('selCatSmall').value;
         var name = document.getElementById('inputItemName').value.trim();
         var model = document.getElementById('inputModelName').value.trim();
-        var cost = Number(document.getElementById('inputItemCost').value) || 0;
+        var costInput = document.getElementById('inputItemCost').value;
+        var cost = Number(String(costInput).replace(/[^0-9]/g, '')) || 0;
 
         if (!name) { alert("품목명을 입력해 주세요!"); return; }
 
-        window.stockItems.push({
+        var existingIdx = window.stockItems.findIndex(i => {
+            var curName = i.itemName || i.name || i.item;
+            var curModel = i.modelName || i.model || i.spec;
+            return (model && curModel === model) || (curName === name);
+        });
+
+        var newItemObj = {
             catLarge: catLarge,
             catMedium: catMedium,
             catSmall: catSmall,
@@ -329,13 +343,19 @@
             modelName: model,
             model: model,
             cost: cost
-        });
+        };
+
+        if (existingIdx > -1) {
+            window.stockItems[existingIdx] = newItemObj;
+        } else {
+            window.stockItems.push(newItemObj);
+        }
 
         document.getElementById('inputItemName').value = "";
         document.getElementById('inputModelName').value = "";
         document.getElementById('inputItemCost').value = "";
 
-        syncCostMasterWithGoogle("상품 마스터 추가: " + name);
+        syncCostMasterWithGoogle("상품 마스터 저장: " + name);
     }
 
     function openEditMasterModal(idx) {
@@ -378,6 +398,9 @@
 
         var newName = document.getElementById('editItemName').value.trim();
         var newModel = document.getElementById('editModelName').value.trim();
+        var costInput = document.getElementById('editItemCost').value;
+        var cost = Number(String(costInput).replace(/[^0-9]/g, '')) || 0;
+
         if (!newName) { alert("품목명을 입력해 주세요!"); return; }
 
         item.catLarge = document.getElementById('editCatLarge').value;
@@ -387,7 +410,7 @@
         item.name = newName;
         item.modelName = newModel;
         item.model = newModel;
-        item.cost = Number(document.getElementById('editItemCost').value) || 0;
+        item.cost = cost;
 
         closeEditMasterModal();
         syncCostMasterWithGoogle("상품 마스터 상세 수정: " + item.name);
@@ -443,31 +466,81 @@
     function openCsvModal() { document.getElementById('csvModal').style.display = 'flex'; }
     function closeCsvModal() { document.getElementById('csvModal').style.display = 'none'; }
 
+    // 🎯 [핵심 정밀 파서] 큰따옴표 내의 콤마(,) 보존 + 숫자 특수문자 제거 파싱
+    function parseCSVLine(line) {
+        var result = [];
+        var start = 0;
+        var inQuotes = false;
+        for (var i = 0; i < line.length; i++) {
+            if (line[i] === '"') {
+                inQuotes = !inQuotes;
+            } else if (line[i] === ',' && !inQuotes) {
+                var val = line.substring(start, i).trim();
+                if (val.startsWith('"') && val.endsWith('"')) {
+                    val = val.substring(1, val.length - 1).replace(/""/g, '"');
+                }
+                result.push(val);
+                start = i + 1;
+            }
+        }
+        var lastVal = line.substring(start).trim();
+        if (lastVal.startsWith('"') && lastVal.endsWith('"')) {
+            lastVal = lastVal.substring(1, lastVal.length - 1).replace(/""/g, '"');
+        }
+        result.push(lastVal);
+        return result;
+    }
+
     function processCsvUpload() {
         var fileInput = document.getElementById('csvFileInput');
         if (!fileInput.files || fileInput.files.length === 0) { alert("CSV 파일을 선택해 주세요!"); return; }
 
         var file = fileInput.files[0];
         var reader = new FileReader();
+
         reader.onload = function(e) {
-            var text = e.target.result;
-            var lines = text.split('\n');
-            var addCount = 0;
+            var buffer = e.target.result;
+            var text = "";
+
+            try {
+                var utf8Decoder = new TextDecoder('utf-8', { fatal: true });
+                text = utf8Decoder.decode(buffer);
+            } catch (err) {
+                var eucDecoder = new TextDecoder('euc-kr');
+                text = eucDecoder.decode(buffer);
+            }
+
+            var lines = text.split(/\r\n|\n/);
+            var updatedCount = 0;
+            var insertedCount = 0;
 
             for (var i = 1; i < lines.length; i++) {
                 var line = lines[i].trim();
                 if (!line) continue;
-                var parts = line.split(',');
+                
+                var parts = parseCSVLine(line);
                 if (parts.length >= 4) {
                     var catL = parts[0] ? parts[0].trim() : "";
                     var catM = parts[1] ? parts[1].trim() : "";
                     var catS = parts[2] ? parts[2].trim() : "";
                     var name = parts[3] ? parts[3].trim() : "";
                     var model = parts[4] ? parts[4].trim() : "";
-                    var cost = parts[5] ? Number(parts[5].trim()) || 0 : 0;
+                    
+                    // 원가에서 쉼표(,) 및 특수문자 완벽 제거 후 숫자 파싱
+                    var rawCost = parts[5] ? parts[5].trim() : "0";
+                    var cost = Number(rawCost.replace(/[^0-9]/g, '')) || 0;
 
                     if (name) {
-                        window.stockItems.push({
+                        var existingIdx = window.stockItems.findIndex(item => {
+                            var curName = item.itemName || item.name || item.item;
+                            var curModel = item.modelName || item.model || item.spec;
+                            if (model && curModel) {
+                                return curModel === model;
+                            }
+                            return curName === name;
+                        });
+
+                        var itemObj = {
                             catLarge: catL,
                             catMedium: catM,
                             catSmall: catS,
@@ -476,17 +549,25 @@
                             modelName: model,
                             model: model,
                             cost: cost
-                        });
-                        addCount++;
+                        };
+
+                        if (existingIdx > -1) {
+                            window.stockItems[existingIdx] = itemObj;
+                            updatedCount++;
+                        } else {
+                            window.stockItems.push(itemObj);
+                            insertedCount++;
+                        }
                     }
                 }
             }
 
-            alert(`${addCount}개의 품목 마스터가 대량 업로드 되었습니다.`);
+            alert(`처리 완료:\n- 신규 등록: ${insertedCount}건\n- 기존 항목 업데이트: ${updatedCount}건`);
             closeCsvModal();
-            syncCostMasterWithGoogle("CSV 대량 품목 등록");
+            syncCostMasterWithGoogle("CSV 콤마 보정 대량 업로드 완료");
         };
-        reader.readAsText(file, "EUC-KR");
+
+        reader.readAsArrayBuffer(file);
     }
 </script>
 </body>
