@@ -15,13 +15,13 @@
         .btn { padding: 0 16px; background-color: #1abc9c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; height: 38px; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
         .btn:hover { background-color: #16a085; }
         .btn-purple { background-color: #9b59b6 !important; }
+        .btn-gray { background-color: #7f8c8d !important; }
 
         .table-container { width: 100%; max-height: 72vh; overflow: auto !important; border: 1px solid #ccc; border-radius: 6px; background: white; }
         table { border-collapse: separate !important; border-spacing: 0 !important; font-size: 12px; width: auto; min-width: 100%; table-layout: fixed; }
         th, td { padding: 8px 6px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; }
         th { background-color: #f8f9fa !important; font-weight: bold; position: sticky !important; top: 0 !important; z-index: 30 !important; }
 
-        /* 고정 열 스타일 */
         .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 180px; max-width: 230px; background: #ffffff !important; z-index: 10; font-weight: bold; text-align: left !important; padding-left: 8px !important; white-space: normal !important; word-break: break-all; }
         th.fix-col-1 { z-index: 40 !important; text-align: center !important; }
 
@@ -32,7 +32,16 @@
         .bg-calc { background-color: #f1f3f5; font-weight: bold; }
         .bg-order { background-color: #e7f5ff; cursor: pointer; }
 
-        .inline-input { width: 95%; height: 26px; text-align: center; border: 2px solid #2980b9; border-radius: 4px; box-sizing: border-box; font-weight: bold; }
+        /* 🎯 커스텀 모달 스타일 */
+        .modal-overlay { display: none; position: fixed; z-index: 1000000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        .modal-card { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #2c3e50; padding-bottom: 8px; }
+        .modal-header h3 { margin: 0; color: #2c3e50; font-size: 16px; font-weight: bold; }
+        .modal-close { cursor: pointer; font-size: 20px; font-weight: bold; color: #888; }
+        .modal-close:hover { color: #e74c3c; }
+        .form-group { display: flex; flex-direction: column; margin-bottom: 15px; }
+        .form-group label { font-size: 12px; font-weight: bold; color: #495057; margin-bottom: 6px; }
+        .form-group input { height: 38px; padding: 0 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 13px; box-sizing: border-box; width: 100%; }
     </style>
     <script>
         document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');
@@ -42,7 +51,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_order_table_v1&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_order_pretty_modal_v2&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -64,10 +73,40 @@
     </div>
 </div>
 
+<!-- 🎯 입고발주표 수정 전용 모달 -->
+<div id="orderEditModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 id="modalTitleText">✏️ 데이터 입력/수정</h3>
+            <span class="modal-close" onclick="closeOrderEditModal()">&times;</span>
+        </div>
+        
+        <p id="modalSubText" style="font-size:13px; color:#2980b9; font-weight:bold; margin-bottom:15px; word-break:break-all;"></p>
+        
+        <input type="hidden" id="editTargetName">
+        <input type="hidden" id="editTargetType"> <!-- 'req', 'date1', 'qty1', 'date2', 'qty2' -->
+
+        <div class="form-group" id="inputGroupText">
+            <label id="inputLabelText">값 입력</label>
+            <input type="text" id="orderModalValueInput">
+        </div>
+
+        <div class="form-group" id="inputGroupDate" style="display:none;">
+            <label>날짜 선택</label>
+            <input type="date" id="orderModalDateInput">
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button class="btn btn-gray" onclick="closeOrderEditModal()">취소</button>
+            <button class="btn btn-purple" onclick="saveOrderModalSubmit()">저장 완료</button>
+        </div>
+    </div>
+</div>
+
 <script>
     window.stockItems = [];
     window.stockEntries = [];
-    window.orderData = {}; // { itemName: { fixedReq: 50, inDate1: '2026-08-01', inQty1: 100, inDate2: '', inQty2: 0 } }
+    window.orderData = {};
 
     document.addEventListener("DOMContentLoaded", function() {
         var now = new Date();
@@ -126,13 +165,11 @@
 
     function getItemName(item) { return item.itemName || item.name || item.item || "이름없음"; }
 
-    // 오늘 날짜 포맷 (YYYY. M. D)
     function getTodayFormatted() {
         var d = new Date();
         return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}`;
     }
 
-    // 최근 3개월 월평균 출고량 자동 계산
     function calcRecent3MonthAvgOut(itemName) {
         var now = new Date();
         var totalOut = 0;
@@ -149,7 +186,6 @@
         return Math.round(totalOut / 3);
     }
 
-    // 현재 총재고 계산
     function calcTotalStock(itemName) {
         var entries = window.stockEntries.filter(e => (e.item === itemName || e.itemName === itemName));
         var inSum = 0, outSum = 0;
@@ -160,7 +196,6 @@
         return inSum - outSum;
     }
 
-    // 📊 메인 입고발주표 테이블 빌드
     function buildOrderPivotTable() {
         var table = document.getElementById('orderPivotTable');
         if (!table) return;
@@ -191,7 +226,6 @@
             var name = getItemName(item);
             var itemData = window.orderData[name] || {};
 
-            // 1월~12월 월별 출고합산
             var monthOutList = [];
             for (var m = 1; m <= 12; m++) {
                 var strM = m < 10 ? "0" + m : String(m);
@@ -202,14 +236,11 @@
                 monthOutList.push(outSum);
             }
 
-            // 현재고
             var stockQty = calcTotalStock(name);
 
-            // 기준 월소요량 (수정 고정값이 있으면 고정값 사용, 없으면 최근 3개월 평균)
             var isFixed = itemData.fixedReq !== undefined && itemData.fixedReq !== null;
             var reqQty = isFixed ? Number(itemData.fixedReq) : calcRecent3MonthAvgOut(name);
 
-            // 가용일수 및 예상품절일
             var availDaysText = "#DIV/0!";
             var expireDateText = "#DIV/0!";
 
@@ -234,14 +265,14 @@
                 <td class="fix-col-1">${name}</td>
                 ${monthOutList.map(v => `<td class="bg-month-out">${v || '-'}</td>`).join('')}
                 <td class="bg-stock">${stockQty.toLocaleString()}개</td>
-                <td class="${reqBgClass}" title="${reqTitle}" onclick="editMonthlyReq('${name}', ${reqQty})">${reqQty.toLocaleString()}개 ${isFixed ? '🔒' : ''}</td>
+                <td class="${reqBgClass}" title="${reqTitle}" onclick="openEditModalReq('${name}', ${reqQty})">${reqQty.toLocaleString()}개 ${isFixed ? '🔒' : ''}</td>
                 <td class="bg-calc">${todayStr}</td>
                 <td class="bg-calc">${availDaysText}</td>
                 <td class="bg-calc">${expireDateText}</td>
-                <td class="bg-order" onclick="editInDate('${name}', 1, '${inDate1}')">${inDate1}</td>
-                <td class="bg-order" onclick="editInQty('${name}', 1, '${itemData.inQty1 || 0}')">${inQty1}</td>
-                <td class="bg-order" onclick="editInDate('${name}', 2, '${inDate2}')">${inDate2}</td>
-                <td class="bg-order" onclick="editInQty('${name}', 2, '${itemData.inQty2 || 0}')">${inQty2}</td>
+                <td class="bg-order" onclick="openEditModalDate('${name}', 1, '${inDate1}')">${inDate1}</td>
+                <td class="bg-order" onclick="openEditModalQty('${name}', 1, '${itemData.inQty1 || 0}')">${inQty1}</td>
+                <td class="bg-order" onclick="openEditModalDate('${name}', 2, '${inDate2}')">${inDate2}</td>
+                <td class="bg-order" onclick="openEditModalQty('${name}', 2, '${itemData.inQty2 || 0}')">${inQty2}</td>
             </tr>`;
         });
 
@@ -249,18 +280,87 @@
         table.innerHTML = headerHtml + bodyHtml;
     }
 
-    // ✏️ 관리자 월소요량 임의 고정 수정
-    function editMonthlyReq(name, currentVal) {
-        var input = prompt(`[${name}] 기준 월소요량을 입력해 주세요.\n(숫자 입력시 수정한 숫자로 고정 표기됩니다):`, currentVal);
-        if (input === null) return;
+    // 🎯 커스텀 모달 오픈 핸들러
+    function openEditModalReq(name, currentVal) {
+        document.getElementById('modalTitleText').innerText = "✏️ 기준 월소요량 고정 수정";
+        document.getElementById('modalSubText').innerText = `[${name}]`;
+        document.getElementById('inputLabelText').innerText = "변경할 월소요량 (수정시 숫자로 고정 표기):";
+        
+        document.getElementById('editTargetName').value = name;
+        document.getElementById('editTargetType').value = 'req';
+        
+        document.getElementById('inputGroupText').style.display = 'flex';
+        document.getElementById('inputGroupDate').style.display = 'none';
+        
+        var valInput = document.getElementById('orderModalValueInput');
+        valInput.type = "number";
+        valInput.value = currentVal;
+        
+        document.getElementById('orderEditModal').style.display = 'flex';
+    }
 
-        var val = parseInt(input.trim());
-        if (isNaN(val) || val < 0) { alert("올바른 숫자를 입력해 주세요."); return; }
+    function openEditModalDate(name, seq, currentVal) {
+        document.getElementById('modalTitleText').innerText = `📅 ${seq}차 입고예정일 수정`;
+        document.getElementById('modalSubText').innerText = `[${name}]`;
+        
+        document.getElementById('editTargetName').value = name;
+        document.getElementById('editTargetType').value = `date${seq}`;
+        
+        document.getElementById('inputGroupText').style.display = 'none';
+        document.getElementById('inputGroupDate').style.display = 'flex';
+        
+        var dateInput = document.getElementById('orderModalDateInput');
+        dateInput.value = (currentVal && currentVal !== '-') ? currentVal : '';
+        
+        document.getElementById('orderEditModal').style.display = 'flex';
+    }
 
+    function openEditModalQty(name, seq, currentVal) {
+        document.getElementById('modalTitleText').innerText = `📦 ${seq}차 입고예정 수량 수정`;
+        document.getElementById('modalSubText').innerText = `[${name}]`;
+        document.getElementById('inputLabelText').innerText = "입고 수량 입력 (개):";
+        
+        document.getElementById('editTargetName').value = name;
+        document.getElementById('editTargetType').value = `qty${seq}`;
+        
+        document.getElementById('inputGroupText').style.display = 'flex';
+        document.getElementById('inputGroupDate').style.display = 'none';
+        
+        var valInput = document.getElementById('orderModalValueInput');
+        valInput.type = "number";
+        valInput.value = currentVal || 0;
+        
+        document.getElementById('orderEditModal').style.display = 'flex';
+    }
+
+    function closeOrderEditModal() {
+        document.getElementById('orderEditModal').style.display = 'none';
+    }
+
+    function saveOrderModalSubmit() {
+        var name = document.getElementById('editTargetName').value;
+        var type = document.getElementById('editTargetType').value;
+        
         if (!window.orderData[name]) window.orderData[name] = {};
-        window.orderData[name].fixedReq = val;
 
-        syncOrderDataWithGoogle(`[${name}] 기준월소요량 ${val}개로 고정 수정`);
+        if (type === 'req') {
+            var val = parseInt(document.getElementById('orderModalValueInput').value);
+            if (isNaN(val) || val < 0) { alert("올바른 숫자를 입력해 주세요."); return; }
+            window.orderData[name].fixedReq = val;
+            syncOrderDataWithGoogle(`[${name}] 기준월소요량 ${val}개 고정 수정`);
+        } else if (type === 'date1' || type === 'date2') {
+            var seq = type.replace('date', '');
+            var dateVal = document.getElementById('orderModalDateInput').value;
+            window.orderData[name][`inDate${seq}`] = dateVal || '-';
+            syncOrderDataWithGoogle(`[${name}] ${seq}차 입고예정일 변경`);
+        } else if (type === 'qty1' || type === 'qty2') {
+            var seq = type.replace('qty', '');
+            var qtyVal = parseInt(document.getElementById('orderModalValueInput').value) || 0;
+            window.orderData[name][`inQty${seq}`] = qtyVal;
+            syncOrderDataWithGoogle(`[${name}] ${seq}차 입고수량 ${qtyVal}개 변경`);
+        }
+
+        closeOrderEditModal();
     }
 
     function resetFixedMonthlyReqAll() {
@@ -270,29 +370,6 @@
             }
             syncOrderDataWithGoogle("월소요량 자동 연동으로 전체 복구");
         }
-    }
-
-    // ✏️ 입고예정일 수정
-    function editInDate(name, seq, currentVal) {
-        var input = prompt(`[${name}] ${seq}차 입고예정일을 입력하세요 (예: 2026-08-15):`, currentVal === '-' ? '' : currentVal);
-        if (input === null) return;
-
-        if (!window.orderData[name]) window.orderData[name] = {};
-        window.orderData[name][`inDate${seq}`] = input.trim();
-
-        syncOrderDataWithGoogle(`[${name}] ${seq}차 입고예정일 변경`);
-    }
-
-    // ✏️ 입고수량 수정
-    function editInQty(name, seq, currentVal) {
-        var input = prompt(`[${name}] ${seq}차 입고예정 수량을 입력하세요:`, currentVal);
-        if (input === null) return;
-
-        var val = parseInt(input.trim()) || 0;
-        if (!window.orderData[name]) window.orderData[name] = {};
-        window.orderData[name][`inQty${seq}`] = val;
-
-        syncOrderDataWithGoogle(`[${name}] ${seq}차 입고예정수량 ${val}개 변경`);
     }
 </script>
 </body>
