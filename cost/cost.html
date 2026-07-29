@@ -41,11 +41,11 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_cost_safe_reset_v9&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_cost_readonly_guard_v11&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
-    <div class="card">
+    <div class="card" id="costControlCard">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h2 style="font-size:18px; margin: 0; color:#2c3e50;">📉 [원가관리] 대/중/소 카테고리 및 상품 마스터 제어 센터</h2>
             <div style="display: flex; gap: 8px;">
@@ -100,7 +100,7 @@
                         <th>품목명</th>
                         <th>모델명 / 규격</th>
                         <th>기본 원가</th>
-                        <th>관리 기능</th>
+                        <th id="thActionHeader">관리 기능</th>
                     </tr>
                 </thead>
                 <tbody id="costMasterTableBody"></tbody>
@@ -109,7 +109,6 @@
     </div>
 </div>
 
-<!-- ✏️ 상품 마스터 수정 모달 -->
 <div id="editMasterModal" class="modal-overlay">
     <div class="modal-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #2c3e50; padding-bottom:8px;">
@@ -156,7 +155,6 @@
     </div>
 </div>
 
-<!-- 🏷️ 카테고리 관리 모달 -->
 <div id="categoryModal" class="modal-overlay">
     <div class="modal-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #2c3e50; padding-bottom:8px;">
@@ -195,7 +193,6 @@
     </div>
 </div>
 
-<!-- 📥 CSV 업로드 모달 -->
 <div id="csvModal" class="modal-overlay">
     <div class="modal-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #2c3e50; padding-bottom:8px;">
@@ -216,7 +213,6 @@
     </div>
 </div>
 
-<!-- 🚨 [신규] 2중 안전장치 전체 초기화 확인 모달 -->
 <div id="clearConfirmModal" class="modal-overlay">
     <div class="modal-card" style="max-width: 460px; border-top: 5px solid #e74c3c;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
@@ -244,10 +240,29 @@
 <script>
     window.stockItems = [];
     window.categories = [];
+    window.isReadOnlyMode = false;
 
     document.addEventListener("DOMContentLoaded", function() {
+        checkUserPermissionGuard();
         loadCostMasterData();
     });
+
+    function checkUserPermissionGuard() {
+        var userRole = localStorage.getItem('login_user_role') || "admin";
+        var userPermissions = {};
+        try { userPermissions = JSON.parse(localStorage.getItem('login_user_permissions') || "{}"); } catch(e) {}
+
+        if (userRole !== "admin") {
+            var costPerm = userPermissions.cost || 'read';
+            if (costPerm === 'read') {
+                window.isReadOnlyMode = true;
+                var ctrlCard = document.getElementById('costControlCard');
+                if (ctrlCard) ctrlCard.style.display = 'none';
+                var thAction = document.getElementById('thActionHeader');
+                if (thAction) thAction.style.display = 'none';
+            }
+        }
+    }
 
     function loadCostMasterData() {
         document.getElementById('loadingStatus').innerText = "🔄 DB 로드 중...";
@@ -288,6 +303,7 @@
     }
 
     function syncCostMasterWithGoogle(msg) {
+        if (window.isReadOnlyMode) { alert("보기 전용 권한 계정은 수정이 불가합니다."); return; }
         document.getElementById('loadingStatus').innerText = "📤 구글 DB 업데이트 중...";
         var payload = {
             action: "syncStock",
@@ -313,8 +329,8 @@
         });
     }
 
-    // 🎯 [신규] 2중 안전장치 전체 초기화 모달 제어
     function openClearConfirmModal() {
+        if (window.isReadOnlyMode) return;
         document.getElementById('confirmTextPrompt').value = "";
         document.getElementById('clearConfirmModal').style.display = 'flex';
     }
@@ -339,6 +355,7 @@
         var selL = document.getElementById('selCatLarge');
         var selM = document.getElementById('selCatMedium');
         var selS = document.getElementById('selCatSmall');
+        if (!selL) return;
 
         selL.innerHTML = '<option value="">선택 안함</option>';
         selM.innerHTML = '<option value="">선택 안함</option>';
@@ -354,7 +371,7 @@
         tbody.innerHTML = "";
 
         if (window.stockItems.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="padding:20px; color:#888;">등록된 상품 마스터가 없습니다. 상단에서 추가해 주세요.</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="${window.isReadOnlyMode ? 6 : 7}" style="padding:20px; color:#888;">등록된 상품 마스터가 없습니다.</td></tr>`;
             return;
         }
 
@@ -364,6 +381,13 @@
             var costVal = Number(item.cost || item.price || 0);
 
             var tr = document.createElement('tr');
+            
+            var actionTdHtml = window.isReadOnlyMode ? '' : `
+                <td>
+                    <button class="btn btn-purple" style="height:26px; padding:0 8px; font-size:11px;" onclick="openEditMasterModal(${idx})">수정</button>
+                    <button class="btn btn-danger" style="height:26px; padding:0 8px; font-size:11px;" onclick="deleteStockItemMaster(${idx})">삭제</button>
+                </td>`;
+
             tr.innerHTML = `
                 <td><b>${item.catLarge || '-'}</b></td>
                 <td>${item.catMedium || '-'}</td>
@@ -371,16 +395,14 @@
                 <td style="font-weight:bold; color:#2c3e50;">${itemName}</td>
                 <td style="color:#2980b9; font-weight:bold;">${modelName}</td>
                 <td style="color:#27ae60; font-weight:bold;">${costVal.toLocaleString()}원</td>
-                <td>
-                    <button class="btn btn-purple" style="height:26px; padding:0 8px; font-size:11px;" onclick="openEditMasterModal(${idx})">수정</button>
-                    <button class="btn btn-danger" style="height:26px; padding:0 8px; font-size:11px;" onclick="deleteStockItemMaster(${idx})">삭제</button>
-                </td>
+                ${actionTdHtml}
             `;
             tbody.appendChild(tr);
         });
     }
 
     function addStockItemMaster() {
+        if (window.isReadOnlyMode) return;
         var catLarge = document.getElementById('selCatLarge').value;
         var catMedium = document.getElementById('selCatMedium').value;
         var catSmall = document.getElementById('selCatSmall').value;
@@ -398,21 +420,12 @@
         });
 
         var newItemObj = {
-            catLarge: catLarge,
-            catMedium: catMedium,
-            catSmall: catSmall,
-            itemName: name,
-            name: name,
-            modelName: model,
-            model: model,
-            cost: cost
+            catLarge: catLarge, catMedium: catMedium, catSmall: catSmall,
+            itemName: name, name: name, modelName: model, model: model, cost: cost
         };
 
-        if (existingIdx > -1) {
-            window.stockItems[existingIdx] = newItemObj;
-        } else {
-            window.stockItems.push(newItemObj);
-        }
+        if (existingIdx > -1) { window.stockItems[existingIdx] = newItemObj; } 
+        else { window.stockItems.push(newItemObj); }
 
         document.getElementById('inputItemName').value = "";
         document.getElementById('inputModelName').value = "";
@@ -423,6 +436,7 @@
     }
 
     function openEditMasterModal(idx) {
+        if (window.isReadOnlyMode) return;
         var item = window.stockItems[idx];
         if (!item) return;
 
@@ -451,11 +465,10 @@
         document.getElementById('editMasterModal').style.display = 'flex';
     }
 
-    function closeEditMasterModal() {
-        document.getElementById('editMasterModal').style.display = 'none';
-    }
+    function closeEditMasterModal() { document.getElementById('editMasterModal').style.display = 'none'; }
 
     function saveEditStockItemMaster() {
+        if (window.isReadOnlyMode) return;
         var idx = document.getElementById('editTargetIndex').value;
         var item = window.stockItems[idx];
         if (!item) return;
@@ -470,10 +483,8 @@
         item.catLarge = document.getElementById('editCatLarge').value;
         item.catMedium = document.getElementById('editCatMedium').value;
         item.catSmall = document.getElementById('editCatSmall').value;
-        item.itemName = newName;
-        item.name = newName;
-        item.modelName = newModel;
-        item.model = newModel;
+        item.itemName = newName; item.name = newName;
+        item.modelName = newModel; item.model = newModel;
         item.cost = cost;
 
         closeEditMasterModal();
@@ -482,6 +493,7 @@
     }
 
     function deleteStockItemMaster(idx) {
+        if (window.isReadOnlyMode) return;
         var item = window.stockItems[idx];
         if (!item) return;
         var displayName = item.itemName || item.name || item.item || "선택 품목";
@@ -491,7 +503,7 @@
         }
     }
 
-    function openCategoryModal() { renderCategoryTable(); document.getElementById('categoryModal').style.display = 'flex'; }
+    function openCategoryModal() { if (window.isReadOnlyMode) return; renderCategoryTable(); document.getElementById('categoryModal').style.display = 'flex'; }
     function closeCategoryModal() { document.getElementById('categoryModal').style.display = 'none'; }
 
     function renderCategoryTable() {
@@ -510,6 +522,7 @@
     }
 
     function addCategoryItem() {
+        if (window.isReadOnlyMode) return;
         var level = document.getElementById('catLevelSelect').value;
         var name = document.getElementById('catNameInput').value.trim();
         if (!name) { alert("카테고리명을 입력해 주세요!"); return; }
@@ -523,6 +536,7 @@
     }
 
     function deleteCategoryItem(idx) {
+        if (window.isReadOnlyMode) return;
         if (confirm("이 카테고리를 삭제하시겠습니까?")) {
             window.categories.splice(idx, 1);
             renderCategoryTable();
@@ -530,34 +544,27 @@
         }
     }
 
-    function openCsvModal() { document.getElementById('csvModal').style.display = 'flex'; }
+    function openCsvModal() { if (window.isReadOnlyMode) return; document.getElementById('csvModal').style.display = 'flex'; }
     function closeCsvModal() { document.getElementById('csvModal').style.display = 'none'; }
 
     function parseCSVLine(line) {
-        var result = [];
-        var start = 0;
-        var inQuotes = false;
+        var result = []; var start = 0; var inQuotes = false;
         for (var i = 0; i < line.length; i++) {
-            if (line[i] === '"') {
-                inQuotes = !inQuotes;
-            } else if (line[i] === ',' && !inQuotes) {
+            if (line[i] === '"') inQuotes = !inQuotes;
+            else if (line[i] === ',' && !inQuotes) {
                 var val = line.substring(start, i).trim();
-                if (val.startsWith('"') && val.endsWith('"')) {
-                    val = val.substring(1, val.length - 1).replace(/""/g, '"');
-                }
-                result.push(val);
-                start = i + 1;
+                if (val.startsWith('"') && val.endsWith('"')) val = val.substring(1, val.length - 1).replace(/""/g, '"');
+                result.push(val); start = i + 1;
             }
         }
         var lastVal = line.substring(start).trim();
-        if (lastVal.startsWith('"') && lastVal.endsWith('"')) {
-            lastVal = lastVal.substring(1, lastVal.length - 1).replace(/""/g, '"');
-        }
+        if (lastVal.startsWith('"') && lastVal.endsWith('"')) lastVal = lastVal.substring(1, lastVal.length - 1).replace(/""/g, '"');
         result.push(lastVal);
         return result;
     }
 
     function processCsvUpload() {
+        if (window.isReadOnlyMode) return;
         var fileInput = document.getElementById('csvFileInput');
         if (!fileInput.files || fileInput.files.length === 0) { alert("CSV 파일을 선택해 주세요!"); return; }
 
@@ -565,25 +572,15 @@
         var reader = new FileReader();
 
         reader.onload = function(e) {
-            var buffer = e.target.result;
-            var text = "";
-
-            try {
-                var utf8Decoder = new TextDecoder('utf-8', { fatal: true });
-                text = utf8Decoder.decode(buffer);
-            } catch (err) {
-                var eucDecoder = new TextDecoder('euc-kr');
-                text = eucDecoder.decode(buffer);
-            }
+            var buffer = e.target.result; var text = "";
+            try { text = new TextDecoder('utf-8', { fatal: true }).decode(buffer); } 
+            catch (err) { text = new TextDecoder('euc-kr').decode(buffer); }
 
             var lines = text.split(/\r\n|\n/);
-            var updatedCount = 0;
-            var insertedCount = 0;
+            var updatedCount = 0; var insertedCount = 0;
 
             for (var i = 1; i < lines.length; i++) {
-                var line = lines[i].trim();
-                if (!line) continue;
-                
+                var line = lines[i].trim(); if (!line) continue;
                 var parts = parseCSVLine(line);
                 if (parts.length >= 4) {
                     var catL = parts[0] ? parts[0].trim() : "";
@@ -595,50 +592,27 @@
                     var cost = Number(rawCost.replace(/[^0-9]/g, '')) || 0;
 
                     if (name) {
-                        if (catL && !window.categories.some(c => c.level === 'large' && c.name === catL)) {
-                            window.categories.push({ level: 'large', name: catL });
-                        }
-                        if (catM && !window.categories.some(c => c.level === 'medium' && c.name === catM)) {
-                            window.categories.push({ level: 'medium', name: catM });
-                        }
-                        if (catS && !window.categories.some(c => c.level === 'small' && c.name === catS)) {
-                            window.categories.push({ level: 'small', name: catS });
-                        }
+                        if (catL && !window.categories.some(c => c.level === 'large' && c.name === catL)) window.categories.push({ level: 'large', name: catL });
+                        if (catM && !window.categories.some(c => c.level === 'medium' && c.name === catM)) window.categories.push({ level: 'medium', name: catM });
+                        if (catS && !window.categories.some(c => c.level === 'small' && c.name === catS)) window.categories.push({ level: 'small', name: catS });
 
                         var existingIdx = window.stockItems.findIndex(item => {
                             var curName = item.itemName || item.name || item.item;
                             var curModel = item.modelName || item.model || item.spec;
-                            if (model && curModel) {
-                                return curModel === model;
-                            }
-                            return curName === name;
+                            return (model && curModel) ? (curModel === model) : (curName === name);
                         });
 
-                        var itemObj = {
-                            catLarge: catL,
-                            catMedium: catM,
-                            catSmall: catS,
-                            itemName: name,
-                            name: name,
-                            modelName: model,
-                            model: model,
-                            cost: cost
-                        };
+                        var itemObj = { catLarge: catL, catMedium: catM, catSmall: catS, itemName: name, name: name, modelName: model, model: model, cost: cost };
 
-                        if (existingIdx > -1) {
-                            window.stockItems[existingIdx] = itemObj;
-                            updatedCount++;
-                        } else {
-                            window.stockItems.push(itemObj);
-                            insertedCount++;
-                        }
+                        if (existingIdx > -1) { window.stockItems[existingIdx] = itemObj; updatedCount++; } 
+                        else { window.stockItems.push(itemObj); insertedCount++; }
                     }
                 }
             }
 
-            alert(`처리 완료:\n- 신규 품목 등록: ${insertedCount}건\n- 기존 품목 업데이트: ${updatedCount}건\n- 카테고리 마스터 자동 추출 적용 완료!`);
+            alert(`처리 완료:\n- 신규 품목 등록: ${insertedCount}건\n- 기존 품목 업데이트: ${updatedCount}건`);
             closeCsvModal();
-            syncCostMasterWithGoogle("CSV 카테고리 자동 추출 업로드 완료");
+            syncCostMasterWithGoogle("CSV 대량 업로드 완료");
         };
 
         reader.readAsArrayBuffer(file);
