@@ -89,7 +89,7 @@
             .account-modal-header h3 { margin: 0; font-size: 18px; color: #0f172a; font-weight: 700; display: flex; align-items: center; gap: 8px; }
             .account-modal-close { cursor: pointer; font-size: 24px; font-weight: bold; color: #94a3b8; transition: color 0.15s; }
             .account-modal-close:hover { color: #ef4444; }
-            
+
             /* 🎯 깨짐 현상 완전 방지 전용 폼 스타일 */
             .account-form-container {
                 display: flex;
@@ -172,7 +172,14 @@
                 <span class="navbar-brand">YUNY_ERP</span>
                 ${canDash ? `<a href="../dashboard/dashboard.html" class="${isDashboard ? 'active-menu' : ''}">📊 대시보드</a>` : ''}
                 ${canAds ? `<a href="../ads/ads.html" class="${isAds ? 'active-menu' : ''}">📢 광고관리</a>` : ''}
-                ${canCost ? `<a href="../cost/cost.html" class="${isCost ? 'active-menu' : ''}">📉 원가관리</a>` : ''}
+                ${canCost ? `
+                    <div class="nav-dropdown">
+                        <a href="../cost/cost.html" class="${isCost ? 'active-menu' : ''}">📉 원가관리 ▾</a>
+                        <div class="nav-dropdown-content">
+                            <a href="../cost/cost.html">📋 품목별 가격표</a>
+                            <a href="../cost/cost-monthly.html">📉 품목별 원가관리</a>
+                        </div>
+                    </div>` : ''}
                 ${canSales ? `<a href="../sales/sales.html" class="${isSales ? 'active-menu' : ''}">💰 매출관리</a>` : ''}
                 ${canMargin ? `<a href="../margin/margin.html" class="${isMargin ? 'active-menu' : ''}">📝 마진관리</a>` : ''}
                 ${canStock ? `
