@@ -218,8 +218,8 @@
             <span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeCsvModal()">&times;</span>
         </div>
         <p style="font-size:12px; color:#666; margin-bottom:15px;">
-            CSV 파일 서식: <b>[대카테고리, 중카테고리, 소카테고리, 품목명, 모델명, 원가]</b> 순서<br>
-            * CSV 업로드 시 카테고리(대/중/소)가 드롭다운 마스터 목록에 자동 등록됩니다.
+            CSV 파일 서식: <b>[대카테고리, 중카테고리, 소카테고리, 품목명, 모델명, 기본원가, 직원가, 정상가]</b> 순서<br>
+            * CSV 업로드 시 카테고리가 자동 등록되며 원가, 직원가, 정상가가 함께 일괄 저장됩니다.
         </p>
         <div class="form-group" style="margin-bottom:15px;">
             <input type="file" id="csvFileInput" accept=".csv" style="height:auto; padding:8px;">
@@ -636,8 +636,14 @@
                     var catS = parts[2] ? parts[2].trim() : "";
                     var name = parts[3] ? parts[3].trim() : "";
                     var model = parts[4] ? parts[4].trim() : "";
+                    
                     var rawCost = parts[5] ? parts[5].trim() : "0";
+                    var rawStaffCost = parts[6] ? parts[6].trim() : "0";
+                    var rawNormalCost = parts[7] ? parts[7].trim() : "0";
+
                     var cost = Number(rawCost.replace(/[^0-9]/g, '')) || 0;
+                    var staffCost = Number(rawStaffCost.replace(/[^0-9]/g, '')) || 0;
+                    var normalCost = Number(rawNormalCost.replace(/[^0-9]/g, '')) || 0;
 
                     if (name) {
                         if (catL && !window.categories.some(c => c.level === 'large' && c.name === catL)) window.categories.push({ level: 'large', name: catL });
@@ -650,7 +656,11 @@
                             return (model && curModel) ? (curModel === model) : (curName === name);
                         });
 
-                        var itemObj = { catLarge: catL, catMedium: catM, catSmall: catS, itemName: name, name: name, modelName: model, model: model, cost: cost };
+                        var itemObj = { 
+                            catLarge: catL, catMedium: catM, catSmall: catS, 
+                            itemName: name, name: name, modelName: model, model: model, 
+                            cost: cost, staffCost: staffCost, normalCost: normalCost 
+                        };
 
                         if (existingIdx > -1) { window.stockItems[existingIdx] = itemObj; updatedCount++; } 
                         else { window.stockItems.push(itemObj); insertedCount++; }
