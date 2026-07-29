@@ -76,9 +76,17 @@
                 <label>모델명 / 규격</label>
                 <input type="text" id="inputModelName" placeholder="예: SAN-RDC-C-CN" style="width:140px;">
             </div>
-            <div class="form-group">
+          <div class="form-group">
                 <label>기본 원가 (원)</label>
-                <input type="number" id="inputItemCost" placeholder="원가 입력" style="width:110px;">
+                <input type="number" id="inputItemCost" placeholder="원가 입력" style="width:100px;">
+            </div>
+            <div class="form-group">
+                <label>직원가 (원)</label>
+                <input type="number" id="inputStaffCost" placeholder="직원가 입력" style="width:100px;">
+            </div>
+            <div class="form-group">
+                <label>정상가 (원)</label>
+                <input type="number" id="inputNormalCost" placeholder="정상가 입력" style="width:100px;">
             </div>
             <button class="btn" onclick="addStockItemMaster()">+ 품목 마스터 등록</button>
         </div>
@@ -133,7 +141,7 @@
             </div>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-bottom:20px;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
             <div class="form-group">
                 <label>품목명</label>
                 <input type="text" id="editItemName" style="width:100%;">
@@ -142,9 +150,19 @@
                 <label>모델명 / 규격</label>
                 <input type="text" id="editModelName" style="width:100%;">
             </div>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-bottom:20px;">
             <div class="form-group">
                 <label>기본 원가 (원)</label>
                 <input type="number" id="editItemCost" style="width:100%;">
+            </div>
+            <div class="form-group">
+                <label>직원가 (원)</label>
+                <input type="number" id="editStaffCost" style="width:100%;">
+            </div>
+            <div class="form-group">
+                <label>정상가 (원)</label>
+                <input type="number" id="editNormalCost" style="width:100%;">
             </div>
         </div>
 
@@ -370,8 +388,23 @@
         var tbody = document.getElementById('costMasterTableBody');
         tbody.innerHTML = "";
 
+        var theadTr = document.querySelector('.table-container table thead tr');
+        if (theadTr) {
+            theadTr.innerHTML = `
+                <th>대카테고리</th>
+                <th>중카테고리</th>
+                <th>소카테고리</th>
+                <th>품목명</th>
+                <th>모델명 / 규격</th>
+                <th>기본 원가</th>
+                <th>직원가</th>
+                <th>정상가</th>
+                ${window.isReadOnlyMode ? '' : '<th id="thActionHeader">관리 기능</th>'}
+            `;
+        }
+
         if (window.stockItems.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="${window.isReadOnlyMode ? 6 : 7}" style="padding:20px; color:#888;">등록된 상품 마스터가 없습니다.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="${window.isReadOnlyMode ? 8 : 9}" style="padding:20px; color:#888;">등록된 상품 마스터가 없습니다.</td></tr>`;
             return;
         }
 
@@ -379,6 +412,8 @@
             var itemName = item.itemName || item.name || item.item || "이름없음";
             var modelName = item.modelName || item.model || item.spec || "-";
             var costVal = Number(item.cost || item.price || 0);
+            var staffCostVal = Number(item.staffCost || 0);
+            var normalCostVal = Number(item.normalCost || 0);
 
             var tr = document.createElement('tr');
             
@@ -395,6 +430,8 @@
                 <td style="font-weight:bold; color:#2c3e50;">${itemName}</td>
                 <td style="color:#2980b9; font-weight:bold;">${modelName}</td>
                 <td style="color:#27ae60; font-weight:bold;">${costVal.toLocaleString()}원</td>
+                <td style="color:#e67e22; font-weight:bold;">${staffCostVal.toLocaleString()}원</td>
+                <td style="color:#2980b9; font-weight:bold;">${normalCostVal.toLocaleString()}원</td>
                 ${actionTdHtml}
             `;
             tbody.appendChild(tr);
@@ -408,8 +445,10 @@
         var catSmall = document.getElementById('selCatSmall').value;
         var name = document.getElementById('inputItemName').value.trim();
         var model = document.getElementById('inputModelName').value.trim();
-        var costInput = document.getElementById('inputItemCost').value;
-        var cost = Number(String(costInput).replace(/[^0-9]/g, '')) || 0;
+        
+        var cost = Number(String(document.getElementById('inputItemCost').value).replace(/[^0-9]/g, '')) || 0;
+        var staffCost = Number(String(document.getElementById('inputStaffCost').value).replace(/[^0-9]/g, '')) || 0;
+        var normalCost = Number(String(document.getElementById('inputNormalCost').value).replace(/[^0-9]/g, '')) || 0;
 
         if (!name) { alert("품목명을 입력해 주세요!"); return; }
 
@@ -421,7 +460,8 @@
 
         var newItemObj = {
             catLarge: catLarge, catMedium: catMedium, catSmall: catSmall,
-            itemName: name, name: name, modelName: model, model: model, cost: cost
+            itemName: name, name: name, modelName: model, model: model,
+            cost: cost, staffCost: staffCost, normalCost: normalCost
         };
 
         if (existingIdx > -1) { window.stockItems[existingIdx] = newItemObj; } 
@@ -430,6 +470,8 @@
         document.getElementById('inputItemName').value = "";
         document.getElementById('inputModelName').value = "";
         document.getElementById('inputItemCost').value = "";
+        document.getElementById('inputStaffCost').value = "";
+        document.getElementById('inputNormalCost').value = "";
 
         autoExtractCategoriesFromItems();
         syncCostMasterWithGoogle("상품 마스터 저장: " + name);
@@ -461,6 +503,8 @@
         document.getElementById('editItemName').value = item.itemName || item.name || item.item || "";
         document.getElementById('editModelName').value = item.modelName || item.model || item.spec || "";
         document.getElementById('editItemCost').value = Number(item.cost || item.price || 0);
+        document.getElementById('editStaffCost').value = Number(item.staffCost || 0);
+        document.getElementById('editNormalCost').value = Number(item.normalCost || 0);
 
         document.getElementById('editMasterModal').style.display = 'flex';
     }
@@ -475,8 +519,10 @@
 
         var newName = document.getElementById('editItemName').value.trim();
         var newModel = document.getElementById('editModelName').value.trim();
-        var costInput = document.getElementById('editItemCost').value;
-        var cost = Number(String(costInput).replace(/[^0-9]/g, '')) || 0;
+        
+        var cost = Number(String(document.getElementById('editItemCost').value).replace(/[^0-9]/g, '')) || 0;
+        var staffCost = Number(String(document.getElementById('editStaffCost').value).replace(/[^0-9]/g, '')) || 0;
+        var normalCost = Number(String(document.getElementById('editNormalCost').value).replace(/[^0-9]/g, '')) || 0;
 
         if (!newName) { alert("품목명을 입력해 주세요!"); return; }
 
@@ -486,6 +532,8 @@
         item.itemName = newName; item.name = newName;
         item.modelName = newModel; item.model = newModel;
         item.cost = cost;
+        item.staffCost = staffCost;
+        item.normalCost = normalCost;
 
         closeEditMasterModal();
         autoExtractCategoriesFromItems();
