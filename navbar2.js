@@ -76,20 +76,95 @@
             .btn-nav-orange { background-color: #e67e22; border: none; }
             .btn-nav-red { background-color: #e74c3c; border: none; }
 
-            .account-modal-overlay { display: none; position: fixed; z-index: 1000000; left: 0; top: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.55); align-items: center; justify-content: center; }
-            .account-modal-card { background-color: #ffffff; padding: 22px; border-radius: 10px; width: 95%; max-width: 850px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
-            .account-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #2c3e50; }
-            .account-modal-header h3 { margin: 0; font-size: 17px; color: #2c3e50; font-weight: bold; }
-            .account-modal-close { cursor: pointer; font-size: 22px; font-weight: bold; color: #888; }
-            .account-modal-close:hover { color: #e74c3c; }
+            /* ✨ 고급스러운 모달 오버레이 및 카드 스타일링 */
+            .account-modal-overlay { display: none; position: fixed; z-index: 1000000; left: 0; top: 0; width: 100vw; height: 100vh; background-color: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); align-items: center; justify-content: center; }
+            .account-modal-card { background-color: #ffffff; padding: 28px; border-radius: 16px; width: 95%; max-width: 880px; box-shadow: 0 20px 40px rgba(0,0,0,0.25); box-sizing: border-box; border: 1px solid #e2e8f0; animation: modalFadeIn 0.25s ease-out; }
+            
+            @keyframes modalFadeIn {
+                from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+                to { opacity: 1; transform: translateY(0) scale(1); }
+            }
 
-            .perm-grid-box { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: #f1f3f5; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 11px; text-align: left; }
-            .perm-grid-box label { font-weight: bold; color: #333; display: flex; align-items: center; gap: 4px; }
-            .perm-grid-box select { height: 26px; font-size: 11px; padding: 0 4px; border-radius: 4px; border: 1px solid #ccc; width: 100%; }
+            .account-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #3b82f6; }
+            .account-modal-header h3 { margin: 0; font-size: 18px; color: #0f172a; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+            .account-modal-close { cursor: pointer; font-size: 24px; font-weight: bold; color: #94a3b8; transition: color 0.15s; }
+            .account-modal-close:hover { color: #ef4444; }
+            
+            /* 🎯 깨짐 현상 완전 방지 전용 폼 스타일 */
+            .account-form-container {
+                display: flex;
+                align-items: flex-end;
+                gap: 12px;
+                background-color: #f8fafc;
+                padding: 16px;
+                border-radius: 12px;
+                border: 1px solid #e2e8f0;
+                box-sizing: border-box;
+            }
+            .acc-form-item {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+            .acc-form-item label {
+                font-size: 11px;
+                font-weight: 700;
+                color: #475569;
+                margin: 0;
+                display: block;
+                white-space: nowrap;
+            }
+            .acc-form-item input, .acc-form-item select {
+                width: 100%;
+                height: 36px;
+                font-size: 12px;
+                padding: 0 10px;
+                border-radius: 6px;
+                border: 1px solid #cbd5e1;
+                background-color: #ffffff;
+                box-sizing: border-box;
+                margin: 0;
+            }
+            .acc-form-item input:focus, .acc-form-item select:focus {
+                border-color: #3b82f6;
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            }
+            .btn-acc-save {
+                height: 36px;
+                padding: 0 16px;
+                background-color: #2c3e50;
+                color: #ffffff;
+                border: none;
+                border-radius: 6px;
+                font-size: 12px;
+                font-weight: 700;
+                cursor: pointer;
+                white-space: nowrap;
+                transition: background 0.15s;
+            }
+            .btn-acc-save:hover {
+                background-color: #1e293b;
+            }
 
-            .account-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 12px; }
-            .account-table th, .account-table td { border: 1px solid #ddd; padding: 7px 5px; text-align: center; }
-            .account-table th { background-color: #f8f9fa; font-weight: bold; color:#333; }
+            /* 🎯 계정 입력 폼 영역 세련되게 수정 */
+            .account-form-row { display: flex; gap: 10px; align-items: flex-end; background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #e2e8f0; }
+            .account-form-row label { font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; display: block; }
+            .account-form-row input, .account-form-row select { width: 100%; height: 36px; font-size: 12px; padding: 0 10px; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; box-sizing: border-box; transition: all 0.15s; }
+            .account-form-row input:focus, .account-form-row select:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+
+            /* 🥷 8개 세부 메뉴 권한 그리드 커스텀 */
+            .perm-grid-box { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #f1f5f9; padding: 14px; border-radius: 10px; margin-top: 12px; font-size: 11px; text-align: left; border: 1px solid #e2e8f0; }
+            .perm-grid-box label { font-weight: 700; color: #334155; display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+            .perm-grid-box select { height: 32px; font-size: 11px; padding: 0 6px; border-radius: 6px; border: 1px solid #cbd5e1; width: 100%; background: #ffffff; font-weight: 600; color: #1e293b; }
+
+            /* 📋 계정 목록 테이블 정돈 */
+            .account-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; margin-top: 16px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+            .account-table th, .account-table td { padding: 10px 8px; text-align: center; border-bottom: 1px solid #f1f5f9; }
+            .account-table th { background-color: #f8fafc; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0; }
+            .account-table tr:last-child td { border-bottom: none; }
+            .account-table tr:hover td { background-color: #f8fafc; }
         </style>
         
         <div class="custom-navbar">
@@ -127,19 +202,28 @@
                 
                 <div class="account-modal-body">
                     <form id="accountForm" onsubmit="return false;" autocomplete="off">
-                        <div style="display:flex; gap:8px; align-items:flex-end; background:#f8f9fa; padding:10px; border-radius:6px; border:1px solid #e9ecef;">
-                            <div style="flex:1;"><label style="font-size:11px; font-weight:bold;">ID</label><input type="text" id="accInputId" style="width:100%; height:32px; font-size:12px; padding:0 6px;"></div>
-                            <div style="flex:1;"><label style="font-size:11px; font-weight:bold;">비밀번호</label><input type="password" id="accInputPw" style="width:100%; height:32px; font-size:12px; padding:0 6px;"></div>
-                            <div style="flex:1;"><label style="font-size:11px; font-weight:bold;">성함</label><input type="text" id="accInputName" style="width:100%; height:32px; font-size:12px; padding:0 6px;"></div>
-                            <div style="flex:1.2;">
-                                <label style="font-size:11px; font-weight:bold;">권한 등급</label>
-                                <select id="accInputRole" style="width:100%; height:32px; font-size:12px;" onchange="window.onRoleSelectChange(this.value)">
+                        <div class="account-form-container">
+                            <div class="acc-form-item">
+                                <label for="accInputId">ID</label>
+                                <input type="text" id="accInputId" placeholder="아이디">
+                            </div>
+                            <div class="acc-form-item">
+                                <label for="accInputPw">비밀번호</label>
+                                <input type="password" id="accInputPw" placeholder="비밀번호">
+                            </div>
+                            <div class="acc-form-item">
+                                <label for="accInputName">성함</label>
+                                <input type="text" id="accInputName" placeholder="성함">
+                            </div>
+                            <div class="acc-form-item" style="flex: 1.2;">
+                                <label for="accInputRole">권한 등급</label>
+                                <select id="accInputRole" onchange="window.onRoleSelectChange(this.value)">
                                     <option value="worker">직원 (worker)</option>
                                     <option value="manager">매니저 (manager)</option>
                                     <option value="admin">관리자 (admin)</option>
                                 </select>
                             </div>
-                            <button type="button" class="btn-nav-action" style="height:32px; padding:0 12px; background:#2c3e50; color:#fff;" onclick="window.saveAccountItem()">계정 등록/저장</button>
+                            <button type="button" class="btn-acc-save" onclick="window.saveAccountItem()">계정 등록/저장</button>
                         </div>
 
                         <div class="perm-grid-box" id="permSettingBox">
