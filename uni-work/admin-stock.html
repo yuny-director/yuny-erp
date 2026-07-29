@@ -23,7 +23,6 @@
         .btn-orange:hover { background-color: #d35400 !important; }
         .btn-gray { background-color: #7f8c8d !important; }
 
-        /* 카테고리 분석 리포트 탭 */
         .cat-tab-bar { display: flex; gap: 6px; margin-bottom: 15px; border-bottom: 2px solid #2c3e50; padding-bottom: 5px; }
         .cat-tab-btn { padding: 8px 16px; font-weight: bold; font-size: 13px; border-radius: 6px 6px 0 0; cursor: pointer; border: 1px solid #ccc; border-bottom: none; background: #e9ecef; color: #495057; }
         .cat-tab-btn.active { background: #2c3e50; color: #fff; border-color: #2c3e50; }
@@ -33,13 +32,11 @@
         .cat-summary-title { font-weight: bold; font-size: 14px; color: #2c3e50; margin-bottom: 8px; border-bottom: 1px solid #dee2e6; padding-bottom: 4px; }
         .cat-summary-val { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
 
-        /* 메인 테이블 스타일 */
         .table-container { width: 100%; max-height: 65vh; overflow: auto !important; border: 1px solid #ccc; border-radius: 6px; background: white; -webkit-overflow-scrolling: touch; }
         table { border-collapse: separate !important; border-spacing: 0 !important; font-size: 12px; width: auto; min-width: 100%; table-layout: fixed; }
         th, td { padding: 8px 6px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; transition: background-color 0.15s ease; }
         th { background-color: #f8f9fa !important; font-weight: bold; position: sticky !important; top: 0 !important; z-index: 30 !important; }
 
-        /* 🎯 [개편] 품목명 고정 너비 확장 (잘림 방지) & 입/출고 열 통합 위치 재설정 */
         .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 180px; max-width: 240px; background: #ffffff !important; z-index: 10; font-weight: bold; text-align: left !important; padding-left: 8px !important; white-space: normal !important; word-break: break-all; }
         .fix-col-2 { position: sticky !important; left: 180px !important; min-width: 110px; max-width: 140px; background: #ffffff !important; z-index: 10; font-weight: bold; color:#2980b9; white-space: normal !important; word-break: break-all; }
         .fix-col-3 { position: sticky !important; left: 290px !important; min-width: 55px; max-width: 65px; background: #fafafa !important; z-index: 10; }
@@ -53,13 +50,11 @@
         .inline-edit-input { width: 90%; height: 24px; text-align: center; border: 2px solid #2980b9; border-radius: 4px; box-sizing: border-box; font-weight: bold; }
         .editable-cell { cursor: pointer; min-width: 45px; }
 
-        /* 마우스 호버 품목(행) & 날짜(열) 하이라이트 스타일 */
         .hover-row-group { background-color: #e8f4fd !important; }
         .hover-col { background-color: #fff3bf !important; }
         .hover-target { background-color: #ffe066 !important; font-weight: bold; }
         th.hover-col { background-color: #ffd8a8 !important; color: #d9480f !important; }
 
-        /* 드래그 정렬 리스트 모달 */
         .sortable-list { list-style: none; padding: 0; margin: 0; }
         .sortable-item { padding: 10px 14px; margin-bottom: 8px; background-color: #f8f9fa; border: 1px solid #ced4da; border-radius: 6px; cursor: grab; font-weight: bold; font-size: 13px; color: #2c3e50; display: flex; align-items: center; justify-content: space-between; }
         .sortable-item.dragging { opacity: 0.5; background-color: #e8f4fd; border: 2px dashed #2980b9; }
@@ -75,7 +70,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_admin_stock_merged_col_v3&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_admin_stock_merged_col_v4&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -88,7 +83,7 @@
                 <input type="date" id="globalStockDate" style="width: 140px; height:36px; margin-left:10px;">
                 <span id="loadingStatus" style="font-weight: bold; color: #27ae60; font-size:13px; margin-left:10px;">🔄 데이터 로드 중...</span>
             </div>
-            <div style="display:flex; gap:8px;">
+            <div style="display:flex; gap:8px;" id="stockControlBtnGroup">
                 <button class="btn btn-purple" onclick="openSortModal()">📊 품목 표시 순서 정렬</button>
                 <button class="btn btn-orange" onclick="openStockCsvModal()">📥 입/출고 CSV 대량 업로드</button>
             </div>
@@ -105,7 +100,7 @@
         <div id="catSummaryGrid" class="cat-summary-grid"></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="stockEntryFormCard">
         <h4 style="margin-top:0; margin-bottom:12px; color:#2c3e50;">🛠️ 일일 입고 / 출고 수량 즉시 등록</h4>
         <div class="flex-form-row">
             <div class="form-group">
@@ -195,8 +190,11 @@
     window.categories = [];
     window.itemOrder = [];
     window.currentCatLevelTab = 'large';
+    window.isStockReadOnly = false;
 
     document.addEventListener("DOMContentLoaded", function() {
+        checkStockPermissionGuard();
+
         var now = new Date();
         var currentYear = now.getFullYear();
         var currentMonth = now.getMonth() + 1;
@@ -216,6 +214,23 @@
 
         loadStockData();
     });
+
+    function checkStockPermissionGuard() {
+        var userRole = localStorage.getItem('login_user_role') || "admin";
+        var userPermissions = {};
+        try { userPermissions = JSON.parse(localStorage.getItem('login_user_permissions') || "{}"); } catch(e) {}
+
+        if (userRole !== "admin") {
+            var stockPerm = userPermissions.stock || 'read';
+            if (stockPerm === 'read') {
+                window.isStockReadOnly = true;
+                var formCard = document.getElementById('stockEntryFormCard');
+                if (formCard) formCard.style.display = 'none';
+                var btnGroup = document.getElementById('stockControlBtnGroup');
+                if (btnGroup) btnGroup.style.display = 'none';
+            }
+        }
+    }
 
     function loadStockData() {
         document.getElementById('loadingStatus').innerText = "🔄 DB 로드 중...";
@@ -238,6 +253,7 @@
     }
 
     function syncStockWithGoogle(msg) {
+        if (window.isStockReadOnly) { alert("보기 전용 권한 계정은 입출고 완수 및 수정을할 수 없습니다."); return; }
         document.getElementById('loadingStatus').innerText = "📤 구글 DB 업데이트 중...";
         var payload = {
             action: "syncStock",
@@ -334,6 +350,7 @@
 
     function renderStockDropdowns() {
         var sel = document.getElementById('stockItemSelect');
+        if (!sel) return;
         sel.innerHTML = "";
 
         if (window.stockItems.length === 0) {
@@ -412,7 +429,6 @@
         });
     }
 
-    // 📦 [개편] 메인 재고 피벗 대장표 빌드 (당월 입/출고 1개 열 통합 및 위치 재설정)
     function buildStockPivotTable() {
         var table = document.getElementById('stockPivotTable');
         if (!table) return;
@@ -429,7 +445,6 @@
             dateSet.push(selYear + "-" + strMonth + "-" + strDay);
         }
 
-        /* 🎯 [헤더 개편] 당월 입고/출고를 '당월 입/출고' 1개 열로 통합 */
         var headerHtml = `<thead><tr><th class="fix-col-1">품목명</th><th class="fix-col-2">모델명</th><th class="fix-col-3">구분</th><th class="fix-col-4">당월 입/출고</th><th class="fix-col-5">현재 총재고</th>${dateSet.map((d, i) => `<th style="min-width:55px;" data-col-idx="${i + 6}">${d.substring(5).replace("-","/")}</th>`).join('')}</tr></thead>`;
         var bodyHtml = "<tbody>";
 
@@ -457,7 +472,6 @@
                 if (outE) monthOutSum += Number(outE.qty || 0);
             });
 
-            /* 🎯 [행 개편] 당월 입/출고 1개 열에서 위(입고), 아래(출고) 합산 표기 */
             var inRow = `<tr class="${groupClass}" data-group="${groupClass}">
                 <td class="fix-col-1" rowspan="2" style="vertical-align:middle;">${name}</td>
                 <td class="fix-col-2" rowspan="2" style="vertical-align:middle;">${model}</td>
@@ -538,6 +552,10 @@
     }
 
     function makeStockCellEditable(cell, dateFull, name, type) {
+        if (window.isStockReadOnly) {
+            alert("보기 전용 권한 계정은 입출고 수량을 수정할 수 없습니다.");
+            return;
+        }
         if (cell.querySelector('input')) return;
         var oldVal = cell.innerText === '-' ? '0' : cell.innerText.replace('개', '');
         cell.innerHTML = `<input type="number" class="inline-edit-input" value="${oldVal}" onblur="saveStockInlineQty(this, '${dateFull}', '${name}', '${type}')" onkeydown="if(event.key==='Enter') this.blur();">`;
@@ -546,6 +564,7 @@
     }
 
     function saveStockInlineQty(input, dateFull, name, type) {
+        if (window.isStockReadOnly) return;
         var newVal = parseInt(input.value) || 0;
         var idx = window.stockEntries.findIndex(e => e.date === dateFull && (e.item === name || e.itemName === name) && e.type === type);
 
@@ -561,6 +580,7 @@
     }
 
     function addStockDailyEntry() {
+        if (window.isStockReadOnly) return;
         var date = document.getElementById('globalStockDate').value;
         var type = document.getElementById('stockTypeSelect').value;
         var item = document.getElementById('stockItemSelect').value;
@@ -578,6 +598,7 @@
     }
 
     function openSortModal() {
+        if (window.isStockReadOnly) return;
         var list = document.getElementById('sortableList');
         list.innerHTML = "";
         var sorted = getSortedStockItems();
@@ -609,16 +630,18 @@
     function closeSortModal() { document.getElementById('sortModal').style.display = 'none'; }
 
     function saveStockItemOrder() {
+        if (window.isStockReadOnly) return;
         var items = Array.from(document.querySelectorAll('#sortableList .sortable-item'));
         window.itemOrder = items.map(li => li.getAttribute('data-name')).filter(Boolean);
         closeSortModal();
         syncStockWithGoogle("재고표 품목 순서 변경 저장");
     }
 
-    function openStockCsvModal() { document.getElementById('stockCsvModal').style.display = 'flex'; }
+    function openStockCsvModal() { if (window.isStockReadOnly) return; document.getElementById('stockCsvModal').style.display = 'flex'; }
     function closeStockCsvModal() { document.getElementById('stockCsvModal').style.display = 'none'; }
 
     function processStockCsvUpload() {
+        if (window.isStockReadOnly) return;
         var fileInput = document.getElementById('stockCsvFileInput');
         if (!fileInput.files || fileInput.files.length === 0) { alert("CSV 파일을 선택해 주세요!"); return; }
 

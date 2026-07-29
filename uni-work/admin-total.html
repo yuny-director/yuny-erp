@@ -2,72 +2,59 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YUNY_ERP - 관리자 마스터 정산표</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YUNY_ERP - 유니 종합 마스터 정산 원장표</title>
     <style>
-        html { 
-            margin: 0; 
-            padding: 0; 
-            background-color: #f4f6f9; 
-            font-family: Arial, sans-serif;
-        }
-        
-        body {
-            margin: 0;
-            padding: 0;
-            padding-top: 50px !important;
-            background-color: #f4f6f9;
-            font-family: Arial, sans-serif;
-        }
+        html { margin: 0; padding: 0; background-color: #f4f6f9; font-family: Arial, sans-serif; }
+        body { margin: 0; padding: 0; padding-top: 65px !important; background-color: #f4f6f9; font-family: Arial, sans-serif; }
 
         .content { padding: 15px; }
+        .card { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .flex-form-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 15px; }
-        .card { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 25px; }
         .form-group { display: flex; flex-direction: column; }
-        .form-group label { margin-bottom: 6px; font-weight: bold; font-size: 14px; color: #333; height: 16px; line-height: 16px; }
-        .form-group input, .form-group select, .flex-form-row select { padding: 0 10px; border: 1px solid #ccc; border-radius: 4px; width: 160px; height: 38px; box-sizing: border-box; font-size: 14px !important; font-family: Arial, sans-serif; background-color: #ffffff; }
-        .btn { padding: 0 18px; background-color: #1abc9c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; height: 38px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s; box-sizing: border-box; margin-bottom: 0px; }
+        .form-group label { margin-bottom: 6px; font-weight: bold; font-size: 13px; color: #333; }
+        .form-group input, .form-group select { padding: 0 10px; border: 1px solid #ccc; border-radius: 4px; height: 38px; box-sizing: border-box; font-size: 13px; background-color: #ffffff; }
+
+        .btn { padding: 0 16px; background-color: #1abc9c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; height: 38px; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s; box-sizing: border-box; }
         .btn:hover { background-color: #16a085; }
-        .btn-dark-verify { background-color: #2c3e50; }
-        .btn-dark-verify:hover { background-color: #34495e; }
-        .btn-danger { background-color: #e74c3c !important; }
-        .btn-orange { background-color: #e67e22 !important; }
-        .btn-gray { background-color: #7f8c8d !important; }
         .btn-purple { background-color: #9b59b6 !important; }
+        .btn-orange { background-color: #e67e22 !important; }
+        .btn-danger { background-color: #e74c3c !important; }
+        .btn-teal { background-color: #00796b !important; }
 
-        .table-container { width: 100%; max-height: 70vh; overflow: auto !important; border: 1px solid #ccc; border-radius: 6px; background: white; -webkit-overflow-scrolling: touch; }
-        table { border-collapse: separate !important; border-spacing: 0 !important; font-size: 13px; width: auto; min-width: 100%; table-layout: fixed; }
-        th, td { padding: 10px 6px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; }
+        /* 🎯 유니 종합 마스터 테이블 스타일 (원본 100% 레이아웃) */
+        .table-container { width: 100%; max-height: 72vh; overflow: auto !important; border: 1px solid #ccc; border-radius: 6px; background: white; -webkit-overflow-scrolling: touch; }
+        table { border-collapse: separate !important; border-spacing: 0 !important; font-size: 12px; width: auto; min-width: 100%; table-layout: fixed; }
+        th, td { padding: 7px 5px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ddd !important; border-bottom: 1px solid #ddd !important; transition: background-color 0.15s ease; }
         th { background-color: #f8f9fa !important; font-weight: bold; position: sticky !important; top: 0 !important; z-index: 30 !important; }
-        
-        /* 🎯 [수정] 외국인/긴 이름 짤림 방지를 위한 첫 번째 열 너비 확장 및 고정 위치 재조정 */
-        .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 100px; max-width: 125px; background: #ffffff !important; z-index: 10; white-space: normal !important; word-break: break-word !important; padding: 6px 4px !important; }
-        .fix-col-2 { position: sticky !important; left: 100px !important; min-width: 65px; max-width: 65px; background: #ffffff !important; z-index: 10; }
-        .fix-col-3 { position: sticky !important; left: 165px !important; min-width: 105px; max-width: 130px; background: #ffffff !important; z-index: 10; }
-        .fix-col-4 { position: sticky !important; left: 270px !important; min-width: 60px; max-width: 75px; background: #ffffff !important; z-index: 10; }
-        .fix-col-5 { position: sticky !important; left: 330px !important; min-width: 75px; max-width: 95px; background: #fafafa !important; z-index: 10; }
-        .fix-col-6 { position: sticky !important; left: 405px !important; min-width: 100px; max-width: 125px; background: #ffffff !important; z-index: 10; }
-        .fix-col-7 { position: sticky !important; left: 505px !important; min-width: 100px; max-width: 120px; background: #f4fce3 !important; z-index: 10; font-weight: bold; border-right: 2px solid #999 !important; }
-        
-        th.fix-col-1, th.fix-col-2, th.fix-col-3, th.fix-col-4, th.fix-col-5, th.fix-col-6, th.fix-col-7 { z-index: 40 !important; }
-        .admin-text { color: #2c3e50; font-weight: bold; }
-        .worker-text { color: #27ae60; font-weight: bold; }
-        
-        .subtotal-row { background-color: #fff9db !important; font-weight: bold !important; color: #d9480f !important; }
-        .subtotal-row td { background-color: #fff9db !important; }
-        .divider { color: #ccc; font-size: 18px; margin: 0 5px; align-self: flex-end; padding-bottom: 10px; }
-        .inline-edit-input { width: 95%; height: 26px; text-align: center; border: 2px solid #2980b9; border-radius: 4px; box-sizing: border-box; font-weight: bold; }
-        .editable-cell { cursor: pointer; min-width: 50px; }
-        .editable-time-cell { cursor: pointer; font-size: 11px !important; min-width: 210px; background: #edf2ff !important; color: #364fc7 !important; padding: 6px 6px !important; }
-        .time-cell-wrap { display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 4px; width: 100%; text-align: center; }
-        .time-display-span { display: inline-block; min-height: 18px; line-height: 18px; }
-        .btn-toggle-apply { padding: 2px 4px; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 3px; border: 1px solid #ccc; flex-shrink: 0; line-height: 12px; }
-        .rate-on { background-color: #2bc891 !important; color: white !important; }
-        .rate-off { background-color: #e74c3c !important; color: white !important; }
 
-        .sortable-list { list-style: none; padding: 0; margin: 0; }
-        .sortable-item { padding: 10px 14px; margin-bottom: 8px; background-color: #f8f9fa; border: 1px solid #ced4da; border-radius: 6px; cursor: grab; font-weight: bold; font-size: 13px; color: #2c3e50; display: flex; align-items: center; justify-content: space-between; }
-        .sortable-item.dragging { opacity: 0.5; background-color: #e8f4fd; border: 2px dashed #2980b9; }
+        /* 좌측 고정 열 */
+        .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 75px; max-width: 85px; background: #ffffff !important; z-index: 10; font-weight: bold; }
+        .fix-col-2 { position: sticky !important; left: 75px !important; min-width: 75px; max-width: 85px; background: #ffffff !important; z-index: 10; font-weight: bold; }
+        .fix-col-3 { position: sticky !important; left: 150px !important; min-width: 90px; max-width: 110px; background: #fafafa !important; z-index: 10; }
+        .fix-col-4 { position: sticky !important; left: 240px !important; min-width: 65px; max-width: 75px; background: #fafafa !important; z-index: 10; }
+        .fix-col-5 { position: sticky !important; left: 305px !important; min-width: 70px; max-width: 80px; background: #fafafa !important; z-index: 10; }
+        .fix-col-6 { position: sticky !important; left: 375px !important; min-width: 85px; max-width: 95px; background: #fafafa !important; z-index: 10; font-weight: bold; }
+        .fix-col-7 { position: sticky !important; left: 460px !important; min-width: 95px; max-width: 105px; background: #f4fce3 !important; z-index: 10; font-weight: bold; color: #2b8a3e; border-right: 2px solid #999 !important; }
+
+        th.fix-col-1, th.fix-col-2, th.fix-col-3, th.fix-col-4, th.fix-col-5, th.fix-col-6, th.fix-col-7 { z-index: 40 !important; text-align: center !important; }
+
+        .type-uni { color: #000000; font-weight: bold; }
+        .type-personal { color: #2b8a3e; font-weight: bold; }
+        .type-work { color: #1971c2; font-weight: bold; }
+        .row-work-bg { background-color: #f8f9fa; }
+
+        .badge-apply { background-color: #12b886; color: white; border: none; border-radius: 3px; padding: 2px 6px; font-size: 10px; font-weight: bold; cursor: pointer; display: inline-block; }
+        .badge-apply:hover { background-color: #0ca678; }
+        .badge-cancel { background-color: #e74c3c; color: white; border: none; border-radius: 3px; padding: 2px 6px; font-size: 10px; font-weight: bold; cursor: pointer; display: inline-block; }
+        .badge-cancel:hover { background-color: #c0392b; }
+
+        .clickable-cell { cursor: pointer; }
+        .clickable-cell:hover { background-color: #e8f4fd !important; }
+
+        /* 모달 스타일 */
+        .modal-overlay { display: none; position: fixed; z-index: 1000000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        .modal-card { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
     </style>
     <script>
         document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');
@@ -77,732 +64,605 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_total_name_width_fixed&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_admin_total_time_edit_v18&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
-    <div class="card" style="background-color: #fff9db; border: 2px solid #fab005; padding: 12px 25px;">
-        <div class="flex-form-row" style="margin-bottom: 0; align-items: center;">
-            <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px;">
-                <label style="color: #e67e22; margin-bottom: 0; font-size: 14px; font-weight: bold;">📅 원장 연월 :</label>
+    <div class="card" style="background-color: #eef2f5; border: 1px solid #ced4da; padding: 12px 20px;">
+        <div class="flex-form-row" style="margin-bottom: 0; align-items: center; justify-content: space-between;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <label style="color: #2c3e50; font-size: 14px; font-weight: bold;">📅 원장 연월 :</label>
                 <select id="filterYear" style="width: 95px; height:36px;"></select>
                 <select id="filterMonth" style="width: 75px; height:36px;"></select>
-                <input type="date" id="globalWorkDate" style="width: 140px; height:36px; margin-left:10px;">
+                <input type="date" id="globalUniDate" style="width: 140px; height:36px; margin-left:10px;">
+                <span id="loadingStatus" style="font-weight: bold; color: #27ae60; font-size:13px; margin-left:10px;">🔄 실시간 동기화 완료</span>
             </div>
-            <span id="loadingStatus" style="font-weight: bold; color: #e67e22; font-size:13px; margin-left:15px; display: inline-flex; align-items: center;">🔄 데이터 로드 중...</span>
         </div>
     </div>
 
-    <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h2 style="font-size:18px; margin: 0;">⚙️ 마스터 제어 콘솔</h2>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn btn-purple" id="btnMasterEditModal">✏️ 명단/품목/단가/시급 수정</button>
-                <button class="btn btn-purple" id="btnSortModal">📊 품목 표시순서 관리</button>
-            </div>
-        </div>
+    <!-- ⚙️ 마스터 제어 콘솔 -->
+    <div class="card" id="adminMasterControlCard">
+        <h3 style="margin-top:0; margin-bottom:12px; font-size:16px; color:#2c3e50;">⚙️ 마스터 제어 콘솔</h3>
+        
         <div class="flex-form-row">
             <div class="form-group">
                 <label>새 작업자</label>
-                <input type="text" id="newWorkerName" placeholder="이름 입력" style="width:130px;">
+                <input type="text" id="newWorkerInput" placeholder="이름 입력" style="width:110px;">
             </div>
-            <button class="btn" id="btnAddWorker">명단 추가</button>
-            <div class="divider">|</div>
+            <button class="btn btn-teal" onclick="addWorkerToPool()">명단 추가</button>
+            
+            <span style="color:#ccc; margin:0 5px;">|</span>
+
             <div class="form-group">
                 <label>새 품목명</label>
-                <input type="text" id="newItemName" placeholder="예: 스포이드(핑크)" style="width:140px;">
+                <input type="text" id="newItemInput" placeholder="예: 스포이드(핑크)" style="width:130px;">
             </div>
             <div class="form-group">
                 <label>기본 단가</label>
-                <input type="number" id="newItemCost" placeholder="원 단위" style="width:100px;">
+                <input type="number" id="newItemPriceInput" placeholder="원 단위" style="width:90px;">
             </div>
-            <button class="btn" id="btnAddItem">품목 추가</button>
+            <button class="btn btn-teal" onclick="addItemPriceMaster()">품목 추가</button>
         </div>
 
-        <div class="sub-section">
-            <h4 style="margin: 0 0 12px 0; color: #2980b9; font-size: 14px;">💰 시급 및 일괄 정산</h4>
-            <div class="flex-form-row">
-                <div class="form-group">
-                    <label>대상자</label>
-                    <select id="rateWorkerSelect" style="width:140px;"></select>
-                </div>
-                <div class="form-group">
-                    <label>시급 설정</label>
-                    <input type="number" id="hourlyRateInput" style="width:110px;">
-                </div>
-                <button class="btn" id="btnSaveRate">원장 저장</button>
-                <button class="btn btn-orange" id="btnRateAllApply">⚡당월전체반영</button>
-                <button class="btn btn-gray" id="btnRateAllExclude">❌당월전체제외</button>
+        <div class="flex-form-row" style="margin-top:10px;">
+            <div class="form-group">
+                <label>💰 시급 및 일괄 정산 - 대상자</label>
+                <select id="hourlyWorkerSelect" style="width:120px;"></select>
             </div>
+            <div class="form-group">
+                <label>시급 설정</label>
+                <input type="number" id="hourlyRateInput" value="10500" style="width:100px;">
+            </div>
+            <button class="btn btn-teal" onclick="saveWorkerHourlyRate()">원장 저장</button>
+            
+            <button class="btn btn-orange" onclick="applyMonthlyRatesAll(true)">⚡ 당월전체반영</button>
+            <button class="btn btn-danger" onclick="applyMonthlyRatesAll(false)">❌ 당월전체미반영</button>
         </div>
-        
-        <div class="sub-section">
-            <h4 style="margin: 0 0 12px 0; color: #2980b9; font-size: 14px;">🗑️ 명단/품목 삭제</h4>
-            <div class="flex-form-row">
-                <div class="form-group">
-                    <label style="visibility:hidden; display:block;">정렬패딩</label>
-                    <select id="delWorkerSelect" style="width:140px; height:38px;"></select>
-                </div>
-                <button class="btn" id="btnDelWorker">명단 제거</button>
-                <div class="divider">|</div>
-                <div class="form-group">
-                    <label style="visibility:hidden; display:block;">정렬패딩</label>
-                    <select id="delItemSelect" style="width:140px; height:38px;"></select>
-                </div>
-                <button class="btn" id="btnDelItem">품목 제거</button>
+
+        <div class="flex-form-row" style="margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
+            <div class="form-group">
+                <label>🗑️ 명단/품목 삭제 - 대상자</label>
+                <select id="deleteWorkerSelect" style="width:120px;"></select>
             </div>
+            <button class="btn btn-teal" onclick="deleteWorkerFromPool()">명단 제거</button>
+
+            <span style="color:#ccc; margin:0 5px;">|</span>
+
+            <div class="form-group">
+                <label>삭제 품목</label>
+                <select id="deleteItemSelect" style="width:130px;"></select>
+            </div>
+            <button class="btn btn-teal" onclick="deleteItemFromMaster()">품목 제거</button>
         </div>
     </div>
 
+    <!-- 🛠️ 일일 데이터 입력 등록 -->
     <div class="card">
-        <h2>🛠️ 일일 데이터 입력</h2>
+        <h3 style="margin-top:0; margin-bottom:12px; font-size:16px; color:#2c3e50;">🛠️ 일일 데이터 입력</h3>
         <div class="flex-form-row">
             <div class="form-group">
                 <label>작업자</label>
-                <select id="admNameSelect" style="width:140px; height:38px;"></select>
+                <select id="entryWorkerSelect" style="width:120px;"></select>
             </div>
             <div class="form-group">
                 <label>품목</label>
-                <select id="admItemSelect" style="width:140px; height:38px;"></select>
+                <select id="entryItemSelect" style="width:140px;" onchange="updateEntryPriceDisplay()"></select>
             </div>
             <div class="form-group">
                 <label>지정단가</label>
-                <input type="number" id="admCost" style="width:100px;">
+                <input type="number" id="entryCostInput" style="width:90px;" readonly style="background:#f1f3f5;">
             </div>
             <div class="form-group">
                 <label>수량</label>
-                <input type="number" id="admQty" value="100" style="width:90px;">
+                <input type="number" id="entryQtyInput" value="100" style="width:90px;">
             </div>
-            <button class="btn btn-dark-verify" id="btnAddWorkRow">관리자기록등록</button>
+            <button class="btn" style="background:#2c3e50;" onclick="addDailyRawEntryAdmin()">관리자기록등록</button>
         </div>
     </div>
 
+    <!-- 📊 유니 종합 마스터 정산 원장표 -->
     <div class="card">
-        <h2>📊 유니 종합 마스터 정산 원장표</h2>
+        <h3 style="margin-top:0; margin-bottom:12px; font-size:16px; color:#2c3e50;">📊 유니 종합 마스터 정산 원장표</h3>
+        
         <div class="table-container">
-            <table id="pivotTable"></table>
+            <table id="uniMasterPivotTable"></table>
         </div>
     </div>
 </div>
 
-<div id="masterEditModal" class="modal" style="display:none; position:fixed; z-index:1000000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
-    <div class="modal-content" style="background:#fff; padding:25px; border-radius:10px; width:90%; max-width:520px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing:border-box;">
-        <h3 style="margin-top:0; margin-bottom:8px; color: #2c3e50;">✏️ 마스터 정보 (명단 / 품목명 / 단가 / 시급) 수정</h3>
-        <p style="font-size:12px; color:#666; margin-bottom:15px;">수정할 항목 종류를 선택하신 후 내용을 변경해 주세요.<br>(이름이나 품목명 변경 시 과거 기록도 함께 안전하게 이전됩니다)</p>
-
-        <div class="form-group" style="margin-bottom: 15px; width: 100%;">
-            <label>수정 구분 선택</label>
-            <select id="editModeSelect" style="width: 100%; height:38px;" onchange="window.onMasterEditModeChange()">
-                <option value="worker_name">👷 작업자 이름 수정</option>
-                <option value="item_name">📂 품목명 수정</option>
-                <option value="item_cost">💵 기본 단가 수정</option>
-                <option value="worker_rate">⏱️ 작업자 시급 수정</option>
-            </select>
-        </div>
-
-        <div class="form-group" style="margin-bottom: 15px; width: 100%;">
-            <label id="lblEditTargetSelect">수정 대상 선택</label>
-            <select id="editTargetSelect" style="width: 100%; height:38px;" onchange="window.onMasterEditTargetChange()"></select>
-        </div>
-
-        <div class="form-group" style="margin-bottom: 20px; width: 100%;">
-            <label id="lblEditValueInput">변경할 내용 입력</label>
-            <input type="text" id="editValueInput" style="width: 100%; height:38px;">
-        </div>
-
-        <div style="display: flex; justify-content: flex-end; gap: 8px; border-top:1px solid #eee; padding-top:15px;">
-            <button class="btn btn-gray" id="btnCloseMasterEditModal">취소</button>
-            <button class="btn btn-purple" id="btnSaveMasterEdit">변경사항 저장</button>
-        </div>
-    </div>
-</div>
-
-<div id="sortModal" class="modal" style="display:none; position:fixed; z-index:1000000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
-    <div class="modal-content" style="background:#fff; padding:25px; border-radius:10px; width:90%; max-width:580px; max-height:85vh; display:flex; flex-direction:column; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing:border-box;">
-        <div style="flex-shrink:0;">
-            <h3 style="margin-top:0; margin-bottom:8px; color: #2c3e50;">↕️ 품목 순서 임의 조정</h3>
-            <p style="font-size:12px; color:#666; margin-bottom:15px;">항목을 마우스로 드래그하여 원하시는 순서대로 배치한 후 하단의 [순서 저장]을 누르세요.</p>
+<!-- ✏️ 셀 클릭 상세 수정 모달 (출퇴근 시간 텍스트 정밀 수정 포함) -->
+<div id="cellEditModal" class="modal-overlay">
+    <div class="modal-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #2c3e50; padding-bottom:8px;">
+            <h3 style="margin:0; color:#2c3e50;" id="editModalTitle">✏️ 작업 내역 / 출퇴근 시간 수정</h3>
+            <span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeCellEditModal()">&times;</span>
         </div>
         
-        <div style="flex:1; overflow-y:auto; padding-right:5px; margin-bottom:15px; border:1px solid #e9ecef; border-radius:6px; padding:10px; background:#f8f9fa;">
-            <ul class="sortable-list" id="sortableList"></ul>
-        </div>
+        <input type="hidden" id="editModalWorker">
+        <input type="hidden" id="editModalDate">
+        <input type="hidden" id="editModalCategory">
 
-        <div style="display: flex; justify-content: flex-end; gap: 8px; flex-shrink:0; border-top:1px solid #eee; padding-top:15px;">
-            <button class="btn btn-gray" id="btnCloseSortModal">취소</button>
-            <button class="btn btn-purple" id="btnSaveItemOrder">순서 저장</button>
+        <div id="editModalContent"></div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
+            <button class="btn btn-gray" onclick="closeCellEditModal()">취소</button>
+            <button class="btn btn-purple" onclick="saveCellEditModalSubmit()">수정 완료</button>
         </div>
     </div>
 </div>
 
 <script>
-window.workersPool = [];
-window.itemPrices = {};
-window.rawEntries = [];
-window.hourlyRates = {};
-window.userList = [];
-window.myItemOrder = ["스포이드", "공병", "미스트(핑크)", "미스트(보라)", "지정품목"];
+    window.workersPool = [];
+    window.itemPrices = {};
+    window.rawEntries = [];
+    window.hourlyRates = {};
+    window.timeEntries = {}; 
 
-window.customItemSort = function(a, b) {
-    try {
-        if (!window.myItemOrder || !Array.isArray(window.myItemOrder)) return 0;
-        var idxA = window.myItemOrder.indexOf(a);
-        var idxB = window.myItemOrder.indexOf(b);
-        if (idxA === -1) idxA = 999;
-        if (idxB === -1) idxB = 999;
-        return idxA - idxB;
-    } catch (e) { return 0; }
-};
+    document.addEventListener("DOMContentLoaded", function() {
+        var now = new Date();
+        var currentYear = now.getFullYear();
+        var currentMonth = now.getMonth() + 1;
 
-document.addEventListener("DOMContentLoaded", function() {
-    var now = new Date();
-    var currentYear = now.getFullYear();
-    var currentMonth = now.getMonth() + 1;
-    var ySel = document.getElementById("filterYear");
-    for(var y = currentYear - 2; y <= currentYear + 1; y++) {
-        ySel.innerHTML += '<option value="' + y + '" ' + (y===currentYear?'selected':'') + '>' + y + '년</option>';
-    }
-    var mSel = document.getElementById("filterMonth");
-    for(var m = 1; m <= 12; m++) {
-        mSel.innerHTML += '<option value="' + m + '" ' + (m===currentMonth?'selected':'') + '>' + m + '월</option>';
-    }
-    document.getElementById('globalWorkDate').value = now.toISOString().split('T')[0];
-    
-    ySel.onchange = window.buildPivotTable;
-    mSel.onchange = window.buildPivotTable;
-
-    document.getElementById("btnAddWorker").addEventListener("click", window.addNewWorker);
-    document.getElementById("btnAddItem").addEventListener("click", window.addNewItem);
-    document.getElementById("btnDelWorker").addEventListener("click", window.deleteWorker);
-    document.getElementById("btnDelItem").addEventListener("click", window.deleteItem);
-    document.getElementById("btnSaveRate").addEventListener("click", window.saveHourlyRateSetting);
-    document.getElementById("btnRateAllApply").addEventListener("click", function() { window.toggleAllRatesForWorker(true); });
-    document.getElementById("btnRateAllExclude").addEventListener("click", function() { window.toggleAllRatesForWorker(false); });
-    document.getElementById("btnAddWorkRow").addEventListener("click", window.addWorkRowData);
-    document.getElementById("btnSortModal").addEventListener("click", window.openSortModal);
-    document.getElementById("btnCloseSortModal").addEventListener("click", window.closeSortModal);
-    document.getElementById("btnSaveItemOrder").addEventListener("click", window.saveItemOrder);
-    
-    document.getElementById("btnMasterEditModal").addEventListener("click", window.openMasterEditModal);
-    document.getElementById("btnCloseMasterEditModal").addEventListener("click", window.closeMasterEditModal);
-    document.getElementById("btnSaveMasterEdit").addEventListener("click", window.saveMasterEdit);
-
-    document.getElementById("rateWorkerSelect").addEventListener("change", window.updateRateSettingHint);
-    document.getElementById("admItemSelect").addEventListener("change", window.updateAdminCostHint);
-
-    window.loadData();
-});
-
-window.loadData = function() {
-    var scriptUrl = window.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbyPWv070zApltQFMeq6HUxFAnnBcZfpAXHz5n_vwnmX34kCXqadFumI1BfmJRWu0OZE/exec";
-    var cacheUrl = scriptUrl + (scriptUrl.indexOf('?') > -1 ? '&' : '?') + 't=' + Date.now();
-    fetch(cacheUrl)
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        window.workersPool = Array.isArray(data.workersPool) ? data.workersPool : [];
-        window.itemPrices = (data.itemPrices && typeof data.itemPrices === 'object') ? data.itemPrices : {};
-        window.rawEntries = Array.isArray(data.rawEntries) ? data.rawEntries : [];
-        window.hourlyRates = (data.hourlyRates && typeof data.hourlyRates === 'object') ? data.hourlyRates : {};
-        window.userList = Array.isArray(data.userList) ? data.userList : [];
-        if(data.itemOrder && Array.isArray(data.itemOrder)) { window.myItemOrder = data.itemOrder; }
-        
-        if (Array.isArray(window.userList)) {
-            var adminNames = window.userList.filter(function(u) { return u.role === 'admin'; }).map(function(u) { return u.name || u.id; });
-            window.workersPool = window.workersPool.filter(function(w) { return adminNames.indexOf(w) === -1 && w !== 'admin'; });
-
-            window.userList.forEach(function(u) {
-                if (u.role === 'worker') {
-                    var nameStr = u.name || u.id;
-                    if (nameStr && window.workersPool.indexOf(nameStr) === -1) {
-                        window.workersPool.push(nameStr);
-                    }
-                }
-            });
+        var ySel = document.getElementById("filterYear");
+        for (var y = currentYear - 2; y <= currentYear + 1; y++) {
+            ySel.innerHTML += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}년</option>`;
         }
-
-        window.renderDropdowns();
-        window.buildPivotTable();
-        if (typeof window.updateNavbarUserDisplay === 'function') window.updateNavbarUserDisplay();
-        document.getElementById('loadingStatus').innerText = "✅ 실시간 동기화 완료";
-    })
-    .catch(function(err) {
-        document.getElementById('loadingStatus').innerText = "❌ 데이터 동기화 지연";
-        window.buildPivotTable();
-    });
-};
-
-window.syncWithGoogle = function(msg, callback) {
-    document.getElementById('loadingStatus').innerText = "📤 구글 DB 업데이트 중...";
-    var scriptUrl = window.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbyPWv070zApltQFMeq6HUxFAnnBcZfpAXHz5n_vwnmX34kCXqadFumI1BfmJRWu0OZE/exec";
-    var payload = {
-        action: "syncAll",
-        updater: "관리자",
-        summary: msg,
-        workersPool: window.workersPool,
-        itemPrices: window.itemPrices,
-        rawEntries: window.rawEntries,
-        hourlyRates: window.hourlyRates,
-        itemOrder: window.myItemOrder
-    };
-
-    fetch(scriptUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(payload)
-    })
-    .then(function(res) { return res.json(); })
-    .then(function(resData) {
-        document.getElementById('loadingStatus').innerText = "✅ DB 저장 성공!";
-        if (callback) callback();
-        else window.loadData();
-    })
-    .catch(function(err) {
-        document.getElementById('loadingStatus').innerText = "❌ 저장 완료";
-        if (callback) callback();
-        else window.loadData();
-    });
-};
-
-window.openMasterEditModal = function() {
-    document.getElementById("editModeSelect").value = "worker_name";
-    window.onMasterEditModeChange();
-    document.getElementById("masterEditModal").style.display = "flex";
-};
-
-window.closeMasterEditModal = function() {
-    document.getElementById("masterEditModal").style.display = "none";
-};
-
-window.onMasterEditModeChange = function() {
-    var mode = document.getElementById("editModeSelect").value;
-    var targetSel = document.getElementById("editTargetSelect");
-    var lblTarget = document.getElementById("lblEditTargetSelect");
-    var lblValue = document.getElementById("lblEditValueInput");
-    var valInput = document.getElementById("editValueInput");
-
-    targetSel.innerHTML = "";
-    valInput.value = "";
-
-    if (mode === "worker_name" || mode === "worker_rate") {
-        lblTarget.innerText = "수정할 작업자 선택";
-        var workers = Array.isArray(window.workersPool) ? window.workersPool : [];
-        workers.forEach(function(w) {
-            targetSel.innerHTML += '<option value="' + w + '">' + w + '</option>';
-        });
-        if (mode === "worker_name") {
-            lblValue.innerText = "변경할 작업자 이름 입력";
-            valInput.type = "text";
-        } else {
-            lblValue.innerText = "변경할 기본 시급 입력 (원)";
-            valInput.type = "number";
+        var mSel = document.getElementById("filterMonth");
+        for (var m = 1; m <= 12; m++) {
+            mSel.innerHTML += `<option value="${m}" ${m === currentMonth ? 'selected' : ''}>${m}월</option>`;
         }
-    } else if (mode === "item_name" || mode === "item_cost") {
-        lblTarget.innerText = "수정할 품목 선택";
-        var items = Object.keys(window.itemPrices || {}).sort(window.customItemSort);
-        items.forEach(function(i) {
-            targetSel.innerHTML += '<option value="' + i + '">' + i + '</option>';
-        });
-        if (mode === "item_name") {
-            lblValue.innerText = "변경할 품목명 입력";
-            valInput.type = "text";
-        } else {
-            lblValue.innerText = "변경할 기본 단가 입력 (원)";
-            valInput.type = "number";
-        }
-    }
-    window.onMasterEditTargetChange();
-};
+        document.getElementById('globalUniDate').value = now.toISOString().split('T')[0];
 
-window.onMasterEditTargetChange = function() {
-    var mode = document.getElementById("editModeSelect").value;
-    var targetVal = document.getElementById("editTargetSelect").value;
-    var valInput = document.getElementById("editValueInput");
+        ySel.onchange = buildUniMasterPivotTable;
+        mSel.onchange = buildUniMasterPivotTable;
 
-    if (!targetVal) return;
-
-    if (mode === "worker_name") {
-        valInput.value = targetVal;
-    } else if (mode === "worker_rate") {
-        var rateConfig = window.hourlyRates[targetVal] || { rate: 9620 };
-        valInput.value = rateConfig.rate || 9620;
-    } else if (mode === "item_name") {
-        valInput.value = targetVal;
-    } else if (mode === "item_cost") {
-        valInput.value = window.itemPrices[targetVal] || 0;
-    }
-};
-
-window.saveMasterEdit = function() {
-    var mode = document.getElementById("editModeSelect").value;
-    var targetVal = document.getElementById("editTargetSelect").value;
-    var newVal = document.getElementById("editValueInput").value.trim();
-
-    if (!targetVal) { alert("수정 대상을 먼저 선택해 주세요!"); return; }
-    if (!newVal) { alert("변경할 내용을 입력해 주세요!"); return; }
-
-    if (mode === "worker_name") {
-        var oldName = targetVal;
-        var newName = newVal;
-        if (oldName === newName) { alert("변경된 이름이 동일합니다."); return; }
-        if (window.workersPool.indexOf(newName) > -1) { alert("이미 존재하는 작업자 이름입니다."); return; }
-
-        var wIdx = window.workersPool.indexOf(oldName);
-        if (wIdx > -1) window.workersPool[wIdx] = newName;
-
-        if (window.hourlyRates[oldName]) {
-            window.hourlyRates[newName] = window.hourlyRates[oldName];
-            delete window.hourlyRates[oldName];
-        }
-
-        window.rawEntries.forEach(function(e) {
-            if (e.name === oldName) e.name = newName;
-        });
-
-        window.syncWithGoogle("작업자명 변경: " + oldName + " -> " + newName);
-        alert("[" + oldName + "] 작업자 이름이 [" + newName + "] 로 변경되었습니다.");
-
-    } else if (mode === "item_name") {
-        var oldItem = targetVal;
-        var newItem = newVal;
-        if (oldItem === newItem) { alert("변경된 품목명이 동일합니다."); return; }
-        if (window.itemPrices[newItem] !== undefined) { alert("이미 존재하는 품목명입니다."); return; }
-
-        window.itemPrices[newItem] = window.itemPrices[oldItem];
-        delete window.itemPrices[oldItem];
-
-        var oIdx = window.myItemOrder.indexOf(oldItem);
-        if (oIdx > -1) window.myItemOrder[oIdx] = newItem;
-
-        window.rawEntries.forEach(function(e) {
-            if (e.item === oldItem) e.item = newItem;
-        });
-
-        window.syncWithGoogle("품목명 변경: " + oldItem + " -> " + newItem);
-        alert("[" + oldItem + "] 품목명이 [" + newItem + "] 로 변경되었습니다.");
-
-    } else if (mode === "item_cost") {
-        var item = targetVal;
-        var newCost = Number(newVal) || 0;
-        window.itemPrices[item] = newCost;
-
-        window.syncWithGoogle("기본단가 변경: " + item + " (" + newCost + "원)");
-        alert("[" + item + "] 기본 단가가 " + newCost.toLocaleString() + "원으로 변경되었습니다.");
-
-    } else if (mode === "worker_rate") {
-        var worker = targetVal;
-        var newRate = Number(newVal) || 0;
-        if (!window.hourlyRates[worker]) window.hourlyRates[worker] = { rate: 9620, customDays: {} };
-        window.hourlyRates[worker].rate = newRate;
-
-        window.syncWithGoogle("시급 변경: " + worker + " (" + newRate + "원)");
-        alert("[" + worker + "] 시급이 " + newRate.toLocaleString() + "원으로 변경되었습니다.");
-    }
-
-    window.closeMasterEditModal();
-    window.renderDropdowns();
-    window.buildPivotTable();
-};
-
-window.addNewWorker = function() {
-    var inputEl = document.getElementById('newWorkerName');
-    var n = inputEl ? inputEl.value.trim() : "";
-    if(!n) { alert("추가할 작업자 이름을 입력해 주세요!"); return; }
-    
-    if(window.workersPool.indexOf(n) === -1) {
-        window.workersPool.push(n);
-        if(inputEl) inputEl.value = "";
-        window.renderDropdowns();
-        window.buildPivotTable();
-        window.syncWithGoogle("작업자 명단 추가: " + n);
-    } else {
-        alert("이미 존재하는 작업자 이름입니다.");
-    }
-};
-
-window.addNewItem = function() {
-    var nameEl = document.getElementById('newItemName');
-    var costEl = document.getElementById('newItemCost');
-    var i = nameEl ? nameEl.value.trim() : "";
-    var c = costEl ? costEl.value : "";
-    if(!i) { alert("추가할 품목명을 입력해 주세요!"); return; }
-    if(!c || c === "") { alert("기본 단가를 입력해 주세요!"); return; }
-    
-    window.itemPrices[i] = Number(c);
-    if(window.myItemOrder.indexOf(i) === -1) { window.myItemOrder.push(i); }
-    if(nameEl) nameEl.value = "";
-    if(costEl) costEl.value = "";
-    window.renderDropdowns();
-    window.buildPivotTable();
-    window.syncWithGoogle("품목 추가: " + i + " (" + c + "원)");
-};
-
-window.deleteWorker = function() {
-    var n = document.getElementById('delWorkerSelect').value;
-    if(!n) return;
-    if(confirm("[" + n + "] 작업자를 정산 명단에서 삭제하시겠습니까?")) {
-        window.workersPool = window.workersPool.filter(function(x) { return x !== n; });
-        window.renderDropdowns();
-        window.buildPivotTable();
-        window.syncWithGoogle("명단 제거: " + n);
-    }
-};
-
-window.deleteItem = function() {
-    var i = document.getElementById('delItemSelect').value;
-    if(!i) return;
-    if(confirm("[" + i + "] 품목을 단가표 및 명세서에서 삭제하시겠습니까?")) {
-        delete window.itemPrices[i];
-        window.myItemOrder = window.myItemOrder.filter(function(x) { return x !== i; });
-        window.renderDropdowns();
-        window.buildPivotTable();
-        window.syncWithGoogle("품목 제거: " + i);
-    }
-};
-
-window.openSortModal = function() {
-    var listContainer = document.getElementById("sortableList"); if(!listContainer) return;
-    listContainer.innerHTML = "";
-    var allItems = Object.keys(window.itemPrices || {}).sort(window.customItemSort);
-    
-    if(allItems.length === 0) {
-        listContainer.innerHTML = "<li style='padding:15px; color:#888;'>등록된 품목이 없습니다.</li>";
-        document.getElementById("sortModal").style.display = "flex";
-        return;
-    }
-
-    allItems.forEach(function(item) {
-        var li = document.createElement("li"); 
-        li.className = "sortable-item"; 
-        li.draggable = true; 
-        li.setAttribute("data-item", item);
-        li.innerHTML = "<span>📂 " + item + "</span> <span>☰</span>";
-        
-        li.addEventListener("dragstart", function() { li.classList.add("dragging"); });
-        li.addEventListener("dragend", function() { li.classList.remove("dragging"); });
-        listContainer.appendChild(li);
+        loadUniworkTotalData();
     });
 
-    listContainer.addEventListener("dragover", function(e) {
-        e.preventDefault(); 
-        var draggingItem = document.querySelector("#sortableList .dragging"); 
-        if(!draggingItem) return;
-        var siblings = Array.prototype.slice.call(listContainer.querySelectorAll(".sortable-item:not(.dragging)"));
-        var nextSibling = siblings.find(function(sibling) { 
-            return e.clientY <= sibling.getBoundingClientRect().top + sibling.getBoundingClientRect().height / 2; 
+    function loadUniworkTotalData() {
+        document.getElementById('loadingStatus').innerText = "🔄 DB 로드 중...";
+        var scriptUrl = window.GOOGLE_SCRIPT_URL + (window.GOOGLE_SCRIPT_URL.indexOf('?') > -1 ? '&' : '?') + 't=' + Date.now();
+        fetch(scriptUrl)
+        .then(r => r.json())
+        .then(data => {
+            window.workersPool = Array.isArray(data.workersPool) ? data.workersPool : [];
+            window.itemPrices = (data.itemPrices && typeof data.itemPrices === 'object') ? data.itemPrices : {};
+            window.rawEntries = Array.isArray(data.rawEntries) ? data.rawEntries : [];
+            window.hourlyRates = (data.hourlyRates && typeof data.hourlyRates === 'object') ? data.hourlyRates : {};
+            window.timeEntries = (data.timeEntries && typeof data.timeEntries === 'object') ? data.timeEntries : {};
+
+            renderUniworkDropdowns();
+            buildUniMasterPivotTable();
+            document.getElementById('loadingStatus').innerText = "✅ 실시간 동기화 완료";
+        })
+        .catch(err => {
+            document.getElementById('loadingStatus').innerText = "❌ 데이터 로드 지연";
         });
-        listContainer.insertBefore(draggingItem, nextSibling);
-    });
+    }
 
-    document.getElementById("sortModal").style.display = "flex";
-};
-
-window.closeSortModal = function() { document.getElementById("sortModal").style.display = "none"; };
-
-window.saveItemOrder = function() {
-    var items = Array.prototype.slice.call(document.querySelectorAll("#sortableList .sortable-item"));
-    window.myItemOrder = items.map(function(li) { return li.getAttribute("data-item"); }).filter(Boolean);
-    window.closeSortModal(); 
-    window.buildPivotTable(); 
-    window.renderDropdowns(); 
-    window.syncWithGoogle("정렬 순서 변경 저장");
-};
-
-function calculateHours(timeStr) {
-    if(!timeStr || timeStr === "-" || timeStr.indexOf("~") === -1 || timeStr.indexOf("미입력") > -1) return 0;
-    try {
-        var parts = timeStr.split("~");
-        var parseTime = function(t) {
-            t = t.trim(); var isPm = t.indexOf("오후") > -1; var clean = t.replace("오전","").replace("오후","").trim();
-            var hm = clean.split(":"); var h = Number(hm[0]); var m = Number(hm[1]) || 0;
-            if(isPm && h < 12) h += 12; if(!isPm && h === 12) h = 0; return h + (m / 60);
+    function syncUniworkWithGoogle(msg) {
+        document.getElementById('loadingStatus').innerText = "📤 구글 DB 업데이트 중...";
+        var payload = {
+            action: "syncAll",
+            workersPool: window.workersPool,
+            itemPrices: window.itemPrices,
+            rawEntries: window.rawEntries,
+            hourlyRates: window.hourlyRates,
+            timeEntries: window.timeEntries
         };
-        var diff = parseTime(parts[1]) - parseTime(parts[0]); return diff > 0 ? Number(diff.toFixed(1)) : 0;
-    } catch(e) { return 0; }
-}
 
-function parseMainItemAndOption(fullName) { if(fullName.indexOf("(") > -1 && fullName.indexOf(")") > -1) { var parts = fullName.split("("); return { main: parts[0].trim(), option: parts[1].replace(")", "").trim() }; } return { main: fullName, option: "" }; }
-
-window.buildPivotTable = function() {
-    var table = document.getElementById('pivotTable'); if(!table) return;
-    table.innerHTML = "";
-    var selYear = parseInt(document.getElementById("filterYear").value) || new Date().getFullYear();
-    var selMonth = parseInt(document.getElementById("filterMonth").value) || (new Date().getMonth() + 1);
-    var lastDay = new Date(selYear, selMonth, 0).getDate();
-    
-    var dateSet = [];
-    var strMonth = selMonth < 10 ? "0" + selMonth : String(selMonth);
-    for(var d = 1; d <= lastDay; d++) {
-        var strDay = d < 10 ? "0" + d : String(d);
-        dateSet.push(selYear + "-" + strMonth + "-" + strDay);
+        fetch(window.GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(() => {
+            document.getElementById('loadingStatus').innerText = "✅ DB 저장 완료!";
+            buildUniMasterPivotTable();
+        })
+        .catch(() => {
+            document.getElementById('loadingStatus').innerText = "✅ 저장 완료";
+            buildUniMasterPivotTable();
+        });
     }
-    
-    var headerHtml = '<thead><tr><th class="fix-col-1">이름</th><th class="fix-col-2">구분</th><th class="fix-col-3">품목</th><th class="fix-col-4">단가</th><th class="fix-col-5">📦 금액</th><th class="fix-col-6">총수량 및 시간</th><th class="fix-col-7">📊 최종 합산 총액</th>' + dateSet.map(function(d) { return '<th style="min-width:65px;">' + d.substring(5).replace("-","/") + '</th>'; }).join('') + '</tr></thead>';
-    var bodyHtml = "<tbody>";
-    
-    var totalAdminCost = 0, totalAdminQty = 0, totalWorkerQty = 0, totalWorkHours = 0, totalHourlyPaySum = 0, totalFinalGrandSum = 0;
-    var dayAdminSums = {}; var dayWorkerSums = {}; dateSet.forEach(function(d) { dayAdminSums[d] = 0; dayWorkerSums[d] = 0; });
-    var globalItemAdminQty = {}; var globalItemCost = {}; var workerGrandTotalsMap = {};
-    var safeItemPrices = window.itemPrices || {}; var safeWorkers = Array.isArray(window.workersPool) ? window.workersPool : [];
 
-    safeWorkers.forEach(function(name) {
-        var nameEntries = window.rawEntries.filter(function(e) { return e.name === name; }); var itemsOfName = [];
-        nameEntries.forEach(function(e) { if(e.item && e.item !== '통합근무' && itemsOfName.indexOf(e.item) === -1) itemsOfName.push(e.item); });
-        if(itemsOfName.length === 0) itemsOfName.push("지정품목");
-        
-        itemsOfName.sort(window.customItemSort);
-        
-        var parentGroups = {};
-        itemsOfName.forEach(function(item) {
-            var p = parseMainItemAndOption(item);
-            if(!parentGroups[p.main]) parentGroups[p.main] = [];
-            parentGroups[p.main].push(item);
+    function renderUniworkDropdowns() {
+        var wSel = document.getElementById('entryWorkerSelect');
+        var hSel = document.getElementById('hourlyWorkerSelect');
+        var dWSel = document.getElementById('deleteWorkerSelect');
+        var iSel = document.getElementById('entryItemSelect');
+        var dISel = document.getElementById('deleteItemSelect');
+
+        if (wSel) wSel.innerHTML = "";
+        if (hSel) hSel.innerHTML = "";
+        if (dWSel) dWSel.innerHTML = "";
+        if (iSel) iSel.innerHTML = "";
+        if (dISel) dISel.innerHTML = "";
+
+        window.workersPool.forEach(w => {
+            if (wSel) wSel.innerHTML += `<option value="${w}">${w}</option>`;
+            if (hSel) hSel.innerHTML += `<option value="${w}">${w}</option>`;
+            if (dWSel) dWSel.innerHTML += `<option value="${w}">${w}</option>`;
         });
-        for (var groupKey in parentGroups) { parentGroups[groupKey].sort(window.customItemSort); }
 
-        var totalRowsForName = 0;
-        for (var groupKey in parentGroups) {
-            var groupItems = parentGroups[groupKey];
-            totalRowsForName += (groupItems.length * 2);
-            if (groupItems.length > 1 || groupItems[0].indexOf("(") > -1) { totalRowsForName += 1; }
+        for (var itemKey in window.itemPrices) {
+            if (iSel) iSel.innerHTML += `<option value="${itemKey}">${itemKey}</option>`;
+            if (dISel) dISel.innerHTML += `<option value="${itemKey}">${itemKey}</option>`;
         }
-        totalRowsForName += 1;
 
-        var rateConfig = window.hourlyRates[name] || { rate: 9620, customDays: {} }; if(!rateConfig.customDays) rateConfig.customDays = {};
-        var nameTotalHours = 0; var nameHourlyPay = 0; var dayAttendanceMap = {};
-        
-        dateSet.forEach(function(dateFull) {
-            var attEnt = nameEntries.find(function(e) { return e.type === 'attendance' && e.date === dateFull; });
-            var isDayApply = rateConfig.customDays[dateFull] !== false;
-            if(attEnt && attEnt.time) {
-                var hours = calculateHours(attEnt.time); nameTotalHours += hours;
-                if(isDayApply) nameHourlyPay += (hours * rateConfig.rate);
-                dayAttendanceMap[dateFull] = { time: attEnt.time, apply: isDayApply };
-            } else { dayAttendanceMap[dateFull] = { time: "-", apply: isDayApply }; }
-        });
-        nameTotalHours = Number(nameTotalHours.toFixed(1)); totalWorkHours += nameTotalHours; totalHourlyPaySum += nameHourlyPay;
-        var nameAdminCostSum = 0; var isFirstRow = true;
+        updateEntryPriceDisplay();
+    }
 
-        for(var groupName in parentGroups) {
-            var groupedItems = parentGroups[groupName]; var groupAdminSums = {}; var groupTotalAdminCost = 0; var groupTotalAdminQty = 0;
-            dateSet.forEach(function(d) { groupAdminSums[d] = 0; });
+    function updateEntryPriceDisplay() {
+        var iSel = document.getElementById('entryItemSelect');
+        if (!iSel || !iSel.value) return;
+        var itemKey = iSel.value;
+        var costInput = document.getElementById('entryCostInput');
+        if (costInput) {
+            costInput.value = window.itemPrices[itemKey] || 0;
+        }
+    }
 
-            groupedItems.forEach(function(item) {
-                var lastAdminEntry = nameEntries.find(function(e) { return e.item === item && e.type === 'admin'; });
-                var cost = (lastAdminEntry ? Number(lastAdminEntry.cost) : (safeItemPrices[item] || 0));
-                var sumAdminQty = 0, sumWorkerQty = 0;
-                
-                if (!globalItemAdminQty[item]) {
-                    globalItemAdminQty[item] = { total: 0 };
-                    dateSet.forEach(function(d) { globalItemAdminQty[item][d] = 0; });
-                }
-                globalItemCost[item] = cost;
-                
-                dateSet.forEach(function(dateFull) {
-                    var aEnt = nameEntries.find(function(e) { return e.item === item && e.type === 'admin' && e.date === dateFull; });
-                    var wEnt = nameEntries.find(function(e) { return e.item === item && e.type === 'worker' && e.date === dateFull; });
-                    if(aEnt) {
-                        var q = Number(aEnt.qty); sumAdminQty += q; groupAdminSums[dateFull] += q; dayAdminSums[dateFull] += q;
-                        globalItemAdminQty[item][dateFull] += q; globalItemAdminQty[item].total += q;
-                    }
-                    if(wEnt) { var wq = Number(wEnt.qty); sumWorkerQty += wq; dayWorkerSums[dateFull] += wq; }
-                });
-                
-                var sumAdminCost = cost * sumAdminQty;
-                nameAdminCostSum += sumAdminCost; totalAdminCost += sumAdminCost; totalAdminQty += sumAdminQty; totalWorkerQty += sumWorkerQty;
-                groupTotalAdminQty += sumAdminQty; groupTotalAdminCost += sumAdminCost;
+    // 🎯 출/퇴근 시각(HH:MM) 간 시간 차이(시간 단위) 자동 계산
+    function calculateHoursBetween(inTimeStr, outTimeStr) {
+        if (!inTimeStr || !outTimeStr) return 0;
+        try {
+            var parseTime = function(tStr) {
+                var clean = tStr.replace('오전', '').replace('오후', '').trim();
+                var parts = clean.split(':');
+                var h = parseInt(parts[0]) || 0;
+                var m = parseInt(parts[1]) || 0;
+                if (tStr.indexOf('오후') > -1 && h < 12) h += 12;
+                if (tStr.indexOf('오전') > -1 && h === 12) h = 0;
+                return h * 60 + m;
+            };
 
-                var adminRowHtml = '<tr>';
-                if(isFirstRow) { adminRowHtml += '<td class="fix-col-1" rowspan="' + totalRowsForName + '" style="font-weight:bold; vertical-align:middle;">' + name + '</td>'; }
-                adminRowHtml += '<td class="fix-col-2 admin-text">유니입력</td><td class="fix-col-3">' + item + '</td><td class="fix-col-4 admin-text">' + cost.toLocaleString() + '원</td><td class="fix-col-5 admin-text" style="background-color:#f8f9fa;">' + sumAdminCost.toLocaleString() + '원</td><td class="fix-col-6">' + sumAdminQty + '개</td>';
-                if(isFirstRow) {
-                    var secureId = name.replace(/[^a-zA-Z0-9가-힣]/g, '');
-                    adminRowHtml += '<td class="fix-col-7" rowspan="' + totalRowsForName + '" style="vertical-align:middle;" id="grandTotalCell_' + secureId + '">계산중</td>'; isFirstRow = false;
-                }
-                
-                dateSet.forEach(function(dateFull) {
-                    var aEnt = nameEntries.find(function(e) { return e.item === item && e.type === 'admin' && e.date === dateFull; });
-                    var wEnt = nameEntries.find(function(e) { return e.item === item && e.type === 'worker' && e.date === dateFull; });
-                    var aQty = aEnt ? Number(aEnt.qty) : 0; var wQty = wEnt ? Number(wEnt.qty) : 0;
-                    adminRowHtml += '<td class="editable-cell ' + ((aQty!==wQty&&aQty>0&&wQty>0)?'diff-warning':'') + '" onclick="window.makeCellEditable(this, \'' + selYear + '\', \'' + dateFull.substring(5).replace('-','/') + '\', \'' + name + '\', \'' + item + '\', \'admin\', ' + cost + ')">' + (aQty || '-') + '</td>';
-                });
-                adminRowHtml += '</tr>'; bodyHtml += adminRowHtml;
+            var inMin = parseTime(inTimeStr);
+            var outMin = parseTime(outTimeStr);
+            if (outMin < inMin) outMin += 24 * 60; // 야간 근무 대응
 
-                var workerRowHtml = '<tr><td class="fix-col-2 worker-text">개인입력</td><td class="fix-col-3">' + item + '</td><td class="fix-col-4">-</td><td class="fix-col-5">-</td><td class="fix-col-6">' + sumWorkerQty + '개</td>';
-                dateSet.forEach(function(dateFull) {
-                    var aEnt = nameEntries.find(function(e) { return e.item === item && e.type === 'admin' && e.date === dateFull; });
-                    var wEnt = nameEntries.find(function(e) { return e.item === item && e.type === 'worker' && e.date === dateFull; });
-                    var aQty = aEnt ? Number(aEnt.qty) : 0; var wQty = wEnt ? Number(wEnt.qty) : 0;
-                    workerRowHtml += '<td class="editable-cell ' + ((aQty!==wQty&&aQty>0&&wQty>0)?'diff-warning':'') + '" onclick="window.makeCellEditable(this, \'' + selYear + '\', \'' + dateFull.substring(5).replace('-','/') + '\', \'' + name + '\', \'' + item + '\', \'worker\', 0)">' + (wQty || '-') + '</td>';
-                });
-                workerRowHtml += '</tr>'; bodyHtml += workerRowHtml;
+            var diffMin = outMin - inMin;
+            return Math.round((diffMin / 60) * 10) / 10; // 소수점 첫째 자리
+        } catch(e) {
+            return 0;
+        }
+    }
+
+    function buildUniMasterPivotTable() {
+        var table = document.getElementById('uniMasterPivotTable');
+        if (!table) return;
+        table.innerHTML = "";
+
+        var selYear = parseInt(document.getElementById("filterYear").value);
+        var selMonth = parseInt(document.getElementById("filterMonth").value);
+        var lastDay = new Date(selYear, selMonth, 0).getDate();
+
+        var dateSet = [];
+        var strMonth = selMonth < 10 ? "0" + selMonth : String(selMonth);
+        for (var d = 1; d <= lastDay; d++) {
+            var strDay = d < 10 ? "0" + d : String(d);
+            dateSet.push(selYear + "-" + strMonth + "-" + strDay);
+        }
+
+        var headerHtml = `<thead>
+            <tr>
+                <th class="fix-col-1">이름</th>
+                <th class="fix-col-2">구분</th>
+                <th class="fix-col-3">품목</th>
+                <th class="fix-col-4">단가</th>
+                <th class="fix-col-5">📦 금액</th>
+                <th class="fix-col-6">총수량 및 시간</th>
+                <th class="fix-col-7">📊 최종 합산 총액</th>
+                ${dateSet.map(d => `<th style="min-width:70px;">${d.substring(5).replace("-","/")}</th>`).join('')}
+            </tr>
+        </thead>`;
+
+        var bodyHtml = "<tbody>";
+
+        window.workersPool.forEach(wName => {
+            var rateObj = window.hourlyRates[wName] || { rate: 9620 };
+            var hourlyRate = rateObj.rate || 9620;
+
+            var adminEntries = window.rawEntries.filter(e => e.name === wName && e.type === 'admin' && e.date && e.date.startsWith(`${selYear}-${strMonth}`));
+            var adminTotalQty = 0, adminTotalPay = 0;
+            adminEntries.forEach(e => {
+                var q = Number(e.qty || 0);
+                var c = Number(e.cost || 0);
+                adminTotalQty += q;
+                adminTotalPay += (q * c);
             });
 
-            if(groupedItems.length > 1 || groupedItems[0].indexOf("(") > -1) {
-                var subRowHtml = '<tr class="subtotal-row"><td class="fix-col-2">옵션소계</td><td class="fix-col-3">' + groupName + '(전체)</td><td class="fix-col-4">-</td><td class="fix-col-5">' + groupTotalAdminCost.toLocaleString() + '원</td><td class="fix-col-6">' + groupTotalAdminQty + '개</td>';
-                dateSet.forEach(function(dateFull) { subRowHtml += '<td>' + (groupAdminSums[dateFull] || '-') + '</td>'; });
-                subRowHtml += '</tr>'; bodyHtml += subRowHtml;
+            var workerEntries = window.rawEntries.filter(e => e.name === wName && e.type === 'worker' && e.date && e.date.startsWith(`${selYear}-${strMonth}`));
+            var workerTotalQty = 0;
+            workerEntries.forEach(e => { workerTotalQty += Number(e.qty || 0); });
+
+            var workTotalHours = 0;
+            dateSet.forEach(d => {
+                var tKey = `${wName}_${d}`;
+                var tInfo = window.timeEntries[tKey];
+                if (tInfo && tInfo.applied) {
+                    var h = tInfo.hours || calculateHoursBetween(tInfo.inTime, tInfo.outTime);
+                    workTotalHours += Number(h || 0);
+                }
+            });
+            var workTotalPay = Math.round(workTotalHours * hourlyRate);
+
+            var grandTotalPay = adminTotalPay + workTotalPay;
+
+            // Row 1: 유니입력
+            var row1 = `<tr>
+                <td class="fix-col-1" rowspan="3" style="vertical-align:middle; font-weight:bold; color:#2c3e50;">${wName}</td>
+                <td class="fix-col-2 type-uni">유니입력</td>
+                <td class="fix-col-3" style="color:#666;">지정품목</td>
+                <td class="fix-col-4">0원</td>
+                <td class="fix-col-5">${adminTotalPay.toLocaleString()}원</td>
+                <td class="fix-col-6">${adminTotalQty.toLocaleString()}개</td>
+                <td class="fix-col-7" rowspan="3" style="vertical-align:middle; font-size:14px; color:#2b8a3e;">${grandTotalPay.toLocaleString()}원</td>`;
+            
+            dateSet.forEach(d => {
+                var dayE = adminEntries.filter(e => e.date === d);
+                var dayQtySum = 0;
+                dayE.forEach(e => { dayQtySum += Number(e.qty || 0); });
+                row1 += `<td class="clickable-cell" onclick="openCellEditModal('${wName}', '${d}', 'uni')">${dayQtySum > 0 ? dayQtySum.toLocaleString() : '-'}</td>`;
+            });
+            row1 += `</tr>`;
+
+            // Row 2: 개인입력
+            var row2 = `<tr>
+                <td class="fix-col-2 type-personal">개인입력</td>
+                <td class="fix-col-3" style="color:#666;">지정품목</td>
+                <td class="fix-col-4">-</td>
+                <td class="fix-col-5">-</td>
+                <td class="fix-col-6">${workerTotalQty.toLocaleString()}개</td>`;
+            
+            dateSet.forEach(d => {
+                var dayE = workerEntries.filter(e => e.date === d);
+                var dayQtySum = 0;
+                dayE.forEach(e => { dayQtySum += Number(e.qty || 0); });
+                row2 += `<td class="clickable-cell" onclick="openCellEditModal('${wName}', '${d}', 'personal')">${dayQtySum > 0 ? dayQtySum.toLocaleString() : '-'}</td>`;
+            });
+            row2 += `</tr>`;
+
+            // Row 3: 출퇴근확정 (실제 출퇴근 시간 표기 및 반영 버튼)
+            var row3 = `<tr class="row-work-bg">
+                <td class="fix-col-2 type-work">출퇴근확정</td>
+                <td class="fix-col-3" style="color:#1971c2; font-weight:bold;">통합근무</td>
+                <td class="fix-col-4" style="color:#1971c2; font-weight:bold;">${hourlyRate.toLocaleString()}원</td>
+                <td class="fix-col-5" style="color:#1971c2; font-weight:bold;">${workTotalPay.toLocaleString()}원</td>
+                <td class="fix-col-6" style="color:#1971c2; font-weight:bold;">${workTotalHours.toFixed(1)}시간</td>`;
+            
+            dateSet.forEach(d => {
+                var tKey = `${wName}_${d}`;
+                var tInfo = window.timeEntries[tKey] || { applied: false, inTime: '', outTime: '', hours: 0 };
+                var isApplied = tInfo.applied;
+                
+                var displayTimeText = "-";
+                if (tInfo.inTime || tInfo.outTime) {
+                    displayTimeText = `${tInfo.inTime || '?'}~${tInfo.outTime || '?'}`;
+                }
+
+                var badgeBtn = isApplied 
+                    ? `<button class="badge-apply" onclick="event.stopPropagation(); toggleWorkApply('${wName}', '${d}', false)">반영</button>`
+                    : `<button class="badge-cancel" onclick="event.stopPropagation(); toggleWorkApply('${wName}', '${d}', true)">미반영</button>`;
+
+                row3 += `<td class="clickable-cell" onclick="openCellEditModal('${wName}', '${d}', 'work')"><div style="font-size:10px;">${displayTimeText}</div>${badgeBtn}</td>`;
+            });
+            row3 += `</tr>`;
+
+            bodyHtml += row1 + row2 + row3;
+        });
+
+        bodyHtml += "</tbody>";
+        table.innerHTML = headerHtml + bodyHtml;
+    }
+
+    function applyMonthlyRatesAll(isApply) {
+        var targetWorker = document.getElementById('hourlyWorkerSelect').value;
+        if (!targetWorker) { alert("대상자를 선택해 주세요."); return; }
+
+        var selYear = parseInt(document.getElementById("filterYear").value);
+        var selMonth = parseInt(document.getElementById("filterMonth").value);
+        var lastDay = new Date(selYear, selMonth, 0).getDate();
+        var strMonth = selMonth < 10 ? "0" + selMonth : String(selMonth);
+
+        var actionText = isApply ? "전체 반영" : "전체 미반영";
+        if (confirm(`[${targetWorker}] 작업자의 ${selYear}년 ${selMonth}월 시급을 ${actionText} 하시겠습니까?`)) {
+            for (var d = 1; d <= lastDay; d++) {
+                var strDay = d < 10 ? "0" + d : String(d);
+                var fullDate = `${selYear}-${strMonth}-${strDay}`;
+                var tKey = `${targetWorker}_${fullDate}`;
+
+                if (!window.timeEntries[tKey]) {
+                    window.timeEntries[tKey] = { inTime: '09:00', outTime: '18:00', hours: 8, applied: isApply };
+                } else {
+                    window.timeEntries[tKey].applied = isApply;
+                }
+            }
+            syncUniworkWithGoogle(`[${targetWorker}] 당월 시급 ${actionText} 완료`);
+        }
+    }
+
+    function toggleWorkApply(wName, dateStr, isApply) {
+        var tKey = `${wName}_${dateStr}`;
+        if (!window.timeEntries[tKey]) {
+            window.timeEntries[tKey] = { inTime: '09:00', outTime: '18:00', hours: 8, applied: isApply };
+        } else {
+            window.timeEntries[tKey].applied = isApply;
+        }
+        syncUniworkWithGoogle(`[${wName}] ${dateStr} 시급 ${isApply ? '반영' : '미반영'}`);
+    }
+
+    // 🎯 [핵심] 관리자 출/퇴근 시각 텍스트 직접 수정 모달 오픈
+    function openCellEditModal(wName, dateStr, cat) {
+        document.getElementById('editModalWorker').value = wName;
+        document.getElementById('editModalDate').value = dateStr;
+        document.getElementById('editModalCategory').value = cat;
+
+        var titleText = cat === 'uni' ? '🛠️ 유니입력 수량 수정' : (cat === 'personal' ? '👤 개인입력 수량 수정' : '⏰ 출퇴근 시간 정밀 수정');
+        document.getElementById('editModalTitle').innerText = titleText + ` [${wName} - ${dateStr}]`;
+
+        var contentContainer = document.getElementById('editModalContent');
+        contentContainer.innerHTML = "";
+
+        if (cat === 'uni' || cat === 'personal') {
+            var typeVal = cat === 'uni' ? 'admin' : 'worker';
+            var existing = window.rawEntries.filter(e => e.name === wName && e.date === dateStr && e.type === typeVal);
+            var currentQty = existing.length > 0 ? existing[0].qty : 0;
+
+            contentContainer.innerHTML = `
+                <div class="form-group">
+                    <label>작업 수량 입력 (개):</label>
+                    <input type="number" id="modalInputQty" value="${currentQty}" style="height:38px; width:100%; border:1px solid #ccc; border-radius:4px; padding:0 10px;">
+                </div>
+            `;
+        } else if (cat === 'work') {
+            var tKey = `${wName}_${dateStr}`;
+            var tInfo = window.timeEntries[tKey] || { inTime: '오전 09:00', outTime: '오후 18:00', hours: 8 };
+
+            contentContainer.innerHTML = `
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <div class="form-group">
+                        <label>출근 시간 기록 (예: 오전 09:00 또는 09:00):</label>
+                        <input type="text" id="modalInputInTime" value="${tInfo.inTime || ''}" placeholder="예: 오전 09:00" style="height:38px; width:100%; border:1px solid #ccc; border-radius:4px; padding:0 10px;">
+                    </div>
+                    <div class="form-group">
+                        <label>퇴근 시간 기록 (예: 오후 18:00 또는 18:00):</label>
+                        <input type="text" id="modalInputOutTime" value="${tInfo.outTime || ''}" placeholder="예: 오후 18:00" style="height:38px; width:100%; border:1px solid #ccc; border-radius:4px; padding:0 10px;">
+                    </div>
+                    <p style="font-size:11px; color:#2980b9; margin:0;">* 시간을 수정하면 근무 시간 및 시급 정산액이 자동 계산됩니다.</p>
+                </div>
+            `;
+        }
+
+        document.getElementById('cellEditModal').style.display = 'flex';
+    }
+
+    function closeCellEditModal() {
+        document.getElementById('cellEditModal').style.display = 'none';
+    }
+
+    function saveCellEditModalSubmit() {
+        var wName = document.getElementById('editModalWorker').value;
+        var dateStr = document.getElementById('editModalDate').value;
+        var cat = document.getElementById('editModalCategory').value;
+
+        if (cat === 'uni' || cat === 'personal') {
+            var newQty = parseInt(document.getElementById('modalInputQty').value) || 0;
+            var typeVal = cat === 'uni' ? 'admin' : 'worker';
+            var idx = window.rawEntries.findIndex(e => e.name === wName && e.date === dateStr && e.type === typeVal);
+
+            if (newQty <= 0) {
+                if (idx > -1) window.rawEntries.splice(idx, 1);
+            } else {
+                var itemKey = document.getElementById('entryItemSelect') ? document.getElementById('entryItemSelect').value : "지정품목";
+                var costVal = window.itemPrices[itemKey] || 0;
+                var entryObj = { date: dateStr, type: typeVal, name: wName, item: itemKey, cost: costVal, qty: newQty };
+                
+                if (idx > -1) window.rawEntries[idx] = entryObj;
+                else window.rawEntries.push(entryObj);
+            }
+        } else if (cat === 'work') {
+            var inTime = document.getElementById('modalInputInTime').value.trim();
+            var outTime = document.getElementById('modalInputOutTime').value.trim();
+            var calculatedHours = calculateHoursBetween(inTime, outTime);
+
+            var tKey = `${wName}_${dateStr}`;
+            if (!window.timeEntries[tKey]) {
+                window.timeEntries[tKey] = { inTime: inTime, outTime: outTime, hours: calculatedHours, applied: true };
+            } else {
+                window.timeEntries[tKey].inTime = inTime;
+                window.timeEntries[tKey].outTime = outTime;
+                window.timeEntries[tKey].hours = calculatedHours;
             }
         }
-        
-        var attendanceRowHtml = '<tr><td class="fix-col-2 admin-text" style="background:#edf2ff !important; color:#364fc7 !important;">출퇴근확정</td><td class="fix-col-3" style="background:#edf2ff !important; color:#364fc7; font-weight:bold;">통합근무</td><td class="fix-col-4" style="background:#edf2ff !important; color:#364fc7; font-weight:bold;">' + Number(rateConfig.rate).toLocaleString() + '원</td><td class="fix-col-5" style="background:#edf2ff !important; color:#364fc7; font-weight:bold;">' + nameHourlyPay.toLocaleString() + '원</td><td class="fix-col-6" style="background:#edf2ff !important; color:#0b7285; font-weight:bold;">' + nameTotalHours + '시간</td>';
-        
-        dateSet.forEach(function(dateFull) {
-            var dayInfo = dayAttendanceMap[dateFull]; var btnClass = dayInfo.apply ? "rate-on" : "rate-off"; var btnText = dayInfo.apply ? "반영" : "미반영";
-            attendanceRowHtml += '<td class="editable-time-cell" onclick="window.makeTimeCellEditable(this, \'' + selYear + '\', \'' + dateFull.substring(5).replace('-','/') + '\', \'' + name + '\', event)"><div class="time-cell-wrap"><span class="time-display-span">' + dayInfo.time + '</span><button class="btn-toggle-apply ' + btnClass + '" onclick="event.stopPropagation(); window.toggleSingleDayRate(\'' + name + '\', \'' + dateFull + '\', ' + dayInfo.apply + ')">' + btnText + '</button></div></td>';
-        });
-        attendanceRowHtml += '</tr>'; bodyHtml += attendanceRowHtml;
 
-        workerGrandTotalsMap[name] = nameAdminCostSum + nameHourlyPay;
-    });
-    bodyHtml += "</tbody>";
+        closeCellEditModal();
+        syncUniworkWithGoogle(`[${wName}] ${dateStr} 출퇴근 시각 수정 저장`);
+    }
 
-    var footerHtml = "<tfoot>"; var activeItems = Object.keys(globalItemAdminQty); activeItems.sort(window.customItemSort);
-    var isFirstSubRow = true;
-    activeItems.forEach(function(item) {
-        var itemCost = globalItemCost[item] || 0; var itemTotalQty = globalItemAdminQty[item].total; var itemTotalCost = itemCost * itemTotalQty;
-        footerHtml += '<tr class="bg-total-item-sub">';
-        if (isFirstSubRow) { footerHtml += '<td class="fix-col-1" rowspan="' + activeItems.length + '" style="vertical-align:middle; font-weight:bold;">품목별 소계</td>'; isFirstSubRow = false; }
-        footerHtml += '<td class="fix-col-2 admin-text">유니입력</td><td class="fix-col-3" style="text-align: left; padding-left: 10px;">' + item + ' 소계</td><td class="fix-col-4">' + itemCost.toLocaleString() + '원</td><td class="fix-col-5">' + itemTotalCost.toLocaleString() + '원</td><td class="fix-col-6">' + itemTotalQty + '개</td><td class="fix-col-7">-</td>';
-        dateSet.forEach(function(d) { var qVal = globalItemAdminQty[item][d]; footerHtml += '<td>' + (qVal || '-') + '</td>'; });
-        footerHtml += '</tr>';
-    });
-    
-    totalFinalGrandSum = totalAdminCost + totalHourlyPaySum;
-    footerHtml += '<tr class="bg-total-row-1"><td class="fix-col-1" rowspan="2" style="vertical-align:middle; font-weight:bold;">최종 합계</td><td class="fix-col-2 admin-text">유니입력</td><td class="fix-col-3" rowspan="2" style="vertical-align:middle; font-weight:bold;">전체합산</td><td class="fix-col-4">-</td><td class="fix-col-5" style="background-color: #d0ebff !important;">' + (totalAdminCost + totalHourlyPaySum).toLocaleString() + '원</td><td class="fix-col-6" style="background-color: #e3fafc !important; padding: 4px 8px !important;"><div class="total-split-box"><span class="val-qty">' + totalAdminQty + '개</span><span class="val-hours">' + totalWorkHours.toFixed(1) + '시간</span></div></td><td class="fix-col-7" id="overallGrandTotalCell" style="background-color: #d3f9d8 !important; color:#2b8a3e; font-weight:bold;">계산중</td>' + dateSet.map(function(d) { return '<td>' + (dayAdminSums[d] || '-') + '</td>'; }).join('') + '</tr><tr class="bg-total-row-2"><td class="fix-col-2 worker-text">개인입력</td><td class="fix-col-4">-</td><td class="fix-col-5">-</td><td class="fix-col-6" style="font-weight: bold; color: #27ae60;">' + totalWorkerQty + '개</td><td class="fix-col-7">-</td>' + dateSet.map(function(d) { return '<td>' + (dayWorkerSums[d] || '-') + '</td>'; }).join('') + '</tr>';
-    footerHtml += "<tfoot>";
-    
-    table.innerHTML = headerHtml + bodyHtml + footerHtml;
-    
-    setTimeout(function(){
-        for(var name in workerGrandTotalsMap) {
-            var secureId = name.replace(/[^a-zA-Z0-9가-힣]/g, ''); var cell = document.getElementById("grandTotalCell_" + secureId);
-            if(cell) { cell.innerText = workerGrandTotalsMap[name].toLocaleString() + "원"; }
+    function addWorkerToPool() {
+        var name = document.getElementById('newWorkerInput').value.trim();
+        if (!name) { alert("작업자 성함을 입력해 주세요!"); return; }
+
+        if (!window.workersPool.includes(name)) {
+            window.workersPool.push(name);
+            document.getElementById('newWorkerInput').value = "";
+            renderUniworkDropdowns();
+            syncUniworkWithGoogle("작업자 명단 추가: " + name);
         }
-        var finalCell = document.getElementById('overallGrandTotalCell'); if(finalCell) { finalCell.innerText = totalFinalGrandSum.toLocaleString() + "원"; }
-    }, 30);
-};
+    }
 
-window.toggleSingleDayRate = function(name, dateFull, currentApply) { if(!window.hourlyRates[name]) window.hourlyRates[name] = { rate: 9620, customDays: {} }; if(!window.hourlyRates[name].customDays) window.hourlyRates[name].customDays = {}; window.hourlyRates[name].customDays[dateFull] = !currentApply; window.buildPivotTable(); window.syncWithGoogle("[" + name + "] " + dateFull + " 반영여부 변경"); };
-window.toggleAllRatesForWorker = function(targetStatus) { var name = document.getElementById('rateWorkerSelect').value; var selYear = document.getElementById("filterYear").value; var selMonth = parseInt(document.getElementById("filterMonth").value); var lastDay = new Date(selYear, selMonth, 0).getDate(); if(!window.hourlyRates[name]) window.hourlyRates[name] = { rate: 9620, customDays: {} }; if(!window.hourlyRates[name].customDays) window.hourlyRates[name].customDays = {}; var strMonth = selMonth < 10 ? "0" + selMonth : String(selMonth); for(var d = 1; d <= lastDay; d++) { var strDay = d < 10 ? "0" + d : String(d); var dateFull = selYear + "-" + strMonth + "-" + strDay; window.hourlyRates[name].customDays[dateFull] = targetStatus; } window.buildPivotTable(); window.syncWithGoogle("[" + name + "] 계정 " + selMonth + "월 시급 일괄 정산 변경"); };
-window.makeCellEditable = function(cell, year, md, name, item, type, cost) { if (cell.querySelector('input')) return; var originalValue = cell.innerText === '-' ? '0' : cell.innerText.replace('개', ''); cell.innerHTML = '<input type="number" class="inline-edit-input" value="' + originalValue + '" onblur="window.saveInlineQty(this, \'' + year + '\', \'' + md + '\', \'' + name + '\', \'' + item + '\', \'' + type + '\', \'' + cost + '\')" onkeydown="if(event.key===\'Enter\') this.blur();">'; var input = cell.querySelector('input'); if(input) { input.focus(); input.select(); } };
-window.saveInlineQty = function(input, year, md, name, item, type, cost) { var newVal = parseInt(input.value) || 0; var dateFull = year + "-" + md.replace("/", "-"); var idx = window.rawEntries.findIndex(function(x) { return x.date === dateFull && x.name === name && x.item === item && x.type === type; }); if (newVal === 0) { if (idx > -1) window.rawEntries.splice(idx, 1); } else { var entry = { date: dateFull, type: type, name: name, item: item, qty: newVal }; if (type === 'admin') entry.cost = Number(cost); if (idx > -1) window.rawEntries[idx] = entry; else window.rawEntries.push(entry); } window.buildPivotTable(); window.syncWithGoogle("인라인 수정: " + name + " [" + item + "] 수량 " + newVal + " 변경"); };
-window.makeTimeCellEditable = function(cell, year, md, name, event) { if (event && event.target.tagName === 'BUTTON') return; var targetSpan = cell.querySelector('.time-display-span'); if (!targetSpan || cell.querySelector('input')) return; var originalValue = targetSpan.innerText === '-' ? '' : targetSpan.innerText; var btn = cell.querySelector('button'); if(btn) btn.style.display = 'none'; targetSpan.innerHTML = '<input type="text" class="inline-edit-input" style="width:100%; font-size:11px;" value="' + originalValue + '" placeholder="예: 오전 9:00 ~ 오후 6:00" onblur="window.saveInlineTime(this, \'' + year + '\', \'' + md + '\', \'' + name + '\')" onkeydown="if(event.key===\'Enter\') this.blur();">'; var input = targetSpan.querySelector('input'); if(input) { input.focus(); input.select(); } };
-window.saveInlineTime = function(input, year, md, name) { var newVal = input.value.trim(); var dateFull = year + "-" + md.replace("/", "-"); var idx = window.rawEntries.findIndex(function(x) { return x.date === dateFull && x.name === name && x.type === 'attendance'; }); if (!newVal || newVal === '-') { if (idx > -1) window.rawEntries.splice(idx, 1); } else { var entry = { date: dateFull, name: name, type: 'attendance', item: '통합근무', time: newVal }; if (idx > -1) window.rawEntries[idx] = entry; else window.rawEntries.push(entry); } window.buildPivotTable(); window.syncWithGoogle("인라인 수정: " + name + " 출퇴근시간 [" + newVal + "] 변경"); };
-window.addWorkRowData = function() { var date = document.getElementById('globalWorkDate').value; var entry = { date: date, type: 'admin', name: document.getElementById('admNameSelect').value, item: document.getElementById('admItemSelect').value, cost: Number(document.getElementById('admCost').value)||0, qty: Number(document.getElementById('admQty').value) }; var idx = window.rawEntries.findIndex(function(x) { return x.date === entry.date && x.name === entry.name && x.item === entry.item && x.type === 'admin'; }); if(idx > -1) window.rawEntries[idx] = entry; else window.rawEntries.push(entry); window.buildPivotTable(); window.syncWithGoogle("관리자가 [" + entry.name + "] 물량 입력"); };
-window.saveHourlyRateSetting = function() { var name = document.getElementById('rateWorkerSelect').value; if(!window.hourlyRates[name]) window.hourlyRates[name] = { rate: 9620, customDays: {} }; window.hourlyRates[name].rate = Number(document.getElementById('hourlyRateInput').value)||0; window.buildPivotTable(); window.syncWithGoogle("[" + name + "] 시급원장 금액 변경"); };
-window.updateRateSettingHint = function() { var name = document.getElementById('rateWorkerSelect').value; var config = window.hourlyRates[name] || { rate: 9620, customDays: {} }; document.getElementById('hourlyRateInput').value = config.rate || 9620; };
-window.updateAdminCostHint = function() { var s = document.getElementById('admItemSelect'); if(s && s.options.length) document.getElementById('admCost').value = s.options[s.selectedIndex].getAttribute('data-cost'); };
+    function deleteWorkerFromPool() {
+        var name = document.getElementById('deleteWorkerSelect').value;
+        if (!name) return;
+        if (confirm(`[${name}] 작업자를 명단에서 삭제하시겠습니까?`)) {
+            window.workersPool = window.workersPool.filter(w => w !== name);
+            renderUniworkDropdowns();
+            syncUniworkWithGoogle("작업자 명단 삭제: " + name);
+        }
+    }
 
-window.renderDropdowns = function() {
-    var aN = document.getElementById('admNameSelect'), rN = document.getElementById('rateWorkerSelect'), aI = document.getElementById('admItemSelect'), dW = document.getElementById('delWorkerSelect'), dI = document.getElementById('delItemSelect');
-    if(!aN || !rN || !aI || !dW || !dI) return;
-    aN.innerHTML = ""; rN.innerHTML = ""; aI.innerHTML = ""; dW.innerHTML = ""; dI.innerHTML = "";
-    var safeWorkers = Array.isArray(window.workersPool) ? window.workersPool : [];
-    safeWorkers.forEach(function(n) { var o = '<option value="' + n + '">' + n + '</option>'; aN.innerHTML += o; rN.innerHTML += o; dW.innerHTML += o; });
-    var safeItemPrices = window.itemPrices || {}; var sortedItemKeys = Object.keys(safeItemPrices).sort(window.customItemSort);
-    sortedItemKeys.forEach(function(i) { aI.innerHTML += '<option value="' + i + '" data-cost="' + safeItemPrices[i] + '">' + i + '</option>'; dI.innerHTML += '<option value="' + i + '">' + i + '</option>'; });
-    window.updateAdminCostHint(); window.updateRateSettingHint();
-};
+    function addItemPriceMaster() {
+        var name = document.getElementById('newItemInput').value.trim();
+        var price = Number(document.getElementById('newItemPriceInput').value) || 0;
+
+        if (!name) { alert("품목명을 입력해 주세요!"); return; }
+
+        window.itemPrices[name] = price;
+        document.getElementById('newItemInput').value = "";
+        document.getElementById('newItemPriceInput').value = "";
+
+        renderUniworkDropdowns();
+        syncUniworkWithGoogle("품목 단가 추가: " + name);
+    }
+
+    function deleteItemFromMaster() {
+        var name = document.getElementById('deleteItemSelect').value;
+        if (!name) return;
+        if (confirm(`[${name}] 품목을 삭제하시겠습니까?`)) {
+            delete window.itemPrices[name];
+            renderUniworkDropdowns();
+            syncUniworkWithGoogle("품목 삭제: " + name);
+        }
+    }
+
+    function saveWorkerHourlyRate() {
+        var name = document.getElementById('hourlyWorkerSelect').value;
+        var rate = Number(document.getElementById('hourlyRateInput').value) || 0;
+
+        if (!name) return;
+        if (!window.hourlyRates[name]) window.hourlyRates[name] = {};
+        window.hourlyRates[name].rate = rate;
+
+        syncUniworkWithGoogle(`[${name}] 시급 ${rate}원 저장`);
+    }
+
+    function addDailyRawEntryAdmin() {
+        var date = document.getElementById('globalUniDate').value;
+        var name = document.getElementById('entryWorkerSelect').value;
+        var item = document.getElementById('entryItemSelect').value;
+        var cost = Number(document.getElementById('entryCostInput').value) || 0;
+        var qty = Number(document.getElementById('entryQtyInput').value) || 0;
+
+        if (!date || !name || !item || qty <= 0) {
+            alert("날짜, 작업자, 품목, 올바른 수량을 입력해 주세요.");
+            return;
+        }
+
+        window.rawEntries.push({
+            date: date,
+            type: 'admin',
+            name: name,
+            item: item,
+            cost: cost,
+            qty: qty,
+            totalCost: (cost * qty) + "원",
+            time: "-"
+        });
+
+        syncUniworkWithGoogle(`일일 작업 추가: ${name} (${item} ${qty}개)`);
+    }
 </script>
 </body>
 </html>

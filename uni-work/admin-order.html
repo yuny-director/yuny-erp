@@ -32,7 +32,6 @@
         .bg-calc { background-color: #f1f3f5; font-weight: bold; }
         .bg-order { background-color: #e7f5ff; cursor: pointer; }
 
-        /* 🎯 커스텀 모달 스타일 */
         .modal-overlay { display: none; position: fixed; z-index: 1000000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
         .modal-card { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #2c3e50; padding-bottom: 8px; }
@@ -51,7 +50,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_order_pretty_modal_v2&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_order_pretty_modal_v3&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -62,7 +61,7 @@
                 <select id="filterYear" style="height:36px; font-weight:bold;"></select>
                 <span id="loadingStatus" style="font-weight: bold; color: #27ae60; font-size:13px; margin-left:10px;">🔄 데이터 로드 중...</span>
             </div>
-            <button class="btn btn-purple" onclick="resetFixedMonthlyReqAll()">⚡ 월소요량 고정 전체 해제(자동연동)</button>
+            <button class="btn btn-purple" id="resetReqBtn" onclick="resetFixedMonthlyReqAll()">⚡ 월소요량 고정 전체 해제(자동연동)</button>
         </div>
     </div>
 
@@ -73,7 +72,6 @@
     </div>
 </div>
 
-<!-- 🎯 입고발주표 수정 전용 모달 -->
 <div id="orderEditModal" class="modal-overlay">
     <div class="modal-card">
         <div class="modal-header">
@@ -84,7 +82,7 @@
         <p id="modalSubText" style="font-size:13px; color:#2980b9; font-weight:bold; margin-bottom:15px; word-break:break-all;"></p>
         
         <input type="hidden" id="editTargetName">
-        <input type="hidden" id="editTargetType"> <!-- 'req', 'date1', 'qty1', 'date2', 'qty2' -->
+        <input type="hidden" id="editTargetType">
 
         <div class="form-group" id="inputGroupText">
             <label id="inputLabelText">값 입력</label>
@@ -107,8 +105,11 @@
     window.stockItems = [];
     window.stockEntries = [];
     window.orderData = {};
+    window.isOrderReadOnly = false;
 
     document.addEventListener("DOMContentLoaded", function() {
+        checkOrderPermissionGuard();
+
         var now = new Date();
         var currentYear = now.getFullYear();
         var ySel = document.getElementById("filterYear");
@@ -119,6 +120,21 @@
 
         loadOrderMasterData();
     });
+
+    function checkOrderPermissionGuard() {
+        var userRole = localStorage.getItem('login_user_role') || "admin";
+        var userPermissions = {};
+        try { userPermissions = JSON.parse(localStorage.getItem('login_user_permissions') || "{}"); } catch(e) {}
+
+        if (userRole !== "admin") {
+            var stockPerm = userPermissions.stock || 'read';
+            if (stockPerm === 'read') {
+                window.isOrderReadOnly = true;
+                var resetBtn = document.getElementById('resetReqBtn');
+                if (resetBtn) resetBtn.style.display = 'none';
+            }
+        }
+    }
 
     function loadOrderMasterData() {
         document.getElementById('loadingStatus').innerText = "🔄 DB 로드 중...";
@@ -139,6 +155,7 @@
     }
 
     function syncOrderDataWithGoogle(msg) {
+        if (window.isOrderReadOnly) { alert("보기 전용 권한입니다."); return; }
         document.getElementById('loadingStatus').innerText = "📤 구글 DB 업데이트 중...";
         var payload = {
             action: "syncStock",
@@ -280,8 +297,8 @@
         table.innerHTML = headerHtml + bodyHtml;
     }
 
-    // 🎯 커스텀 모달 오픈 핸들러
     function openEditModalReq(name, currentVal) {
+        if (window.isOrderReadOnly) { alert("보기 전용 권한입니다."); return; }
         document.getElementById('modalTitleText').innerText = "✏️ 기준 월소요량 고정 수정";
         document.getElementById('modalSubText').innerText = `[${name}]`;
         document.getElementById('inputLabelText').innerText = "변경할 월소요량 (수정시 숫자로 고정 표기):";
@@ -300,6 +317,7 @@
     }
 
     function openEditModalDate(name, seq, currentVal) {
+        if (window.isOrderReadOnly) { alert("보기 전용 권한입니다."); return; }
         document.getElementById('modalTitleText').innerText = `📅 ${seq}차 입고예정일 수정`;
         document.getElementById('modalSubText').innerText = `[${name}]`;
         
@@ -316,6 +334,7 @@
     }
 
     function openEditModalQty(name, seq, currentVal) {
+        if (window.isOrderReadOnly) { alert("보기 전용 권한입니다."); return; }
         document.getElementById('modalTitleText').innerText = `📦 ${seq}차 입고예정 수량 수정`;
         document.getElementById('modalSubText').innerText = `[${name}]`;
         document.getElementById('inputLabelText').innerText = "입고 수량 입력 (개):";
@@ -338,6 +357,7 @@
     }
 
     function saveOrderModalSubmit() {
+        if (window.isOrderReadOnly) return;
         var name = document.getElementById('editTargetName').value;
         var type = document.getElementById('editTargetType').value;
         
@@ -364,6 +384,7 @@
     }
 
     function resetFixedMonthlyReqAll() {
+        if (window.isOrderReadOnly) return;
         if (confirm("모든 품목의 고정된 월소요량을 해제하고 최근 3개월 평균 자동 연동으로 복구하시겠습니까?")) {
             for (var k in window.orderData) {
                 delete window.orderData[k].fixedReq;
