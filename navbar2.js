@@ -1,48 +1,62 @@
-// 🚨 YUNY_ERP 전역 네비게이션바 (계정목록 자동로드 & 커스텀 비번변경 모달 탑재판)
+// 🚨 YUNY_ERP 전역 네비게이션바 (어느 페이지에서나 계정목록 무조건 로드 보장 완본)
 (function() {
+    // 🎯 [핵심] GOOGLE_SCRIPT_URL 전역 안전장치 (config.js 누락 대비)
+    if (!window.GOOGLE_SCRIPT_URL || window.GOOGLE_SCRIPT_URL === "") {
+        window.GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyPWv070zApltQFMeq6HUxFAnnBcZfpAXHz5n_vwnmX34kCXqadFumI1BfmJRWu0OZE/exec";
+    }
+
     function initNavbar() {
         var navbarContainer = document.getElementById('global-navbar');
         if (!navbarContainer) return;
 
         var currentPath = window.location.pathname;
+        var userRole = localStorage.getItem('login_user_role') || "admin";
+        
+        var userPermissions = {};
+        try {
+            userPermissions = JSON.parse(localStorage.getItem('login_user_permissions') || "{}");
+        } catch(e) { userPermissions = {}; }
+
+        if (userRole === "admin") {
+            userPermissions = {
+                dashboard: 'edit', ads: 'edit', cost: 'edit', sales: 'edit', margin: 'edit', stock: 'edit',
+                uniwork: 'admin', accountMgr: 'full'
+            };
+        }
+
+        var canDash = userPermissions.dashboard !== 'hide';
+        var canAds = userPermissions.ads !== 'hide';
+        var canCost = userPermissions.cost !== 'hide';
+        var canSales = userPermissions.sales !== 'hide';
+        var canMargin = userPermissions.margin !== 'hide';
+        var canStock = userPermissions.stock !== 'hide';
+        var canUniwork = userPermissions.uniwork !== 'hide';
+        var canManageAccounts = (userPermissions.accountMgr === 'full') || (userRole === 'admin');
+
+        var uniworkLink = "../uni-work/admin-total.html";
+        var isWorkerMode = (userPermissions.uniwork === 'worker') || (userRole === 'worker');
+        if (isWorkerMode && userRole !== 'admin') {
+            uniworkLink = "../uni-work/worker-input.html";
+        }
 
         var isDashboard = currentPath.indexOf('dashboard') > -1;
         var isAds = currentPath.indexOf('ads') > -1;
         var isCost = currentPath.indexOf('cost') > -1;
         var isSales = currentPath.indexOf('sales') > -1;
         var isMargin = currentPath.indexOf('margin') > -1;
-        var isTotal = currentPath.indexOf('admin-total') > -1;
-        
-        var isStock = currentPath.indexOf('admin-stock') > -1;
-        var isOrder = currentPath.indexOf('admin-order') > -1;
-        var isStockGroup = isStock || isOrder;
-        
-        var isWorkerPage = currentPath.indexOf('worker-input') > -1 || currentPath.indexOf('worker-time') > -1;
-        var userRole = localStorage.getItem('login_user_role') || "";
-        var isWorkerRole = isWorkerPage || (userRole === "worker");
+        var isTotal = currentPath.indexOf('admin-total') > -1 || currentPath.indexOf('worker-input') > -1;
+        var isStock = currentPath.indexOf('admin-stock') > -1 || currentPath.indexOf('admin-order') > -1;
 
         var navHtml = `
         <style>
             .custom-navbar { 
-                position: fixed !important; 
-                top: 0 !important; 
-                left: 0 !important;
-                right: 0 !important;
-                width: 100vw !important;
-                height: 50px !important; 
-                z-index: 999999 !important; 
-                background-color: #2c3e50 !important; 
-                color: white !important; 
-                display: flex !important; 
-                justify-content: space-between !important; 
-                align-items: center !important; 
-                padding: 0 15px !important; 
-                font-family: Arial, sans-serif !important; 
-                font-size: 13px !important; 
-                box-sizing: border-box !important; 
+                position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important;
+                width: 100vw !important; height: 50px !important; z-index: 999999 !important; 
+                background-color: #2c3e50 !important; color: white !important; display: flex !important; 
+                justify-content: space-between !important; align-items: center !important; padding: 0 15px !important; 
+                font-family: Arial, sans-serif !important; font-size: 13px !important; box-sizing: border-box !important; 
                 box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
             }
-
             .custom-navbar-left { display: flex; align-items: center; gap: 6px; }
             .custom-navbar a { color: #ecf0f1; text-decoration: none; padding: 6px 10px; border-radius: 4px; font-weight: bold; white-space: nowrap; transition: background 0.2s; display: inline-flex; align-items: center; gap: 4px; }
             .custom-navbar a:hover { background-color: #34495e; color: #1abc9c; }
@@ -63,95 +77,91 @@
             .btn-nav-red { background-color: #e74c3c; border: none; }
 
             .account-modal-overlay { display: none; position: fixed; z-index: 1000000; left: 0; top: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.55); align-items: center; justify-content: center; }
-            .account-modal-card { background-color: #ffffff; padding: 25px; border-radius: 10px; width: 90%; max-width: 680px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
-            .account-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #2c3e50; }
+            .account-modal-card { background-color: #ffffff; padding: 22px; border-radius: 10px; width: 95%; max-width: 850px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
+            .account-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #2c3e50; }
             .account-modal-header h3 { margin: 0; font-size: 17px; color: #2c3e50; font-weight: bold; }
-            .account-modal-close { cursor: pointer; font-size: 22px; font-weight: bold; color: #888; transition: color 0.2s; }
+            .account-modal-close { cursor: pointer; font-size: 22px; font-weight: bold; color: #888; }
             .account-modal-close:hover { color: #e74c3c; }
 
-            .account-input-bar { display: flex; align-items: flex-end; gap: 8px; width: 100%; box-sizing: border-box; background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 15px; }
-            .account-field-box { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-            .account-field-box label { font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #495057; text-align: left; }
-            .account-field-box input, .account-field-box select { height: 36px; padding: 0 8px; border: 1px solid #ced4da; border-radius: 4px; font-size: 13px; width: 100%; box-sizing: border-box; background: #fff; }
-            .account-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-            .account-table th, .account-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+            .perm-grid-box { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: #f1f3f5; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 11px; text-align: left; }
+            .perm-grid-box label { font-weight: bold; color: #333; display: flex; align-items: center; gap: 4px; }
+            .perm-grid-box select { height: 26px; font-size: 11px; padding: 0 4px; border-radius: 4px; border: 1px solid #ccc; width: 100%; }
+
+            .account-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 12px; }
+            .account-table th, .account-table td { border: 1px solid #ddd; padding: 7px 5px; text-align: center; }
             .account-table th { background-color: #f8f9fa; font-weight: bold; color:#333; }
         </style>
         
         <div class="custom-navbar">
             <div class="custom-navbar-left">
                 <span class="navbar-brand">YUNY_ERP</span>
-                ${!isWorkerRole ? `
-                    <a href="../dashboard/dashboard.html" class="${isDashboard ? 'active-menu' : ''}">📊 대시보드</a>
-                    <a href="../ads/ads.html" class="${isAds ? 'active-menu' : ''}">📢 광고관리</a>
-                    <a href="../cost/cost.html" class="${isCost ? 'active-menu' : ''}">📉 원가관리</a>
-                    <a href="../sales/sales.html" class="${isSales ? 'active-menu' : ''}">💰 매출관리</a>
-                    <a href="../margin/margin.html" class="${isMargin ? 'active-menu' : ''}">📝 마진관리</a>
-                    
+                ${canDash ? `<a href="../dashboard/dashboard.html" class="${isDashboard ? 'active-menu' : ''}">📊 대시보드</a>` : ''}
+                ${canAds ? `<a href="../ads/ads.html" class="${isAds ? 'active-menu' : ''}">📢 광고관리</a>` : ''}
+                ${canCost ? `<a href="../cost/cost.html" class="${isCost ? 'active-menu' : ''}">📉 원가관리</a>` : ''}
+                ${canSales ? `<a href="../sales/sales.html" class="${isSales ? 'active-menu' : ''}">💰 매출관리</a>` : ''}
+                ${canMargin ? `<a href="../margin/margin.html" class="${isMargin ? 'active-menu' : ''}">📝 마진관리</a>` : ''}
+                ${canStock ? `
                     <div class="nav-dropdown">
-                        <a href="../uni-work/admin-stock.html" class="${isStockGroup ? 'active-menu' : ''}">📦 재고표 ▾</a>
+                        <a href="../uni-work/admin-stock.html" class="${isStock ? 'active-menu' : ''}">📦 재고표 ▾</a>
                         <div class="nav-dropdown-content">
-                            <a href="../uni-work/admin-stock.html" class="${isStock ? 'active-menu' : ''}">📅 일별입출고</a>
-                            <a href="../uni-work/admin-order.html" class="${isOrder ? 'active-menu' : ''}">📊 입고발주표</a>
+                            <a href="../uni-work/admin-stock.html">📅 일별입출고</a>
+                            <a href="../uni-work/admin-order.html">📊 입고발주표</a>
                         </div>
-                    </div>
-
-                    <a href="../uni-work/admin-total.html" class="${isTotal ? 'active-menu' : ''}">🛠️ 유니워크(정산표)</a>
-                ` : ''}
+                    </div>` : ''}
+                ${canUniwork ? `<a href="${uniworkLink}" class="${isTotal ? 'active-menu' : ''}">🛠️ 유니워크</a>` : ''}
             </div>
             <div class="navbar-user-info">
                 <span class="navbar-user-name-text" id="navbar-user-name">접속자 표시중</span>
-                ${!isWorkerRole ? `
-                    <button class="btn-nav-action" onclick="window.openAccountManagerModal()">⚙️ 계정 권한 설정</button>
-                ` : ''}
+                ${canManageAccounts ? `<button class="btn-nav-action" onclick="window.openAccountManagerModal()">⚙️ 계정/권한 설정</button>` : ''}
                 <button class="btn-nav-action btn-nav-orange" onclick="window.openResetPwModal()">🔑 비번 변경</button>
                 <button class="btn-nav-action btn-nav-red" onclick="window.logoutSystem()">로그아웃</button>
             </div>
         </div>
 
-        ${!isWorkerRole ? `
-        <!-- ⚙️ 1. 계정 권한 설정 모달 -->
         <div id="accountModal" class="account-modal-overlay">
             <div class="account-modal-card">
                 <div class="account-modal-header">
-                    <h3>🥷 [통합 계정 관리] 작업자 ID/PW/성함 및 권한 등급 제어</h3>
+                    <h3>🥷 [통합 계정 & 권한 제어] 등급별 세부 메뉴 보기/수정/모드 설정</h3>
                     <span class="account-modal-close" onclick="window.closeAccountManagerModal()">&times;</span>
                 </div>
                 
                 <div class="account-modal-body">
                     <form id="accountForm" onsubmit="return false;" autocomplete="off">
-                        <div class="account-input-bar">
-                            <div class="account-field-box">
-                                <label for="accInputId">ID</label>
-                                <input type="text" id="accInputId" name="acc_user_id" placeholder="아이디" autocomplete="off">
-                            </div>
-                            <div class="account-field-box">
-                                <label for="accInputPw">비밀번호</label>
-                                <input type="password" id="accInputPw" name="acc_user_pw" placeholder="비밀번호" autocomplete="new-password">
-                            </div>
-                            <div class="account-field-box">
-                                <label for="accInputName">작업자 성함</label>
-                                <input type="text" id="accInputName" placeholder="예: 홍길동" autocomplete="off">
-                            </div>
-                            <div class="account-field-box">
-                                <label for="accInputRole">권한 등급</label>
-                                <select id="accInputRole">
-                                    <option value="worker">worker</option>
-                                    <option value="admin">admin</option>
+                        <div style="display:flex; gap:8px; align-items:flex-end; background:#f8f9fa; padding:10px; border-radius:6px; border:1px solid #e9ecef;">
+                            <div style="flex:1;"><label style="font-size:11px; font-weight:bold;">ID</label><input type="text" id="accInputId" style="width:100%; height:32px; font-size:12px; padding:0 6px;"></div>
+                            <div style="flex:1;"><label style="font-size:11px; font-weight:bold;">비밀번호</label><input type="password" id="accInputPw" style="width:100%; height:32px; font-size:12px; padding:0 6px;"></div>
+                            <div style="flex:1;"><label style="font-size:11px; font-weight:bold;">성함</label><input type="text" id="accInputName" style="width:100%; height:32px; font-size:12px; padding:0 6px;"></div>
+                            <div style="flex:1.2;">
+                                <label style="font-size:11px; font-weight:bold;">권한 등급</label>
+                                <select id="accInputRole" style="width:100%; height:32px; font-size:12px;" onchange="window.onRoleSelectChange(this.value)">
+                                    <option value="worker">직원 (worker)</option>
+                                    <option value="manager">매니저 (manager)</option>
+                                    <option value="admin">관리자 (admin)</option>
                                 </select>
                             </div>
-                            <button type="button" class="btn-nav-action" style="height:36px; padding:0 14px; margin-bottom:0; flex-shrink:0; background:#2c3e50; color:#fff;" onclick="window.saveAccountItem()">저장/등록</button>
+                            <button type="button" class="btn-nav-action" style="height:32px; padding:0 12px; background:#2c3e50; color:#fff;" onclick="window.saveAccountItem()">계정 등록/저장</button>
+                        </div>
+
+                        <div class="perm-grid-box" id="permSettingBox">
+                            <div><label>📊 대시보드</label><select id="perm_dashboard"><option value="hide">숨김</option><option value="read">보기 전용</option><option value="edit" selected>수정 가능</option></select></div>
+                            <div><label>📢 광고관리</label><select id="perm_ads"><option value="hide">숨김</option><option value="read">보기 전용</option><option value="edit" selected>수정 가능</option></select></div>
+                            <div><label>📉 원가관리</label><select id="perm_cost"><option value="hide">숨김</option><option value="read">보기 전용</option><option value="edit" selected>수정 가능</option></select></div>
+                            <div><label>💰 매출관리</label><select id="perm_sales"><option value="hide">숨김</option><option value="read">보기 전용</option><option value="edit" selected>수정 가능</option></select></div>
+                            <div><label>📝 마진관리</label><select id="perm_margin"><option value="hide">숨김</option><option value="read">보기 전용</option><option value="edit" selected>수정 가능</option></select></div>
+                            <div><label>📦 재고표</label><select id="perm_stock"><option value="hide">숨김</option><option value="read">보기 전용</option><option value="edit" selected>수정 가능</option></select></div>
+                            <div><label>🛠️ 유니워크</label><select id="perm_uniwork"><option value="hide">숨김</option><option value="worker">직원 모드</option><option value="admin" selected>관리자 모드</option></select></div>
+                            <div><label>⚙️ 계정 관리</label><select id="perm_accountMgr"><option value="self">본인 계정만</option><option value="full" selected>전체 생성/수정</option></select></div>
                         </div>
                     </form>
 
-                    <div style="max-height: 260px; overflow-y: auto;">
+                    <div style="max-height: 230px; overflow-y: auto;">
                         <table class="account-table">
                             <thead>
                                 <tr>
-                                    <th>등록 ID</th>
-                                    <th>작업자 성함</th>
-                                    <th>비밀번호</th>
-                                    <th>권한 등급</th>
+                                    <th>ID</th>
+                                    <th>성함</th>
+                                    <th>등급</th>
+                                    <th>메뉴 세부 권한 현황</th>
                                     <th>관리 기능</th>
                                 </tr>
                             </thead>
@@ -161,11 +171,9 @@
                 </div>
             </div>
         </div>
-        ` : ''}
 
-        <!-- 🔑 2. 비밀번호 변경 전용 커스텀 모달 -->
         <div id="pwChangeModal" class="account-modal-overlay">
-            <div class="account-modal-card" style="max-width:400px;">
+            <div class="account-modal-card" style="max-width:380px;">
                 <div class="account-modal-header">
                     <h3>🔑 비밀번호 변경</h3>
                     <span class="account-modal-close" onclick="window.closeResetPwModal()">&times;</span>
@@ -184,7 +192,7 @@
 
         navbarContainer.innerHTML = navHtml;
         window.updateNavbarUserDisplay();
-        window.autoLoadGlobalUserList(); // 🎯 네비바 생성 시 전역 계정 원장 자동 로드
+        window.autoLoadGlobalUserList();
     }
 
     if (document.readyState === 'loading') {
@@ -194,12 +202,13 @@
     }
 })();
 
-// 🎯 구글 DB에서 전역 userList 자동 로드 함수
+// 🎯 [핵심] 어느 페이지에서 접속하든 구글 DB에서 계정목록 자동 수집
 window.autoLoadGlobalUserList = function() {
     var scriptUrl = window.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbyPWv070zApltQFMeq6HUxFAnnBcZfpAXHz5n_vwnmX34kCXqadFumI1BfmJRWu0OZE/exec";
+    
     fetch(scriptUrl + (scriptUrl.indexOf('?') > -1 ? '&' : '?') + 't=' + Date.now())
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+    .then(r => r.json())
+    .then(data => {
         if (data && Array.isArray(data.userList)) {
             window.userList = data.userList;
             if (document.getElementById('accountModal') && document.getElementById('accountModal').style.display === 'flex') {
@@ -207,20 +216,43 @@ window.autoLoadGlobalUserList = function() {
             }
         }
     })
-    .catch(function(e) {});
+    .catch(e => {
+        console.log("계정 원장 수집 요청 지연중...");
+    });
 };
 
-window.updateNavbarUserDisplay = function(customName) {
+window.updateNavbarUserDisplay = function() {
     var nameEl = document.getElementById('navbar-user-name');
     if (!nameEl) return;
-    var activeName = customName || localStorage.getItem('login_user_name') || "관리자";
-    nameEl.innerText = activeName + "님 접속중";
+    var activeName = localStorage.getItem('login_user_name') || "관리자";
+    var activeRole = localStorage.getItem('login_user_role') || "admin";
+    var roleText = activeRole === 'admin' ? '관리자' : (activeRole === 'manager' ? '매니저' : '직원');
+    nameEl.innerText = `${activeName}님(${roleText}) 접속중`;
+};
+
+window.onRoleSelectChange = function(role) {
+    var isWorker = role === 'worker';
+    var isManager = role === 'manager';
+    var isAdmin = role === 'admin';
+
+    var setPerm = function(dash, ads, cost, sales, margin, stock, uniwork, acc) {
+        document.getElementById('perm_dashboard').value = dash;
+        document.getElementById('perm_ads').value = ads;
+        document.getElementById('perm_cost').value = cost;
+        document.getElementById('perm_sales').value = sales;
+        document.getElementById('perm_margin').value = margin;
+        document.getElementById('perm_stock').value = stock;
+        document.getElementById('perm_uniwork').value = uniwork;
+        document.getElementById('perm_accountMgr').value = acc;
+    };
+
+    if (isWorker) setPerm('hide', 'hide', 'hide', 'hide', 'hide', 'read', 'worker', 'self');
+    else if (isManager) setPerm('read', 'read', 'read', 'read', 'read', 'edit', 'admin', 'full');
+    else if (isAdmin) setPerm('edit', 'edit', 'edit', 'edit', 'edit', 'edit', 'admin', 'full');
 };
 
 window.openAccountManagerModal = function() {
-    if (!window.userList || window.userList.length === 0) {
-        window.autoLoadGlobalUserList();
-    }
+    window.autoLoadGlobalUserList();
     window.renderAccountTable();
     var modal = document.getElementById('accountModal');
     if (modal) modal.style.display = 'flex';
@@ -246,69 +278,87 @@ window.renderAccountTable = function() {
     currentUsers.forEach(function(u, idx) {
         var tr = document.createElement('tr');
         var displayName = u.name || u.id;
+        var roleBadge = u.role === 'admin' ? '<b style="color:#2980b9;">관리자</b>' : (u.role === 'manager' ? '<b style="color:#9b59b6;">매니저</b>' : '<b style="color:#27ae60;">직원</b>');
+        
+        var perms = u.permissions || {};
+        var permSummary = `원가:${perms.cost || 'edit'} | 재고:${perms.stock || 'edit'} | 계정:${perms.accountMgr || 'self'}`;
+
         tr.innerHTML = `
             <td style="font-weight:bold;">${u.id}</td>
             <td style="color:#2c3e50; font-weight:bold;">${displayName}</td>
-            <td>••••</td>
-            <td style="color:${u.role === 'admin' ? '#2980b9' : '#27ae60'}; font-weight:bold;">${u.role}</td>
+            <td>${roleBadge}</td>
+            <td style="font-size:11px; color:#555;">${permSummary}</td>
             <td>
-                <button class="btn-nav-action" style="height:26px; padding:0 6px; font-size:11px; background:#7f8c8d;" onclick="window.resetAccountPw(${idx})">비번초기화</button>
-                <button class="btn-nav-action btn-nav-red" style="height:26px; padding:0 6px; font-size:11px;" onclick="window.deleteAccountItem(${idx})">삭제</button>
+                <button class="btn-nav-action" style="height:24px; padding:0 6px; font-size:11px; background:#e67e22;" onclick="window.loadAccountToEdit(${idx})">권한수정</button>
+                <button class="btn-nav-action btn-nav-red" style="height:24px; padding:0 6px; font-size:11px;" onclick="window.deleteAccountItem(${idx})">삭제</button>
             </td>
         `;
         tbody.appendChild(tr);
     });
 };
 
+window.loadAccountToEdit = function(idx) {
+    var u = window.userList[idx];
+    if (!u) return;
+
+    document.getElementById('accInputId').value = u.id;
+    document.getElementById('accInputPw').value = u.pw || "";
+    document.getElementById('accInputName').value = u.name || u.id;
+    document.getElementById('accInputRole').value = u.role || "worker";
+
+    var p = u.permissions || {};
+    document.getElementById('perm_dashboard').value = p.dashboard || 'hide';
+    document.getElementById('perm_ads').value = p.ads || 'hide';
+    document.getElementById('perm_cost').value = p.cost || 'hide';
+    document.getElementById('perm_sales').value = p.sales || 'hide';
+    document.getElementById('perm_margin').value = p.margin || 'hide';
+    document.getElementById('perm_stock').value = p.stock || 'read';
+    document.getElementById('perm_uniwork').value = p.uniwork || 'worker';
+    document.getElementById('perm_accountMgr').value = p.accountMgr || 'self';
+};
+
 window.saveAccountItem = function() {
-    var idInput = document.getElementById('accInputId');
-    var pwInput = document.getElementById('accInputPw');
-    var nameInput = document.getElementById('accInputName');
-    var roleInput = document.getElementById('accInputRole');
+    var id = document.getElementById('accInputId').value.trim();
+    var pw = document.getElementById('accInputPw').value.trim();
+    var name = document.getElementById('accInputName').value.trim();
+    var role = document.getElementById('accInputRole').value;
     
-    var id = idInput ? idInput.value.trim() : "";
-    var pw = pwInput ? pwInput.value.trim() : "";
-    var name = nameInput ? nameInput.value.trim() : "";
-    var role = roleInput ? roleInput.value : "worker";
-    
-    if (!id || !pw) {
-        alert("ID와 비밀번호를 모두 입력해 주세요!");
-        return;
-    }
-    
+    if (!id || !pw) { alert("ID와 비밀번호를 입력해 주세요!"); return; }
     if (!name) name = id;
 
+    var permissions = {
+        dashboard: document.getElementById('perm_dashboard').value,
+        ads: document.getElementById('perm_ads').value,
+        cost: document.getElementById('perm_cost').value,
+        sales: document.getElementById('perm_sales').value,
+        margin: document.getElementById('perm_margin').value,
+        stock: document.getElementById('perm_stock').value,
+        uniwork: document.getElementById('perm_uniwork').value,
+        accountMgr: document.getElementById('perm_accountMgr').value
+    };
+
     if (!window.userList) window.userList = [];
-    var existingIdx = window.userList.findIndex(function(u) { return u.id === id; });
+    var existingIdx = window.userList.findIndex(u => u.id === id);
     
+    var userObj = { id: id, pw: pw, name: name, role: role, permissions: permissions };
+
     if (existingIdx > -1) {
-        window.userList[existingIdx] = { id: id, pw: pw, name: name, role: role };
+        window.userList[existingIdx] = userObj;
     } else {
-        window.userList.push({ id: id, pw: pw, name: name, role: role });
+        window.userList.push(userObj);
     }
-    
-    if (idInput) idInput.value = "";
-    if (pwInput) pwInput.value = "";
-    if (nameInput) nameInput.value = "";
+
+    document.getElementById('accInputId').value = "";
+    document.getElementById('accInputPw').value = "";
+    document.getElementById('accInputName').value = "";
 
     window.renderAccountTable();
     window.syncAccountDataWithGoogle();
 };
 
-window.resetAccountPw = function(idx) {
-    var targetList = window.userList || [];
-    if (!targetList || !targetList[idx]) return;
-    var newPw = prompt(`[${targetList[idx].id}] 계정의 새 비밀번호를 입력하세요:`, "1234");
-    if (newPw) {
-        targetList[idx].pw = newPw.trim();
-        window.renderAccountTable();
-        window.syncAccountDataWithGoogle();
-    }
-};
-
 window.deleteAccountItem = function(idx) {
     var targetList = window.userList || [];
-    if (!targetList || !targetList[idx]) return;
+    if (!targetList[idx]) return;
     if (confirm(`[${targetList[idx].id}] 계정을 삭제하시겠습니까?`)) {
         targetList.splice(idx, 1);
         window.renderAccountTable();
@@ -326,41 +376,29 @@ window.syncAccountDataWithGoogle = function() {
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(payload)
     })
-    .then(function(res) { return res.json(); })
-    .then(function() {
-        alert("계정 원장이 성공적으로 동기화되었습니다.");
-    });
+    .then(r => r.json())
+    .then(() => { alert("계정 및 세부 권한 설정이 성공적으로 저장되었습니다."); });
 };
 
-// 🔑 커스텀 비밀번호 변경 모달 제어
 window.openResetPwModal = function() {
-    var input = document.getElementById('customNewPwInput');
-    if (input) input.value = "";
-    var modal = document.getElementById('pwChangeModal');
-    if (modal) modal.style.display = 'flex';
+    document.getElementById('customNewPwInput').value = "";
+    document.getElementById('pwChangeModal').style.display = 'flex';
 };
 
 window.closeResetPwModal = function() {
-    var modal = document.getElementById('pwChangeModal');
-    if (modal) modal.style.display = 'none';
+    document.getElementById('pwChangeModal').style.display = 'none';
 };
 
 window.submitMyPasswordChange = function() {
-    var input = document.getElementById('customNewPwInput');
-    var newPw = input ? input.value.trim() : "";
-    if (!newPw) {
-        alert("새 비밀번호를 입력해 주세요!");
-        return;
-    }
+    var newPw = document.getElementById('customNewPwInput').value.trim();
+    if (!newPw) { alert("새 비밀번호를 입력해 주세요!"); return; }
 
     var activeName = localStorage.getItem('login_user_name') || "관리자";
     if (!window.userList) window.userList = [];
     
-    var found = window.userList.find(function(u) { return (u.name || u.id) === activeName; });
+    var found = window.userList.find(u => (u.name || u.id) === activeName);
     if (found) {
         found.pw = newPw;
-    } else {
-        window.userList.push({ id: activeName, pw: newPw, name: activeName, role: "admin" });
     }
 
     window.closeResetPwModal();
@@ -370,6 +408,7 @@ window.submitMyPasswordChange = function() {
 window.logoutSystem = function() {
     localStorage.removeItem('login_user_name');
     localStorage.removeItem('login_user_role');
+    localStorage.removeItem('login_user_permissions');
     alert("로그아웃 되었습니다.");
     window.location.href = "../index.html";
 };
