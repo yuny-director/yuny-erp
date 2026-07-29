@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YUNY_ERP - 품목별 월별 원가관리</title>
+    <style>
+        html { margin: 0; padding: 0; background-color: #f4f6f9; font-family: Arial, sans-serif; }
+        body { margin: 0; padding: 0; padding-top: 65px !important; background-color: #f4f6f9; font-family: Arial, sans-serif; }
+
+        .content { padding: 15px; }
+        .card { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .flex-form-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { margin-bottom: 6px; font-weight: bold; font-size: 13px; color: #333; }
+        .form-group input, .form-group select { padding: 0 10px; border: 1px solid #ccc; border-radius: 4px; height: 38px; box-sizing: border-box; font-size: 13px; background-color: #ffffff; }
+
+        .btn { padding: 0 16px; background-color: #1abc9c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; height: 38px; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s; box-sizing: border-box; }
+        .btn:hover { background-color: #16a085; }
+        .btn-orange { background-color: #e67e22 !important; }
+        .btn-orange:hover { background-color: #d35400 !important; }
+        .btn-gray { background-color: #7f8c8d !important; }
+
+        .table-container { width: 100%; max-height: 70vh; overflow: auto; border: 1px solid #ccc; border-radius: 6px; background: white; }
+        table { border-collapse: collapse; font-size: 13px; width: 100%; text-align: center; }
+        th, td { padding: 10px 8px; border: 1px solid #ddd; white-space: nowrap; }
+        th { background-color: #f8f9fa; font-weight: bold; position: sticky; top: 0; z-index: 10; }
+
+        .editable-cost-cell { cursor: pointer; background-color: #f8fff9; font-weight: bold; color: #27ae60; }
+        .editable-cost-cell:hover { background-color: #e8f8f0; text-decoration: underline; }
+        .badge-modified { background-color: #e67e22; color: white; font-size: 10px; padding: 2px 5px; border-radius: 3px; margin-left: 4px; }
+        .badge-auto { background-color: #3498db; color: white; font-size: 10px; padding: 2px 5px; border-radius: 3px; margin-left: 4px; }
+
+        .modal-overlay { display: none; position: fixed; z-index: 1000000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        .modal-card { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
+    </style>
+    <script>
+        document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');
+    </script>
+</head>
+<body>
+
+<div id="global-navbar"></div>
+<script>
+    document.write('<script src="../navbar2.js?v=2026_cost_monthly_v1&t=' + Date.now() + '"><\/script>');
+</script>
+
+<div class="content">
+    <!-- 연월 선택 상단 제어 바 -->
+    <div class="card" style="background-color: #eef2f5; border: 1px solid #ced4da; padding: 12px 20px;">
+        <div class="flex-form-row" style="margin-bottom: 0; align-items: center; justify-content: space-between;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <label style="color: #2c3e50; font-size: 14px; font-weight: bold;">📅 원가 기준 연월 :</label>
+                <select id="filterYear" style="width: 95px; height:36px;"></select>
+                <select id="filterMonth" style="width: 75px; height:36px;"></select>
+                <span id="loadingStatus" style="font-weight: bold; color: #27ae60; font-size:13px; margin-left:10px;">🔄 실시간 동기화 완료</span>
+            </div>
+            <div style="display:flex; gap:8px;" id="costControlBtnGroup">
+                <button class="btn btn-orange" onclick="openMonthlyCsvModal()">📥 월별 원가 CSV 대량 업로드</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 품목별 월별 원가 대장표 -->
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 style="margin:0; font-size:16px; color:#2c3e50;">📉 품목별 월별 원가 관리 대장</h3>
+            <span style="font-size:12px; color:#7f8c8d;">* 원가를 클릭하면 개별 수기 수정이 가능하며, 수정된 가격은 다음 달로 자동 이월됩니다.</span>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>대카테고리</th>
+                        <th>중카테고리</th>
+                        <th>소카테고리</th>
+                        <th>품목명</th>
+                        <th>모델명 / 규격</th>
+                        <th>마스터 기본원가</th>
+                        <th>해당월 적용 원가 (클릭시 수정)</th>
+                        <th>상태</th>
+                    </tr>
+                </thead>
+                <tbody id="monthlyCostTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- CSV 대량 업로드 모달 -->
+<div id="monthlyCsvModal" class="modal-overlay">
+    <div class="modal-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #2c3e50; padding-bottom:8px;">
+            <h3 style="margin:0; color:#2c3e50;">📥 월별 원가 CSV 대량 업로드</h3>
+            <span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeMonthlyCsvModal()">&times;</span>
+        </div>
+        <p style="font-size:12px; color:#666; margin-bottom:15px;">
+            CSV 파일 서식: <b>[적용연월(YYYY-MM), 품목명, 변동원가]</b> 순서 (첫 줄 헤더 포함)<br>
+            * 대량 업로드한 원가는 해당 연월부터 이후 달까지 자동 이월 적용됩니다.
+        </p>
+        <div class="form-group" style="margin-bottom:15px;">
+            <input type="file" id="monthlyCsvFileInput" accept=".csv" style="height:auto; padding:8px;">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button class="btn btn-gray" onclick="closeMonthlyCsvModal()">취소</button>
+            <button class="btn btn-orange" onclick="processMonthlyCsvUpload()">CSV 원가 업로드 실행</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.stockItems = [];
+    window.monthlyCostHistory = {}; // { "2026-07": { "품목명": 5500 } }
+    window.isReadOnlyMode = false;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        checkUserPermissionGuard();
+
+        var now = new Date();
+        var currentYear = now.getFullYear();
+        var currentMonth = now.getMonth() + 1;
+
+        var ySel = document.getElementById("filterYear");
+        for (var y = currentYear - 2; y <= currentYear + 1; y++) {
+            ySel.innerHTML += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}년</option>`;
+        }
+        var mSel = document.getElementById("filterMonth");
+        for (var m = 1; m <= 12; m++) {
+            mSel.innerHTML += `<option value="${m}" ${m === currentMonth ? 'selected' : ''}>${m}월</option>`;
+        }
+
+        ySel.onchange = renderMonthlyCostTable;
+        mSel.onchange = renderMonthlyCostTable;
+
+        loadCostData();
+    });
+
+    function checkUserPermissionGuard() {
+        var userRole = localStorage.getItem('login_user_role') || "admin";
+        var userPermissions = {};
+        try { userPermissions = JSON.parse(localStorage.getItem('login_user_permissions') || "{}"); } catch(e) {}
+
+        if (userRole !== "admin") {
+            var costPerm = userPermissions.cost || 'read';
+            if (costPerm === 'read') {
+                window.isReadOnlyMode = true;
+                var btnGroup = document.getElementById('costControlBtnGroup');
+                if (btnGroup) btnGroup.style.display = 'none';
+            }
+        }
+    }
+
+    function loadCostData() {
+        document.getElementById('loadingStatus').innerText = "🔄 DB 로드 중...";
+        var scriptUrl = window.GOOGLE_SCRIPT_URL + (window.GOOGLE_SCRIPT_URL.indexOf('?') > -1 ? '&' : '?') + 't=' + Date.now();
+        fetch(scriptUrl)
+        .then(r => r.json())
+        .then(data => {
+            window.stockItems = Array.isArray(data.stockItems) ? data.stockItems : [];
+            window.monthlyCostHistory = (data.monthlyCostHistory && typeof data.monthlyCostHistory === 'object') ? data.monthlyCostHistory : {};
+
+            renderMonthlyCostTable();
+            document.getElementById('loadingStatus').innerText = "✅ 실시간 동기화 완료";
+        })
+        .catch(err => {
+            document.getElementById('loadingStatus').innerText = "❌ 데이터 로드 지연";
+        });
+    }
+
+    function syncMonthlyCostWithGoogle(msg) {
+        if (window.isReadOnlyMode) return;
+        document.getElementById('loadingStatus').innerText = "📤 구글 DB 업데이트 중...";
+        var payload = {
+            action: "syncStock",
+            stockItems: window.stockItems,
+            monthlyCostHistory: window.monthlyCostHistory
+        };
+
+        fetch(window.GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(() => {
+            document.getElementById('loadingStatus').innerText = "✅ DB 저장 완료!";
+            renderMonthlyCostTable();
+        })
+        .catch(() => {
+            document.getElementById('loadingStatus').innerText = "✅ 저장 완료";
+            renderMonthlyCostTable();
+        });
+    }
+
+    function getItemName(item) {
+        return item.itemName || item.name || item.item || "이름없음";
+    }
+
+    // 🎯 [핵심 이월 알고리즘] 해당 연월의 원가 계산 (없을 경우 과거 가장 최근 수정 원가 또는 마스터 원가 자동 이월)
+    function EffectiveCostInfo(itemName, targetYear, targetMonth, masterCost) {
+        var strMonth = targetMonth < 10 ? "0" + targetMonth : String(targetMonth);
+        var targetKey = `${targetYear}-${strMonth}`;
+
+        // 1. 해당 월에 직접 입력된 값이 있으면 적용
+        if (window.monthlyCostHistory[targetKey] && window.monthlyCostHistory[targetKey][itemName] !== undefined) {
+            return { cost: Number(window.monthlyCostHistory[targetKey][itemName]), isModified: true };
+        }
+
+        // 2. 직전 과거 월들을 역순으로 탐색하여 가장 최근에 수정된 원가 검색
+        var allKeys = Object.keys(window.monthlyCostHistory).sort();
+        var latestPastKey = null;
+
+        for (var i = allKeys.length - 1; i >= 0; i--) {
+            if (allKeys[i] < targetKey && window.monthlyCostHistory[allKeys[i]][itemName] !== undefined) {
+                latestPastKey = allKeys[i];
+                break;
+            }
+        }
+
+        if (latestPastKey) {
+            return { cost: Number(window.monthlyCostHistory[latestPastKey][itemName]), isModified: false, isCarried: true };
+        }
+
+        // 3. 과거 수정 이력이 없으면 품목별 가격표의 [기본 원가] 사용
+        return { cost: Number(masterCost || 0), isModified: false, isCarried: false };
+    }
+
+    function renderMonthlyCostTable() {
+        var tbody = document.getElementById('monthlyCostTableBody');
+        tbody.innerHTML = "";
+
+        var selYear = parseInt(document.getElementById("filterYear").value);
+        var selMonth = parseInt(document.getElementById("filterMonth").value);
+
+        if (window.stockItems.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="padding:20px; color:#888;">등록된 품목 마스터가 없습니다. [품목별 가격표]에서 먼저 품목을 등록해 주세요.</td></tr>';
+            return;
+        }
+
+        window.stockItems.forEach((item, idx) => {
+            var name = getItemName(item);
+            var model = item.modelName || item.model || item.spec || "-";
+            var masterCost = Number(item.cost || item.price || 0);
+
+            var costInfo = EffectiveCostInfo(name, selYear, selMonth, masterCost);
+            
+            var badgeHtml = "";
+            if (costInfo.isModified) {
+                badgeHtml = '<span class="badge-modified">당월수기수정</span>';
+            } else if (costInfo.isCarried) {
+                badgeHtml = '<span class="badge-auto">이전월이월</span>';
+            } else {
+                badgeHtml = '<span class="badge-auto" style="background:#7f8c8d;">기본원가</span>';
+            }
+
+            var tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><b>${item.catLarge || '-'}</b></td>
+                <td>${item.catMedium || '-'}</td>
+                <td>${item.catSmall || '-'}</td>
+                <td style="font-weight:bold; color:#2c3e50;">${name}</td>
+                <td style="color:#2980b9; font-weight:bold;">${model}</td>
+                <td style="color:#7f8c8d;">${masterCost.toLocaleString()}원</td>
+                <td class="editable-cost-cell" onclick="editSingleMonthlyCost('${name}', ${costInfo.cost})">${costInfo.cost.toLocaleString()}원 ✏️</td>
+                <td>${badgeHtml}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function editSingleMonthlyCost(itemName, currentCost) {
+        if (window.isReadOnlyMode) { alert("보기 전용 권한입니다."); return; }
+        
+        var selYear = parseInt(document.getElementById("filterYear").value);
+        var selMonth = parseInt(document.getElementById("filterMonth").value);
+        var strMonth = selMonth < 10 ? "0" + selMonth : String(selMonth);
+        var targetKey = `${selYear}-${strMonth}`;
+
+        var inputVal = prompt(`[${itemName}] 의 ${targetKey} 원가를 수정하세요.\n(수정된 원가는 다음 달부터 자동 이월 반영됩니다)`, currentCost);
+        if (inputVal === null) return;
+
+        var newCost = parseInt(String(inputVal).replace(/[^0-9]/g, ''));
+        if (isNaN(newCost) || newCost < 0) { alert("올바른 금액을 입력해 주세요."); return; }
+
+        if (!window.monthlyCostHistory[targetKey]) {
+            window.monthlyCostHistory[targetKey] = {};
+        }
+        window.monthlyCostHistory[targetKey][itemName] = newCost;
+
+        syncMonthlyCostWithGoogle(`[${itemName}] ${targetKey} 원가 ${newCost}원으로 수기 변경`);
+    }
+
+    function openMonthlyCsvModal() { if (window.isReadOnlyMode) return; document.getElementById('monthlyCsvModal').style.display = 'flex'; }
+    function closeMonthlyCsvModal() { document.getElementById('monthlyCsvModal').style.display = 'none'; }
+
+    function processMonthlyCsvUpload() {
+        if (window.isReadOnlyMode) return;
+        var fileInput = document.getElementById('monthlyCsvFileInput');
+        if (!fileInput.files || fileInput.files.length === 0) { alert("CSV 파일을 선택해 주세요!"); return; }
+
+        var file = fileInput.files[0];
+        var reader = new FileReader();
+
+        reader.onload = function(e) {
+            var buffer = e.target.result; var text = "";
+            try { text = new TextDecoder('utf-8', { fatal: true }).decode(buffer); } 
+            catch (err) { text = new TextDecoder('euc-kr').decode(buffer); }
+
+            var lines = text.split(/\r\n|\n/);
+            var updateCount = 0;
+
+            for (var i = 1; i < lines.length; i++) {
+                var line = lines[i].trim(); if (!line) continue;
+                var parts = line.split(',');
+                if (parts.length >= 3) {
+                    var yearMonth = parts[0] ? parts[0].trim() : "";
+                    var itemName = parts[1] ? parts[1].trim() : "";
+                    var rawCost = parts[2] ? parts[2].trim() : "0";
+                    var costVal = Number(rawCost.replace(/[^0-9]/g, '')) || 0;
+
+                    if (yearMonth && itemName && costVal >= 0) {
+                        if (!window.monthlyCostHistory[yearMonth]) {
+                            window.monthlyCostHistory[yearMonth] = {};
+                        }
+                        window.monthlyCostHistory[yearMonth][itemName] = costVal;
+                        updateCount++;
+                    }
+                }
+            }
+
+            alert(`${updateCount}건의 월별 원가 데이터가 대량 업데이트되었습니다.`);
+            closeMonthlyCsvModal();
+            syncMonthlyCostWithGoogle("월별 원가 CSV 대량 업로드");
+        };
+
+        reader.readAsArrayBuffer(file);
+    }
+</script>
+</body>
+</html>
