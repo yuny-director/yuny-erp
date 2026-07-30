@@ -24,10 +24,18 @@
         .sort-header { cursor: pointer; user-select: none; }
         .sort-header:hover { background-color: #dbeafe !important; color: #1d4ed8; }
 
+        :root { --item-col-width: 250px; }
+
         .table-container { width: 100%; max-height: 70vh; overflow: auto; border: 1px solid #ccc; border-radius: 6px; background: white; margin-bottom: 10px; }
         table { border-collapse: separate; border-spacing: 0; font-size: 12px; width: 100%; text-align: center; }
         .table-container th, .table-container td { padding: 8px 6px; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; white-space: nowrap; box-sizing: border-box; }
         .table-container th { background-color: #f8f9fa; font-weight: bold; position: sticky; top: 0; z-index: 10; }
+
+        .fix-item-col { position: sticky !important; left: 0px !important; width: var(--item-col-width) !important; min-width: var(--item-col-width) !important; max-width: var(--item-col-width) !important; background: #ffffff !important; z-index: 20; font-weight: bold; white-space: normal !important; word-break: break-all !important; text-align: left !important; padding-left: 12px !important; }
+        th.fix-item-col { z-index: 30 !important; background-color: #e8f4fd !important; text-align: center !important; }
+
+        .resizer { position: absolute; right: 0; top: 0; width: 6px; cursor: col-resize; user-select: none; height: 100%; background-color: transparent; }
+        .resizer:hover { background-color: #3498db; }
 
         .row-total { background-color: #eef9f1; font-weight: bold; }
         .row-total td { color: #27ae60; }
@@ -47,7 +55,7 @@
 <body>
 
 <div id="global-navbar"></div>
-<script>document.write('<script src="../navbar2.js?v=2026_sales_item_y_v1&t=' + Date.now() + '"><\/script>');</script>
+<script>document.write('<script src="../navbar2.js?v=2026_sales_item_y_v2&t=' + Date.now() + '"><\/script>');</script>
 
 <div class="content">
     <div class="card" style="background-color: #eef2f5; border: 1px solid #ced4da; padding: 12px 20px;">
@@ -106,12 +114,16 @@
             yearData.filter(e => getEntryItem(e) === a).forEach(e => { qA += getEntryQty(e); sA += getEntryAmt(e); });
             yearData.filter(e => getEntryItem(e) === b).forEach(e => { qB += getEntryQty(e); sB += getEntryAmt(e); });
 
+            if (itemSort.col === 'name') return itemSort.asc ? a.localeCompare(b) : b.localeCompare(a);
             if (itemSort.col === 'qty') return itemSort.asc ? qA - qB : qB - qA;
             return itemSort.asc ? sA - sB : sB - sA;
         });
 
         var headerHtml = `<thead><tr>
-            <th style="min-width:180px;">품목명 (마스터 연동)</th>
+            <th class="fix-item-col sort-header" onclick="toggleSort('name')" style="position:relative;">
+                품목명 (마스터 연동) ↕️
+                <div class="resizer" onmousedown="initColResize(event)"></div>
+            </th>
             <th style="min-width:75px;">구분</th>
             <th class="sort-header" onclick="toggleSort('amt')" style="min-width:130px; background:#e8f4fd;">${year}년 전체합계 ↕️</th>
             ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => `<th style="min-width:75px;">${m}월</th>`).join('')}
@@ -126,7 +138,7 @@
             if (m >= 0 && m < 12) { monthQty[m] += q; monthSales[m] += s; }
         });
 
-        bodyHtml += `<tr class="row-total"><td rowspan="2" style="vertical-align:middle;"><b>전체 품목 통합</b></td><td>수량</td><td style="background:#e7f5ff;">${grandQty.toLocaleString()}개</td>${monthQty.map(q => `<td>${q > 0 ? q.toLocaleString()+'개' : '-'}</td>`).join('')}</tr>`;
+        bodyHtml += `<tr class="row-total"><td class="fix-item-col" rowspan="2" style="vertical-align:middle;"><b>전체 품목 통합</b></td><td>수량</td><td style="background:#e7f5ff;">${grandQty.toLocaleString()}개</td>${monthQty.map(q => `<td>${q > 0 ? q.toLocaleString()+'개' : '-'}</td>`).join('')}</tr>`;
         bodyHtml += `<tr class="row-total" style="border-bottom:2px solid #a0aec0;"><td>매출액</td><td style="background:#d3f9d8;">${grandSales.toLocaleString()}원</td>${monthSales.map(s => `<td>${s > 0 ? s.toLocaleString()+'원' : '-'}</td>`).join('')}</tr>`;
 
         allItems.forEach(item => {
@@ -139,11 +151,27 @@
                 if (m >= 0 && m < 12) { iMonthQ[m] += q; iMonthS[m] += s; }
             });
 
-            bodyHtml += `<tr><td rowspan="2" style="vertical-align:middle; font-weight:bold; color:#2c3e50;">${item}</td><td style="color:#2980b9; font-weight:bold;">수량</td><td style="background:#e7f5ff; font-weight:bold;">${iQty.toLocaleString()}개</td>${iMonthQ.map(q => `<td>${q > 0 ? q.toLocaleString()+'개' : '-'}</td>`).join('')}</tr>`;
+            bodyHtml += `<tr><td class="fix-item-col" rowspan="2" style="vertical-align:middle; font-weight:bold; color:#2c3e50;">${item}</td><td style="color:#2980b9; font-weight:bold;">수량</td><td style="background:#e7f5ff; font-weight:bold;">${iQty.toLocaleString()}개</td>${iMonthQ.map(q => `<td>${q > 0 ? q.toLocaleString()+'개' : '-'}</td>`).join('')}</tr>`;
             bodyHtml += `<tr style="border-bottom:2px solid #e2e8f0;"><td style="color:#27ae60; font-weight:bold;">매출액</td><td style="background:#f4fce3; color:#2b8a3e; font-weight:bold;">${iSales.toLocaleString()}원</td>${iMonthS.map(s => `<td>${s > 0 ? s.toLocaleString()+'원' : '-'}</td>`).join('')}</tr>`;
         });
 
         table.innerHTML = headerHtml + bodyHtml + "</tbody>";
+    }
+
+    function initColResize(e) {
+        e.preventDefault();
+        var startX = e.clientX;
+        var startWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--item-col-width')) || 250;
+        function onMouseMove(e) {
+            var newWidth = Math.max(150, startWidth + (e.clientX - startX));
+            document.documentElement.style.setProperty('--item-col-width', newWidth + 'px');
+        }
+        function onMouseUp() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
     }
 </script>
 </body>

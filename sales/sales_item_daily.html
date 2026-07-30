@@ -24,15 +24,20 @@
         .sort-header { cursor: pointer; user-select: none; }
         .sort-header:hover { background-color: #dbeafe !important; color: #1d4ed8; }
 
+        :root { --item-col-width: 250px; }
+
         .table-container { width: 100%; max-height: 70vh; overflow: auto; border: 1px solid #ccc; border-radius: 6px; background: white; margin-bottom: 10px; }
         table { border-collapse: separate; border-spacing: 0; font-size: 12px; width: 100%; text-align: center; }
         .table-container th, .table-container td { padding: 8px 6px; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; white-space: nowrap; box-sizing: border-box; }
         .table-container th { background-color: #f8f9fa; font-weight: bold; position: sticky; top: 0; z-index: 10; }
 
-        .fix-sales-col-1 { position: sticky !important; left: 0px !important; width: 180px !important; min-width: 180px !important; background: #ffffff !important; z-index: 20; font-weight: bold; }
-        .fix-sales-col-2 { position: sticky !important; left: 180px !important; width: 70px !important; min-width: 70px !important; background: #ffffff !important; z-index: 20; font-weight: bold; }
-        .fix-sales-col-3 { position: sticky !important; left: 250px !important; width: 120px !important; min-width: 120px !important; background: #f4fce3 !important; z-index: 20; font-weight: bold; color: #2b8a3e; border-right: 2px solid #2b8a3e !important; }
+        .fix-sales-col-1 { position: sticky !important; left: 0px !important; width: var(--item-col-width) !important; min-width: var(--item-col-width) !important; max-width: var(--item-col-width) !important; background: #ffffff !important; z-index: 20; font-weight: bold; white-space: normal !important; word-break: break-all !important; text-align: left !important; padding-left: 12px !important; }
+        .fix-sales-col-2 { position: sticky !important; left: var(--item-col-width) !important; width: 70px !important; min-width: 70px !important; background: #ffffff !important; z-index: 20; font-weight: bold; }
+        .fix-sales-col-3 { position: sticky !important; left: calc(var(--item-col-width) + 70px) !important; width: 120px !important; min-width: 120px !important; background: #f4fce3 !important; z-index: 20; font-weight: bold; color: #2b8a3e; border-right: 2px solid #2b8a3e !important; }
         th.fix-sales-col-1, th.fix-sales-col-2, th.fix-sales-col-3 { z-index: 30 !important; background-color: #e8f4fd !important; text-align: center !important; }
+
+        .resizer { position: absolute; right: 0; top: 0; width: 6px; cursor: col-resize; user-select: none; height: 100%; background-color: transparent; }
+        .resizer:hover { background-color: #3498db; }
 
         .modal-overlay { display: none; position: fixed; z-index: 1000000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
         .modal-card { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 760px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
@@ -49,7 +54,7 @@
 <body>
 
 <div id="global-navbar"></div>
-<script>document.write('<script src="../navbar2.js?v=2026_sales_item_d_v1&t=' + Date.now() + '"><\/script>');</script>
+<script>document.write('<script src="../navbar2.js?v=2026_sales_item_d_v2&t=' + Date.now() + '"><\/script>');</script>
 
 <div class="content">
     <div class="card" style="background-color: #eef2f5; border: 1px solid #ced4da; padding: 12px 20px;">
@@ -113,12 +118,16 @@
             monthData.filter(e => getEntryItem(e) === a).forEach(e => { qA += getEntryQty(e); sA += getEntryAmt(e); });
             monthData.filter(e => getEntryItem(e) === b).forEach(e => { qB += getEntryQty(e); sB += getEntryAmt(e); });
 
+            if (itemDailySort.col === 'name') return itemDailySort.asc ? a.localeCompare(b) : b.localeCompare(a);
             if (itemDailySort.col === 'qty') return itemDailySort.asc ? qA - qB : qB - qA;
             return itemDailySort.asc ? sA - sB : sB - sA;
         });
 
         var headerHtml = `<thead><tr>
-            <th class="fix-sales-col-1">품목명</th>
+            <th class="fix-sales-col-1 sort-header" onclick="toggleSort('name')" style="position:relative;">
+                품목명 ↕️
+                <div class="resizer" onmousedown="initColResize(event)"></div>
+            </th>
             <th class="fix-sales-col-2">구분</th>
             <th class="fix-sales-col-3 sort-header" onclick="toggleSort('amt')">${month}월 누적 합계 ↕️</th>
             ${dateList.map(d => `<th>${d.substring(8)}일</th>`).join('')}
@@ -149,6 +158,22 @@
         });
 
         table.innerHTML = headerHtml + bodyHtml + "</tbody>";
+    }
+
+    function initColResize(e) {
+        e.preventDefault();
+        var startX = e.clientX;
+        var startWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--item-col-width')) || 250;
+        function onMouseMove(e) {
+            var newWidth = Math.max(150, startWidth + (e.clientX - startX));
+            document.documentElement.style.setProperty('--item-col-width', newWidth + 'px');
+        }
+        function onMouseUp() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
     }
 </script>
 </body>
