@@ -17,13 +17,17 @@
         .btn-purple { background-color: #9b59b6 !important; }
         .btn-gray { background-color: #7f8c8d !important; }
 
+        .sort-header { cursor: pointer; user-select: none; transition: background 0.15s; }
+        .sort-header:hover { background-color: #dbeafe !important; color: #1d4ed8 !important; }
+
         .table-container { width: 100%; max-height: 72vh; overflow: auto !important; border: 1px solid #ccc; border-radius: 6px; background: white; }
         table { border-collapse: separate !important; border-spacing: 0 !important; font-size: 12px; width: auto; min-width: 100%; table-layout: fixed; }
         th, td { padding: 8px 6px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; }
         th { background-color: #f8f9fa !important; font-weight: bold; position: sticky !important; top: 0 !important; z-index: 30 !important; }
 
         .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 180px; max-width: 230px; background: #ffffff !important; z-index: 10; font-weight: bold; text-align: left !important; padding-left: 8px !important; white-space: normal !important; word-break: break-all; }
-        th.fix-col-1 { z-index: 40 !important; text-align: center !important; }
+        .fix-col-2 { position: sticky !important; left: 180px !important; min-width: 130px; max-width: 160px; background: #f8fafc !important; z-index: 10; font-weight: bold; text-align: center !important; color: #2563eb; border-right: 2px solid #cbd5e1 !important; }
+        th.fix-col-1, th.fix-col-2 { z-index: 40 !important; text-align: center !important; }
 
         .bg-month-out { background-color: #ffffff; }
         .bg-stock { background-color: #e6fcf5 !important; font-weight: bold; color: #099268; }
@@ -50,7 +54,7 @@
 
 <div id="global-navbar"></div>
 <script>
-    document.write('<script src="../navbar2.js?v=2026_order_pretty_modal_v3&t=' + Date.now() + '"><\/script>');
+    document.write('<script src="../navbar2.js?v=2026_order_pretty_modal_v4&t=' + Date.now() + '"><\/script>');
 </script>
 
 <div class="content">
@@ -107,6 +111,11 @@
     window.orderData = {};
     window.isOrderReadOnly = false;
 
+    var orderSortState = {
+        col: 'name',
+        asc: true
+    };
+
     document.addEventListener("DOMContentLoaded", function() {
         checkOrderPermissionGuard();
 
@@ -134,6 +143,16 @@
                 if (resetBtn) resetBtn.style.display = 'none';
             }
         }
+    }
+
+    function toggleOrderSort(col) {
+        if (orderSortState.col === col) {
+            orderSortState.asc = !orderSortState.asc;
+        } else {
+            orderSortState.col = col;
+            orderSortState.asc = (col === 'name' || col === 'model');
+        }
+        buildOrderPivotTable();
     }
 
     function loadOrderMasterData() {
@@ -181,13 +200,15 @@
     }
 
     function getItemName(item) { return item.itemName || item.name || item.item || "이름없음"; }
+    function getItemModel(item) { return item.modelName || item.model || item.spec || item.year || "-"; }
 
     function getTodayFormatted() {
         var d = new Date();
         return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}`;
     }
 
-    function calcRecent3MonthAvgOut(itemName) {
+    // 🎯 [핵심] 모델명(1순위) 및 품목명(2순위) 기준 3개월 평균 출고량 계산
+    function calcRecent3MonthAvgOut(itemName, modelName) {
         var now = new Date();
         var totalOut = 0;
         for (var i = 0; i < 3; i++) {
@@ -197,20 +218,61 @@
             var strM = m < 10 ? "0" + m : String(m);
             var monthPrefix = `${y}-${strM}`;
 
-            var entries = window.stockEntries.filter(e => (e.item === itemName || e.itemName === itemName) && e.type === 'out' && e.date && e.date.startsWith(monthPrefix));
+            var entries = window.stockEntries.filter(e => {
+                if (e.type !== 'out' || !e.date || !e.date.startsWith(monthPrefix)) return false;
+                var eModel = String(e.modelName || e.model || "").trim().toUpperCase();
+                var eItem = String(e.item || e.itemName || "").trim();
+                
+                if (modelName && modelName !== '-' && eModel !== '') {
+                    return eModel === String(modelName).trim().toUpperCase();
+                }
+                return eItem === String(itemName).trim();
+            });
+
             entries.forEach(e => { totalOut += Number(e.qty || 0); });
         }
         return Math.round(totalOut / 3);
     }
 
-    function calcTotalStock(itemName) {
-        var entries = window.stockEntries.filter(e => (e.item === itemName || e.itemName === itemName));
+    // 🎯 [핵심] 입출고 내역 원장(stockEntries)에서 모델명(1순위) / 품목명(2순위) 기준 현재총재고(입고-출고) 연동
+    function calcTotalStock(itemName, modelName) {
+        var cleanModel = (modelName && modelName !== '-') ? String(modelName).trim().toUpperCase() : '';
+        var cleanItem = String(itemName).trim();
+
+        var entries = window.stockEntries.filter(e => {
+            var eModel = String(e.modelName || e.model || "").trim().toUpperCase();
+            var eItem = String(e.item || e.itemName || "").trim();
+
+            if (cleanModel !== '' && eModel !== '') {
+                return eModel === cleanModel;
+            }
+            return eItem === cleanItem;
+        });
+
         var inSum = 0, outSum = 0;
         entries.forEach(e => {
             if (e.type === 'in') inSum += Number(e.qty || 0);
             if (e.type === 'out') outSum += Number(e.qty || 0);
         });
-        return inSum - outSum;
+        
+        // 원장 계산 재고가 있을 경우 반환, 없다면 stockItems 기본 저장값 fallback
+        var calcResult = inSum - outSum;
+        if (entries.length > 0) return calcResult;
+
+        // stockItems 항목 자체 재고가 존재하면 fallback
+        var itemObj = window.stockItems.find(s => {
+            var sModel = String(s.modelName || s.model || "").trim().toUpperCase();
+            var sItem = getItemName(s).trim();
+            return (cleanModel !== '' && sModel === cleanModel) || (sItem === cleanItem);
+        });
+
+        if (itemObj) {
+            if (itemObj.currentStock !== undefined) return Number(itemObj.currentStock);
+            if (itemObj.stock !== undefined) return Number(itemObj.stock);
+            if (itemObj.qty !== undefined) return Number(itemObj.qty);
+        }
+
+        return calcResult;
     }
 
     function buildOrderPivotTable() {
@@ -221,15 +283,21 @@
         var selYear = parseInt(document.getElementById("filterYear").value);
         var todayStr = getTodayFormatted();
 
+        var getSortIcon = (col) => {
+            if (orderSortState.col === col) return orderSortState.asc ? ' ⬆️' : ' ⬇️';
+            return ' ↕️';
+        };
+
         var headerHtml = `<thead>
             <tr>
-                <th class="fix-col-1">구분 (품목명)</th>
-                ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => `<th style="width:50px;">${m}월</th>`).join('')}
-                <th style="width:70px; background:#e6fcf5 !important;">현재고</th>
-                <th style="width:90px; background:#fff9db !important;">기준 월소요량</th>
-                <th style="width:90px;">기준일</th>
-                <th style="width:75px;">가용일수</th>
-                <th style="width:100px;">예상품절일</th>
+                <th class="fix-col-1 sort-header" onclick="toggleOrderSort('name')">구분 (품목명)${getSortIcon('name')}</th>
+                <th class="fix-col-2 sort-header" onclick="toggleOrderSort('model')">모델명${getSortIcon('model')}</th>
+                ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => `<th style="width:45px;">${m}월</th>`).join('')}
+                <th class="sort-header" onclick="toggleOrderSort('stock')" style="width:70px; background:#e6fcf5 !important;">현재고${getSortIcon('stock')}</th>
+                <th class="sort-header" onclick="toggleOrderSort('monthlyReq')" style="width:90px; background:#fff9db !important;">기준 월소요량${getSortIcon('monthlyReq')}</th>
+                <th style="width:85px;">기준일</th>
+                <th class="sort-header" onclick="toggleOrderSort('days')" style="width:75px;">가용일수${getSortIcon('days')}</th>
+                <th class="sort-header" onclick="toggleOrderSort('outDate')" style="width:100px;">예상품절일${getSortIcon('outDate')}</th>
                 <th style="width:95px; background:#e7f5ff !important;">입고예정일(1)</th>
                 <th style="width:75px; background:#e7f5ff !important;">입고수량(1)</th>
                 <th style="width:95px; background:#e7f5ff !important;">입고예정일(2)</th>
@@ -237,26 +305,64 @@
             </tr>
         </thead>`;
 
+        var sortedItems = window.stockItems.slice();
+        sortedItems.sort((a, b) => {
+            var nameA = getItemName(a);
+            var nameB = getItemName(b);
+            var modelA = getItemModel(a);
+            var modelB = getItemModel(b);
+
+            var stockA = calcTotalStock(nameA, modelA);
+            var stockB = calcTotalStock(nameB, modelB);
+
+            var itemDataA = window.orderData[nameA] || window.orderData[modelA] || {};
+            var itemDataB = window.orderData[nameB] || window.orderData[modelB] || {};
+
+            var reqA = (itemDataA.fixedReq !== undefined && itemDataA.fixedReq !== null) ? Number(itemDataA.fixedReq) : calcRecent3MonthAvgOut(nameA, modelA);
+            var reqB = (itemDataB.fixedReq !== undefined && itemDataB.fixedReq !== null) ? Number(itemDataB.fixedReq) : calcRecent3MonthAvgOut(nameB, modelB);
+
+            var daysA = reqA > 0 ? Math.round((stockA / reqA) * 30) : 999999;
+            var daysB = reqB > 0 ? Math.round((stockB / reqB) * 30) : 999999;
+
+            var col = orderSortState.col;
+            var asc = orderSortState.asc;
+
+            if (col === 'name') return asc ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+            if (col === 'model') return asc ? modelA.localeCompare(modelB) : modelB.localeCompare(modelA);
+            if (col === 'stock') return asc ? stockA - stockB : stockB - stockA;
+            if (col === 'monthlyReq') return asc ? reqA - reqB : reqB - reqA;
+            if (col === 'days' || col === 'outDate') return asc ? daysA - daysB : daysB - daysA;
+
+            return nameA.localeCompare(nameB);
+        });
+
         var bodyHtml = "<tbody>";
 
-        window.stockItems.forEach(item => {
+        sortedItems.forEach(item => {
             var name = getItemName(item);
-            var itemData = window.orderData[name] || {};
+            var model = getItemModel(item);
+            var itemData = window.orderData[name] || window.orderData[model] || {};
 
             var monthOutList = [];
             for (var m = 1; m <= 12; m++) {
                 var strM = m < 10 ? "0" + m : String(m);
                 var prefix = `${selYear}-${strM}`;
                 var outSum = 0;
-                window.stockEntries.filter(e => (e.item === name || e.itemName === name) && e.type === 'out' && e.date && e.date.startsWith(prefix))
-                .forEach(e => { outSum += Number(e.qty || 0); });
+                window.stockEntries.filter(e => {
+                    if (e.type !== 'out' || !e.date || !e.date.startsWith(prefix)) return false;
+                    var eModel = String(e.modelName || e.model || "").trim().toUpperCase();
+                    var eItem = String(e.item || e.itemName || "").trim();
+                    if (model !== '-' && eModel !== '') return eModel === String(model).trim().toUpperCase();
+                    return eItem === String(name).trim();
+                }).forEach(e => { outSum += Number(e.qty || 0); });
                 monthOutList.push(outSum);
             }
 
-            var stockQty = calcTotalStock(name);
+            // 🎯 모델명 우선 연동된 현재총재고
+            var stockQty = calcTotalStock(name, model);
 
             var isFixed = itemData.fixedReq !== undefined && itemData.fixedReq !== null;
-            var reqQty = isFixed ? Number(itemData.fixedReq) : calcRecent3MonthAvgOut(name);
+            var reqQty = isFixed ? Number(itemData.fixedReq) : calcRecent3MonthAvgOut(name, model);
 
             var availDaysText = "#DIV/0!";
             var expireDateText = "#DIV/0!";
@@ -280,6 +386,7 @@
 
             bodyHtml += `<tr>
                 <td class="fix-col-1">${name}</td>
+                <td class="fix-col-2">${model}</td>
                 ${monthOutList.map(v => `<td class="bg-month-out">${v || '-'}</td>`).join('')}
                 <td class="bg-stock">${stockQty.toLocaleString()}개</td>
                 <td class="${reqBgClass}" title="${reqTitle}" onclick="openEditModalReq('${name}', ${reqQty})">${reqQty.toLocaleString()}개 ${isFixed ? '🔒' : ''}</td>
