@@ -1,9 +1,8 @@
 // sales_common.js
 window.salesRawEntries = [];
 window.stockItems = [];
-window.itemMappings = {};
+window.itemMappings = {}; // { "쇼핑몰옵션명": { itemName: "...", modelName: "..." } }
 window.pendingParsedEntries = [];
-window.unmappedList = [];
 
 function getEntryDate(e) { 
     var dt = String(e.date || e.d || "").trim(); 
@@ -18,10 +17,24 @@ function getEntryMall(e) {
     return mName;
 }
 
-function getEntryItem(e) { 
+function getEntryItemInfo(e) { 
     var rawOpt = e.rawOptionName || e.r || "";
-    var mapped = window.itemMappings[rawOpt] || e.itemName || e.i || "";
-    return mapped.trim() || rawOpt.trim() || "기타품목";
+    var mapObj = window.itemMappings[rawOpt];
+    
+    var itemName = "";
+    var modelName = "";
+
+    if (mapObj && typeof mapObj === 'object') {
+        itemName = mapObj.itemName || "";
+        modelName = mapObj.modelName || "";
+    } else if (typeof mapObj === 'string') {
+        itemName = mapObj;
+    }
+
+    if (!itemName) itemName = e.itemName || e.i || rawOpt || "기타품목";
+    if (!modelName) modelName = e.modelName || e.model || "-";
+
+    return { itemName: itemName.trim(), modelName: modelName.trim() };
 }
 
 function getEntryQty(e) { return Number(e.qty || e.q || 0); }
@@ -78,13 +91,22 @@ function loadSalesData(renderCallback) {
     .then(r => r.json())
     .then(data => {
         var raw = Array.isArray(data.salesRawEntries) ? data.salesRawEntries : [];
-        window.salesRawEntries = raw.map(e => ({
-            date: getEntryDate(e), mallName: getEntryMall(e),
-            rawOptionName: e.rawOptionName || e.r || "", itemName: e.itemName || e.i || "",
-            qty: getEntryQty(e), salesAmt: getEntryAmt(e)
-        }));
         window.stockItems = Array.isArray(data.stockItems) ? data.stockItems : [];
         window.itemMappings = (data.itemMappings && typeof data.itemMappings === 'object') ? data.itemMappings : {};
+
+        window.salesRawEntries = raw.map(e => {
+            var info = getEntryItemInfo(e);
+            return {
+                date: getEntryDate(e),
+                mallName: getEntryMall(e),
+                rawOptionName: e.rawOptionName || e.r || "",
+                itemName: info.itemName,
+                modelName: info.modelName,
+                qty: getEntryQty(e),
+                salesAmt: getEntryAmt(e)
+            };
+        });
+
         if (renderCallback) renderCallback();
         if (st) st.innerText = "✅ 실시간 동기화 완료";
     })
@@ -105,54 +127,126 @@ function syncSalesWithGoogle(msg, renderCallback) {
 function openSalesUploadModal() { document.getElementById('salesUploadModal').style.display = 'flex'; }
 function closeSalesUploadModal() { document.getElementById('salesUploadModal').style.display = 'none'; }
 
+// 🎯 [핵심 1] 종속 드롭다운 매핑 관리 팝업 생성
 function openEditMappingModal() {
     var unmappedSet = new Set();
     var masterNames = window.stockItems.map(i => i.itemName || i.name || i.item).filter(Boolean);
+
     window.salesRawEntries.forEach(e => {
         var rawOpt = e.rawOptionName || e.r || "";
-        if (rawOpt && !window.itemMappings[rawOpt] && !masterNames.includes(rawOpt)) unmappedSet.add(rawOpt);
+        if (rawOpt && !window.itemMappings[rawOpt] && !masterNames.includes(rawOpt)) {
+            unmappedSet.add(rawOpt);
+        }
     });
+
     var unmappedList = Array.from(unmappedSet);
 
     document.getElementById('unmappedCountBadge').innerText = unmappedList.length;
     document.getElementById('mappedCountBadge').innerText = Object.keys(window.itemMappings).length;
 
+    // A. 미매핑 목록 생성
     var unmappedTbody = document.getElementById('unmappedManagerTableBody');
     unmappedTbody.innerHTML = "";
-    var erpOptionsHtml = `<option value="">-- ERP 품목 선택 --</option>`;
-    window.stockItems.forEach(item => { erpOptionsHtml += `<option value="${item.itemName || item.name || item.item}">${item.itemName || item.name || item.item}</option>`; });
 
-    if (unmappedList.length === 0) unmappedTbody.innerHTML = `<tr><td colspan="2" style="padding:15px; color:#27ae60; font-weight:bold;">🎉 현재 미매핑된 수집 옵션이 없습니다!</td></tr>`;
-    else {
+    if (unmappedList.length === 0) {
+        unmappedTbody.innerHTML = `<tr><td colspan="3" style="padding:15px; color:#27ae60; font-weight:bold;">🎉 현재 미매핑된 수집 옵션이 없습니다!</td></tr>`;
+    } else {
         unmappedList.forEach((rawOpt, idx) => {
-            var tr = document.createElement('tr'); tr.setAttribute('data-key', rawOpt);
-            tr.innerHTML = `<td style="padding:8px; border:1px solid #cbd5e1; font-weight:bold;">${rawOpt}</td><td style="padding:8px; border:1px solid #cbd5e1;"><select id="mgrMapSelect_${idx}" style="width:100%; height:32px;">${erpOptionsHtml}</select></td>`;
+            var tr = document.createElement('tr');
+            tr.setAttribute('data-key', rawOpt);
+            tr.innerHTML = `
+                <td style="padding:8px; border:1px solid #cbd5e1; font-weight:bold; text-align:left;">${rawOpt}</td>
+                <td style="padding:8px; border:1px solid #cbd5e1;">
+                    <select id="unmapItemSelect_${idx}" style="width:100%; height:32px;" onchange="onMappingItemChange(this, 'unmapModelSelect_${idx}')">
+                        ${getUniqueItemOptionsHtml("")}
+                    </select>
+                </td>
+                <td style="padding:8px; border:1px solid #cbd5e1;">
+                    <select id="unmapModelSelect_${idx}" style="width:100%; height:32px;">
+                        <option value="">-- 모델명 선택 --</option>
+                    </select>
+                </td>
+            `;
             unmappedTbody.appendChild(tr);
         });
     }
 
+    // B. 기존 매핑된 목록 생성
     var mappedTbody = document.getElementById('existingMappingsTableBody');
     mappedTbody.innerHTML = "";
     var keys = Object.keys(window.itemMappings);
-    if (keys.length === 0) mappedTbody.innerHTML = `<tr><td colspan="3" style="padding:15px; color:#94a3b8;">등록된 매핑 정보가 없습니다.</td></tr>`;
-    else {
+
+    if (keys.length === 0) {
+        mappedTbody.innerHTML = `<tr><td colspan="4" style="padding:15px; color:#94a3b8;">등록된 매핑 정보가 없습니다.</td></tr>`;
+    } else {
         keys.forEach((rawOpt, idx) => {
-            var tr = document.createElement('tr'); tr.setAttribute('data-key', rawOpt);
-            var selectHtml = `<select id="editSelect_${idx}" style="width:100%; height:30px;">`;
-            window.stockItems.forEach(item => {
-                var name = item.itemName || item.name || item.item;
-                selectHtml += `<option value="${name}" ${name === window.itemMappings[rawOpt] ? 'selected' : ''}>${name}</option>`;
-            });
-            selectHtml += `</select>`;
-            tr.innerHTML = `<td style="padding:6px; font-weight:bold;">${rawOpt}</td><td style="padding:6px;">${selectHtml}</td><td style="padding:6px;"><button class="btn btn-red" onclick="deleteMappingRow(this)">삭제</button></td>`;
+            var mapObj = window.itemMappings[rawOpt];
+            var curItem = typeof mapObj === 'object' ? mapObj.itemName : mapObj;
+            var curModel = typeof mapObj === 'object' ? mapObj.modelName : "";
+
+            var tr = document.createElement('tr');
+            tr.setAttribute('data-key', rawOpt);
+            tr.innerHTML = `
+                <td style="padding:6px; font-weight:bold; text-align:left;">${rawOpt}</td>
+                <td style="padding:6px;">
+                    <select id="mapItemSelect_${idx}" style="width:100%; height:30px;" onchange="onMappingItemChange(this, 'mapModelSelect_${idx}')">
+                        ${getUniqueItemOptionsHtml(curItem)}
+                    </select>
+                </td>
+                <td style="padding:6px;">
+                    <select id="mapModelSelect_${idx}" style="width:100%; height:30px;">
+                        ${getModelOptionsHtml(curItem, curModel)}
+                    </select>
+                </td>
+                <td style="padding:6px;"><button class="btn btn-red" onclick="deleteMappingRow(this)">삭제</button></td>
+            `;
             mappedTbody.appendChild(tr);
         });
     }
+
     switchModalSubTab('unmapped');
     document.getElementById('editMappingModal').style.display = 'flex';
 }
 
+// 중복 제거된 품목명 드롭다운 HTML 생성
+function getUniqueItemOptionsHtml(selectedItem) {
+    var items = Array.from(new Set(window.stockItems.map(i => i.itemName || i.name || i.item).filter(Boolean)));
+    var html = `<option value="">-- ERP 품목 선택 --</option>`;
+    items.forEach(name => {
+        var sel = (name === selectedItem) ? 'selected' : '';
+        html += `<option value="${name}" ${sel}>${name}</option>`;
+    });
+    return html;
+}
+
+// 품목 선택 시 해당 품목에 속한 모델명만 드롭다운으로 업데이트 (종속 드롭다운)
+function onMappingItemChange(itemSelectElem, targetModelSelectId) {
+    var selectedItem = itemSelectElem.value;
+    var modelSelectElem = document.getElementById(targetModelSelectId);
+    if (modelSelectElem) {
+        modelSelectElem.innerHTML = getModelOptionsHtml(selectedItem, "");
+    }
+}
+
+// 특정 품목명에 속한 모델명 목록 추출
+function getModelOptionsHtml(itemName, selectedModel) {
+    if (!itemName) return `<option value="">-- 모델명 선택 --</option>`;
+
+    var models = window.stockItems.filter(i => (i.itemName || i.name || i.item) === itemName)
+                                  .map(i => i.modelName || i.model || i.spec || i.year || "-")
+                                  .filter(Boolean);
+
+    models = Array.from(new Set(models));
+    var html = `<option value="">-- 모델명 선택 --</option>`;
+    models.forEach(m => {
+        var sel = (m === selectedModel) ? 'selected' : '';
+        html += `<option value="${m}" ${sel}>${m}</option>`;
+    });
+    return html;
+}
+
 function closeEditMappingModal() { document.getElementById('editMappingModal').style.display = 'none'; }
+
 function switchModalSubTab(tab) {
     document.getElementById('modalSubTabUnmapped').classList.toggle('active', tab === 'unmapped');
     document.getElementById('modalSubTabMapped').classList.toggle('active', tab === 'mapped');
@@ -161,35 +255,78 @@ function switchModalSubTab(tab) {
 }
 
 function saveUnmappedManagerList() {
-    var rows = document.querySelectorAll('#unmappedManagerTableBody tr'); var saved = 0;
-    rows.forEach(tr => {
-        var rawOpt = tr.getAttribute('data-key'); var select = tr.querySelector('select');
-        if (rawOpt && select && select.value) { window.itemMappings[rawOpt] = select.value; saved++; }
+    var rows = document.querySelectorAll('#unmappedManagerTableBody tr');
+    var saved = 0;
+
+    rows.forEach((tr, idx) => {
+        var rawOpt = tr.getAttribute('data-key');
+        var itemSel = document.getElementById(`unmapItemSelect_${idx}`);
+        var modelSel = document.getElementById(`unmapModelSelect_${idx}`);
+
+        if (rawOpt && itemSel && itemSel.value) {
+            window.itemMappings[rawOpt] = {
+                itemName: itemSel.value,
+                modelName: modelSel ? modelSel.value : ""
+            };
+            saved++;
+        }
     });
+
     if (saved === 0) { alert("선택된 매핑 품목이 없습니다."); return; }
-    window.salesRawEntries.forEach(entry => { if (window.itemMappings[entry.rawOptionName]) entry.itemName = window.itemMappings[entry.rawOptionName]; });
-    closeEditMappingModal(); alert(`✅ 총 ${saved}건의 수집 옵션이 매핑되었습니다!`);
-    syncSalesWithGoogle("미매핑 품목 매핑 저장", renderSalesTables);
+
+    window.salesRawEntries.forEach(entry => {
+        var mapObj = window.itemMappings[entry.rawOptionName];
+        if (mapObj) {
+            entry.itemName = mapObj.itemName;
+            entry.modelName = mapObj.modelName;
+        }
+    });
+
+    closeEditMappingModal();
+    alert(`✅ 총 ${saved}건의 수집 옵션이 품목 및 모델명으로 매핑되었습니다!`);
+    syncSalesWithGoogle("미매핑 품목 매핑 저장", function() { location.reload(); });
 }
 
 function deleteMappingRow(btn) { var tr = btn.closest('tr'); if (tr) tr.remove(); }
+
 function saveEditedMappings() {
     var newMappings = {};
-    document.querySelectorAll('#existingMappingsTableBody tr').forEach(tr => {
-        var rawOpt = tr.getAttribute('data-key'); var select = tr.querySelector('select');
-        if (rawOpt && select && select.value) newMappings[rawOpt] = select.value;
+    var rows = document.querySelectorAll('#existingMappingsTableBody tr');
+
+    rows.forEach((tr, idx) => {
+        var rawOpt = tr.getAttribute('data-key');
+        var itemSel = document.getElementById(`mapItemSelect_${idx}`);
+        var modelSel = document.getElementById(`mapModelSelect_${idx}`);
+
+        if (rawOpt && itemSel && itemSel.value) {
+            newMappings[rawOpt] = {
+                itemName: itemSel.value,
+                modelName: modelSel ? modelSel.value : ""
+            };
+        }
     });
+
     window.itemMappings = newMappings;
-    window.salesRawEntries.forEach(entry => { if (window.itemMappings[entry.rawOptionName]) entry.itemName = window.itemMappings[entry.rawOptionName]; });
-    closeEditMappingModal(); alert("✅ 매핑 수정사항이 저장되었습니다!");
-    syncSalesWithGoogle("쇼핑몰 품목 매핑 수정", renderSalesTables);
+
+    window.salesRawEntries.forEach(entry => {
+        var mapObj = window.itemMappings[entry.rawOptionName];
+        if (mapObj) {
+            entry.itemName = mapObj.itemName;
+            entry.modelName = mapObj.modelName;
+        }
+    });
+
+    closeEditMappingModal();
+    alert("✅ 매핑 수정사항이 성공적으로 저장되었습니다!");
+    syncSalesWithGoogle("쇼핑몰 품목 매핑 수정", function() { location.reload(); });
 }
 
 function processSalesCsvUpload() {
     var fileInput = document.getElementById('salesCsvFileInput');
     var mallTypeSel = document.getElementById('uploadMallType').value;
     if (!fileInput.files || fileInput.files.length === 0) { alert("매출 파일을 선택해 주세요!"); return; }
-    var file = fileInput.files[0]; var fileName = file.name.toLowerCase();
+    var file = fileInput.files[0];
+    var fileName = file.name.toLowerCase();
 
     var processRows = function(rows) {
         if (!rows || rows.length < 2) { alert("파일에 데이터가 없습니다."); return; }
@@ -226,7 +363,8 @@ function processSalesCsvUpload() {
 
         for (var i = headerIdx + 1; i < rows.length; i++) {
             var cols = rows[i]; if (!cols || cols.length < 2) continue;
-            var dateVal = parseExcelDate(cols[dateColIdx]); var rawOptionName = "";
+            var dateVal = parseExcelDate(cols[dateColIdx]);
+            var rawOptionName = "";
 
             if (targetMallName === '쿠팡') {
                 var cReg = cols[10] ? String(cols[10]).trim() : "", cOpt = cols[11] ? String(cols[11]).trim() : "", cExpo = cols[12] ? String(cols[12]).trim() : "";
@@ -251,12 +389,31 @@ function processSalesCsvUpload() {
             }
 
             if (dateVal) {
-                var mapped = window.itemMappings[rawOptionName];
-                if (!mapped) {
+                var mapObj = window.itemMappings[rawOptionName];
+                var itemName = "";
+                var modelName = "";
+
+                if (mapObj) {
+                    itemName = typeof mapObj === 'object' ? mapObj.itemName : mapObj;
+                    modelName = typeof mapObj === 'object' ? mapObj.modelName : "";
+                } else {
                     var exact = window.stockItems.find(s => (s.itemName || s.name) === rawOptionName);
-                    if (exact) { mapped = rawOptionName; window.itemMappings[rawOptionName] = rawOptionName; }
+                    if (exact) {
+                        itemName = rawOptionName;
+                        modelName = exact.modelName || exact.model || "-";
+                        window.itemMappings[rawOptionName] = { itemName, modelName };
+                    }
                 }
-                rawEntries.push({ date: dateVal, mallName: targetMallName, rawOptionName: rawOptionName, itemName: mapped || rawOptionName, qty: qtyVal, salesAmt: salesAmtVal });
+
+                rawEntries.push({
+                    date: dateVal,
+                    mallName: targetMallName,
+                    rawOptionName: rawOptionName,
+                    itemName: itemName || rawOptionName,
+                    modelName: modelName || "-",
+                    qty: qtyVal,
+                    salesAmt: salesAmtVal
+                });
             }
         }
 
@@ -296,7 +453,7 @@ function finalizeSalesUpload() {
         });
         alert(`✅ [${currentMall}] 신규/추가 매출 데이터 ${added}건이 완벽하게 누적합산 되었습니다!`);
         closeSalesUploadModal();
-        syncSalesWithGoogle("매출 데이터 누적 업데이트", renderSalesTables);
+        syncSalesWithGoogle("매출 데이터 누적 업데이트", function() { location.reload(); });
         window.pendingParsedEntries = [];
     }
 }

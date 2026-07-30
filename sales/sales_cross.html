@@ -24,23 +24,24 @@
         .sort-header { cursor: pointer; user-select: none; transition: background 0.15s; }
         .sort-header:hover { background-color: #dbeafe !important; color: #1d4ed8 !important; }
 
-        :root { --item-col-width: 250px; }
+        :root { --item-col-width: 220px; }
         .table-container { width: 100%; max-height: 70vh; overflow: auto; border: 1px solid #ccc; border-radius: 6px; background: white; margin-bottom: 10px; }
         table { border-collapse: separate; border-spacing: 0; font-size: 12px; width: 100%; text-align: center; }
         .table-container th, .table-container td { padding: 8px 6px; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; white-space: nowrap; box-sizing: border-box; }
         .table-container th { background-color: #f8f9fa; font-weight: bold; position: sticky; top: 0; z-index: 10; }
 
         .fix-sales-col-1 { position: sticky !important; left: 0px !important; width: var(--item-col-width) !important; min-width: var(--item-col-width) !important; max-width: var(--item-col-width) !important; background: #ffffff !important; z-index: 20; font-weight: bold; white-space: normal !important; word-break: break-all !important; line-height: 1.3; }
-        .fix-sales-col-2 { position: sticky !important; left: var(--item-col-width) !important; width: 100px !important; min-width: 100px !important; max-width: 100px !important; background: #ffffff !important; z-index: 20; font-weight: bold; }
-        .fix-sales-col-3 { position: sticky !important; left: calc(var(--item-col-width) + 100px) !important; width: 65px !important; min-width: 65px !important; max-width: 65px !important; background: #ffffff !important; z-index: 20; font-weight: bold; }
-        .fix-sales-col-4 { position: sticky !important; left: calc(var(--item-col-width) + 165px) !important; width: 110px !important; min-width: 110px !important; max-width: 110px !important; background: #f4fce3 !important; z-index: 20; font-weight: bold; color: #2b8a3e; border-right: 2px solid #2b8a3e !important; }
-        th.fix-sales-col-1, th.fix-sales-col-2, th.fix-sales-col-3, th.fix-sales-col-4 { z-index: 30 !important; background-color: #e8f4fd !important; text-align: center !important; }
+        .fix-sales-col-2 { position: sticky !important; left: var(--item-col-width) !important; width: 130px !important; min-width: 130px !important; max-width: 130px !important; background: #f8fafc !important; z-index: 20; font-weight: bold; color: #2563eb; }
+        .fix-sales-col-3 { position: sticky !important; left: calc(var(--item-col-width) + 130px) !important; width: 100px !important; min-width: 100px !important; max-width: 100px !important; background: #ffffff !important; z-index: 20; font-weight: bold; }
+        .fix-sales-col-4 { position: sticky !important; left: calc(var(--item-col-width) + 230px) !important; width: 65px !important; min-width: 65px !important; max-width: 65px !important; background: #ffffff !important; z-index: 20; font-weight: bold; }
+        .fix-sales-col-5 { position: sticky !important; left: calc(var(--item-col-width) + 295px) !important; width: 110px !important; min-width: 110px !important; max-width: 110px !important; background: #f4fce3 !important; z-index: 20; font-weight: bold; color: #2b8a3e; border-right: 2px solid #2b8a3e !important; }
+        th.fix-sales-col-1, th.fix-sales-col-2, th.fix-sales-col-3, th.fix-sales-col-4, th.fix-sales-col-5 { z-index: 30 !important; background-color: #e8f4fd !important; text-align: center !important; }
 
         .resizer { position: absolute; right: 0; top: 0; width: 6px; cursor: col-resize; user-select: none; height: 100%; background-color: transparent; }
         .resizer:hover { background-color: #3498db; }
 
         .modal-overlay { display: none; position: fixed; z-index: 1000000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
-        .modal-card { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 760px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
+        .modal-card { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 820px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
         .modal-tab-container { display: flex; gap: 4px; border-bottom: 2px solid #3b82f6; margin-bottom: 12px; }
         .modal-tab-btn { padding: 8px 16px; background-color: #f1f5f9; border: none; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: bold; font-size: 12px; color: #64748b; }
         .modal-tab-btn.active { background-color: #3b82f6; color: #ffffff; }
@@ -54,7 +55,7 @@
 <body>
 
 <div id="global-navbar"></div>
-<script>document.write('<script src="../navbar2.js?v=2026_sales_cross_v2&t=' + Date.now() + '"><\/script>');</script>
+<script>document.write('<script src="../navbar2.js?v=2026_sales_cross_v3&t=' + Date.now() + '"><\/script>');</script>
 
 <div class="content">
     <div class="card" style="background-color: #eef2f5; border: 1px solid #ced4da; padding: 12px 20px;">
@@ -76,7 +77,6 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <h3 style="margin:0; font-size:15px; color:#2c3e50;">🏆 쇼핑몰-품목 연간 월별(1~12월) 누적 & 당월 vs 전월 대비 증감 분석</h3>
             <div style="display:flex; align-items:center; gap:12px;">
-                <!-- 🎯 쇼핑몰 선택 필터 -->
                 <div style="display:flex; align-items:center; gap:6px;">
                     <label style="font-size:13px; font-weight:bold; color:#333;">🏬 쇼핑몰 선택 :</label>
                     <select id="crossMallFilter" onchange="renderSalesTables()" style="height:34px; font-size:12px; font-weight:bold; padding:0 10px; border:1px solid #2563eb; background:#eff6ff; color:#1e40af; border-radius:4px;">
@@ -93,16 +93,11 @@
 
 <!-- 매핑 & 업로드 공통 모달 -->
 <div id="salesUploadModal" class="modal-overlay"><div class="modal-card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #2c3e50; padding-bottom:8px;"><h3 style="margin:0; color:#2c3e50;">📥 쇼핑몰별 매출 파일 업로드</h3><span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeSalesUploadModal()">&times;</span></div><div class="form-group" style="margin-bottom:12px;"><label>1. 업로드할 쇼핑몰(양식) 선택</label><select id="uploadMallType" style="height:38px; font-weight:bold;"><option value="smartstore_confirmed">네이버 스마트스토어 - [구매확정 내역 파일]</option><option value="smartstore_dispatch">네이버 스마트스토어 - [전체주문 발주/발송 관리 파일]</option><option value="coupang">쿠팡 (Coupang)</option><option value="eleven">11번가</option><option value="gmarket">G마켓 / 옥션</option><option value="custom">기타 / 표준 양식</option></select></div><div class="form-group" style="margin-bottom:15px;"><label>2. 매출 데이터 파일 선택 (.xlsx, .xls, .csv)</label><input type="file" id="salesCsvFileInput" accept=".xlsx, .xls, .csv" style="height:auto; padding:8px;"></div><div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;"><button class="btn btn-gray" onclick="closeSalesUploadModal()">취소</button><button class="btn btn-orange" onclick="processSalesCsvUpload()">매출 데이터 파싱 & 업로드</button></div></div></div>
-<div id="editMappingModal" class="modal-overlay"><div class="modal-card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><h3 style="margin:0; color:#1e293b;">⚙️ 쇼핑몰-ERP 품목 연결 매핑 관리</h3><span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeEditMappingModal()">&times;</span></div><div class="modal-tab-container"><button class="modal-tab-btn active" id="modalSubTabUnmapped" onclick="switchModalSubTab('unmapped')">⚠️ 미매핑 수집 품목 매핑 (<span id="unmappedCountBadge">0</span>)</button><button class="modal-tab-btn" id="modalSubTabMapped" onclick="switchModalSubTab('mapped')">✅ 이미 매핑된 품목 관리 (<span id="mappedCountBadge">0</span>)</button></div><div id="modalSubViewUnmapped"><p style="font-size:12px; color:#64748b; margin-bottom:10px;">수집된 매출 데이터 중 아직 ERP 품목과 연결되지 않은 옵션명 목록입니다.</p><div class="modal-table-container" style="max-height:360px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:6px; padding:0; margin-bottom:15px;"><table style="width:100%; font-size:12px;"><thead><tr><th style="width:58%;">쇼핑몰 수집 옵션명</th><th style="width:42%;">연결할 ERP 품목 선택</th></tr></thead><tbody id="unmappedManagerTableBody"></tbody></table></div><div style="display:flex; justify-content:flex-end; gap:8px;"><button class="btn btn-gray" onclick="closeEditMappingModal()">취소</button><button class="btn btn-orange" onclick="saveUnmappedManagerList()">미매핑 연결 저장</button></div></div><div id="modalSubViewMapped" style="display:none;"><p style="font-size:12px; color:#64748b; margin-bottom:10px;">현재 구글 DB에 저장되어 자동으로 연결되는 쇼핑몰 옵션 매핑 목록입니다.</p><div class="modal-table-container" style="max-height:360px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:6px; padding:0; margin-bottom:15px;"><table style="width:100%; font-size:12px;"><thead><tr><th style="width:50%;">쇼핑몰 수집 옵션명</th><th style="width:40%;">매핑된 ERP 품목명</th><th style="width:10%;">삭제</th></tr></thead><tbody id="existingMappingsTableBody"></tbody></table></div><div style="display:flex; justify-content:flex-end; gap:8px;"><button class="btn btn-gray" onclick="closeEditMappingModal()">취소</button><button class="btn btn-blue" onclick="saveEditedMappings()">매핑 수정사항 저장</button></div></div></div></div>
+<div id="editMappingModal" class="modal-overlay"><div class="modal-card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><h3 style="margin:0; color:#1e293b;">⚙️ 쇼핑몰-ERP 품목/모델명 연결 매핑 관리</h3><span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeEditMappingModal()">&times;</span></div><div class="modal-tab-container"><button class="modal-tab-btn active" id="modalSubTabUnmapped" onclick="switchModalSubTab('unmapped')">⚠️ 미매핑 수집 품목 매핑 (<span id="unmappedCountBadge">0</span>)</button><button class="modal-tab-btn" id="modalSubTabMapped" onclick="switchModalSubTab('mapped')">✅ 이미 매핑된 품목 관리 (<span id="mappedCountBadge">0</span>)</button></div><div id="modalSubViewUnmapped"><p style="font-size:12px; color:#64748b; margin-bottom:10px;">수집된 매출 데이터 중 아직 ERP 품목 및 모델명과 연결되지 않은 옵션명 목록입니다.</p><div class="modal-table-container" style="max-height:360px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:6px; padding:0; margin-bottom:15px;"><table style="width:100%; font-size:12px;"><thead><tr><th style="width:40%;">쇼핑몰 수집 옵션명</th><th style="width:30%;">연결할 ERP 품목 선택</th><th style="width:30%;">연결할 모델명 선택</th></tr></thead><tbody id="unmappedManagerTableBody"></tbody></table></div><div style="display:flex; justify-content:flex-end; gap:8px;"><button class="btn btn-gray" onclick="closeEditMappingModal()">취소</button><button class="btn btn-orange" onclick="saveUnmappedManagerList()">미매핑 연결 저장</button></div></div><div id="modalSubViewMapped" style="display:none;"><p style="font-size:12px; color:#64748b; margin-bottom:10px;">현재 구글 DB에 저장되어 자동으로 연결되는 쇼핑몰 옵션 매핑 목록입니다.</p><div class="modal-table-container" style="max-height:360px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:6px; padding:0; margin-bottom:15px;"><table style="width:100%; font-size:12px;"><thead><tr><th style="width:38%;">쇼핑몰 수집 옵션명</th><th style="width:27%;">매핑된 ERP 품목명</th><th style="width:27%;">매핑된 모델명</th><th style="width:8%;">삭제</th></tr></thead><tbody id="existingMappingsTableBody"></tbody></table></div><div style="display:flex; justify-content:flex-end; gap:8px;"><button class="btn btn-gray" onclick="closeEditMappingModal()">취소</button><button class="btn btn-blue" onclick="saveEditedMappings()">매핑 수정사항 저장</button></div></div></div></div>
 
-<script src="sales_common.js?v=2026_1"></script>
+<script src="sales_common.js?v=2026_2"></script>
 <script>
-    // 🎯 헤더 텍스트 클릭 정렬 상태 (기본값: 선택한 당월 매출 내림차순)
-    var crossSortState = {
-        type: 'curMonth', // 'total', 'diff', 'curMonth', 'm1'~'m12'
-        monthTarget: 0,   // 특정 월 정렬 시 사용
-        asc: false        // false: 내림차순, true: 오름차순
-    };
+    var crossSortState = { type: 'curMonth', monthTarget: 0, asc: false };
 
     document.addEventListener("DOMContentLoaded", function() {
         initSalesPage(renderSalesTables);
@@ -115,20 +110,17 @@
         var mallList = Array.from(new Set(window.salesRawEntries.map(e => getEntryMall(e)))).filter(Boolean);
 
         var html = `<option value="ALL">🛍️ 전체 쇼핑몰 통합 보기</option>`;
-        mallList.forEach(m => {
-            html += `<option value="${m}" ${currentVal === m ? 'selected' : ''}>🏬 ${m}</option>`;
-        });
+        mallList.forEach(m => { html += `<option value="${m}" ${currentVal === m ? 'selected' : ''}>🏬 ${m}</option>`; });
         filter.innerHTML = html;
     }
 
-    // 🎯 컬럼 헤더 텍스트 클릭 시 정렬 토글 함수
     function toggleCrossSort(type, mTarget) {
         if (crossSortState.type === type && crossSortState.monthTarget === (mTarget || 0)) {
-            crossSortState.asc = !crossSortState.asc; // 방향 전환
+            crossSortState.asc = !crossSortState.asc;
         } else {
             crossSortState.type = type;
             crossSortState.monthTarget = mTarget || 0;
-            crossSortState.asc = false; // 기본 내림차순부터 시작
+            crossSortState.asc = false;
         }
         renderSalesTables();
     }
@@ -136,16 +128,12 @@
     function renderSalesTables() {
         var year = parseInt(document.getElementById("filterYear").value);
         var month = parseInt(document.getElementById("filterMonth").value);
-        
-        // 당월 정렬이 기본일 때 월 변경에 따른 타겟 반영
-        if (crossSortState.type === 'curMonth') {
-            crossSortState.monthTarget = month;
-        }
-
+        if (crossSortState.type === 'curMonth') crossSortState.monthTarget = month;
         updateMallFilterOptions();
         buildCrossPivotTable(year, month);
     }
 
+    // 🎯 [핵심 2] 품목명 & 모델명이 각각 독립된 컬럼으로 개별 행 표출되는 피벗 엔진
     function buildCrossPivotTable(year, month) {
         var table = document.getElementById('crossPivotTable');
         table.innerHTML = "";
@@ -163,9 +151,20 @@
         });
 
         var mallList = (selectedMall === 'ALL') ? Array.from(new Set(window.salesRawEntries.map(e => getEntryMall(e)))) : [selectedMall];
-        var itemList = Array.from(new Set(yearData.map(e => getEntryItem(e)))).filter(Boolean);
 
-        // 정렬 화살표 표시용 도우미
+        // 품목명 + 모델명 조합 고유 키 생성 (셀 병합 없이 독립 행 처리)
+        var productKeySet = new Set();
+        yearData.forEach(e => {
+            var iName = e.itemName || "기타품목";
+            var mName = e.modelName || "-";
+            productKeySet.add(`${iName}|||${mName}`);
+        });
+
+        var productList = Array.from(productKeySet).map(key => {
+            var parts = key.split('|||');
+            return { itemName: parts[0], modelName: parts[1] };
+        });
+
         var getSortIcon = (type, m) => {
             if (crossSortState.type === type && (m === undefined || crossSortState.monthTarget === m)) {
                 return crossSortState.asc ? ' ⬆️' : ' ⬇️';
@@ -173,15 +172,15 @@
             return ' ↕️';
         };
 
-        // 🎯 클릭 가능한 헤더 생성
         var headerHtml = `<thead><tr>
             <th class="fix-sales-col-1 sort-header" onclick="toggleCrossSort('name')" style="text-align:left; padding-left:15px; position:relative;">
-                ERP / 수집 품목명 ${getSortIcon('name')}
+                ERP 품목명 ${getSortIcon('name')}
                 <div class="resizer" onmousedown="initColResize(event)"></div>
             </th>
-            <th class="fix-sales-col-2">쇼핑몰 구분</th>
-            <th class="fix-sales-col-3">구분</th>
-            <th class="fix-sales-col-4 sort-header" onclick="toggleCrossSort('total')">${year}년 전체합계 ${getSortIcon('total')}</th>
+            <th class="fix-sales-col-2 sort-header" onclick="toggleCrossSort('model')">모델명 ${getSortIcon('model')}</th>
+            <th class="fix-sales-col-3">쇼핑몰 구분</th>
+            <th class="fix-sales-col-4">구분</th>
+            <th class="fix-sales-col-5 sort-header" onclick="toggleCrossSort('total')">${year}년 전체합계 ${getSortIcon('total')}</th>
             <th class="sort-header" onclick="toggleCrossSort('diff')" style="min-width:140px; background:#fff3bf; color:#d9480f;">전월대비 증감 ${getSortIcon('diff')}<br>(${month}월 vs ${prevMonth}월)</th>
             ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => {
                 var isCur = (m === month);
@@ -191,16 +190,17 @@
 
         var bodyHtml = "<tbody>";
 
-        // 🎯 헤더 클릭 정렬 로직 (전체합계, 전월대비 증감, 특정 월 선택 정렬)
-        itemList.sort((a, b) => {
-            var getStats = (itm) => {
+        // 개별 품목/모델별 정렬
+        productList.sort((a, b) => {
+            var getStats = (prod) => {
                 var yearAmt = 0, yearQty = 0;
                 var monthAmt = Array(12).fill(0), monthQty = Array(12).fill(0);
 
                 window.salesRawEntries.filter(e => {
                     var matchMall = (selectedMall === 'ALL' || getEntryMall(e) === selectedMall);
                     var matchYear = getEntryDate(e).replace(/[^0-9]/g, '').startsWith(String(year));
-                    return matchMall && matchYear && getEntryItem(e) === itm;
+                    var matchProd = (e.itemName === prod.itemName && (e.modelName || "-") === prod.modelName);
+                    return matchMall && matchYear && matchProd;
                 }).forEach(e => {
                     var q = getEntryQty(e), s = getEntryAmt(e);
                     yearQty += q; yearAmt += s;
@@ -214,30 +214,28 @@
                 return { yearAmt, yearQty, monthAmt, monthQty };
             };
 
-            var stA = getStats(a);
-            var stB = getStats(b);
-
+            var stA = getStats(a); var stB = getStats(b);
             var valA = 0, valB = 0;
 
             if (crossSortState.type === 'name') {
-                return crossSortState.asc ? a.localeCompare(b) : b.localeCompare(a);
+                return crossSortState.asc ? a.itemName.localeCompare(b.itemName) : b.itemName.localeCompare(a.itemName);
+            } else if (crossSortState.type === 'model') {
+                return crossSortState.asc ? a.modelName.localeCompare(b.modelName) : b.modelName.localeCompare(a.modelName);
             } else if (crossSortState.type === 'total') {
                 valA = stA.yearAmt; valB = stB.yearAmt;
             } else if (crossSortState.type === 'diff') {
-                var diffA = stA.monthAmt[month - 1] - stA.monthAmt[prevMonth - 1];
-                var diffB = stB.monthAmt[month - 1] - stB.monthAmt[prevMonth - 1];
-                valA = diffA; valB = diffB;
-            } else { // 'curMonth' 또는 특정 'month'
+                valA = stA.monthAmt[month - 1] - stA.monthAmt[prevMonth - 1];
+                valB = stB.monthAmt[month - 1] - stB.monthAmt[prevMonth - 1];
+            } else {
                 var tM = crossSortState.monthTarget || month;
-                valA = stA.monthAmt[tM - 1];
-                valB = stB.monthAmt[tM - 1];
+                valA = stA.monthAmt[tM - 1]; valB = stB.monthAmt[tM - 1];
             }
 
             return crossSortState.asc ? valA - valB : valB - valA;
         });
 
-        itemList.forEach((item, idx) => {
-            var itemAllEntries = yearData.filter(e => getEntryItem(e) === item);
+        productList.forEach((prod, idx) => {
+            var itemAllEntries = yearData.filter(e => e.itemName === prod.itemName && (e.modelName || "-") === prod.modelName);
             var badge = idx < 3 ? ` <span style="background:#e67e22; color:white; border-radius:10px; padding:1px 6px; font-size:10px;">TOP ${idx+1}</span>` : '';
 
             var subMalls = (selectedMall === 'ALL') ? ["전체 몰 통합"].concat(mallList) : [selectedMall];
@@ -252,10 +250,9 @@
                 mEntries.forEach(e => {
                     var q = getEntryQty(e), s = getEntryAmt(e);
                     yearTotalQty += q; yearTotalAmt += s;
-                    var dt = getEntryDate(e);
-                    var cleanDate = dt.replace(/[^0-9]/g, '');
-                    if (cleanDate.length >= 6) {
-                        var mo = parseInt(cleanDate.substring(4, 6)) - 1;
+                    var dt = getEntryDate(e).replace(/[^0-9]/g, '');
+                    if (dt.length >= 6) {
+                        var mo = parseInt(dt.substring(4, 6)) - 1;
                         if (mo >= 0 && mo < 12) { monthQtyArr[mo] += q; monthAmtArr[mo] += s; }
                     }
                 });
@@ -277,11 +274,12 @@
 
                 var r1 = `<tr style="${rowBg}">`;
                 if (mIdx === 0) {
-                    r1 += `<td class="fix-sales-col-1" rowspan="${rowCount}" style="text-align:left; padding-left:15px; font-weight:bold; color:#2c3e50; vertical-align:middle;">${item}${badge}</td>`;
+                    r1 += `<td class="fix-sales-col-1" rowspan="${rowCount}" style="text-align:left; padding-left:15px; font-weight:bold; color:#2c3e50; vertical-align:middle;">${prod.itemName}${badge}</td>`;
+                    r1 += `<td class="fix-sales-col-2" rowspan="${rowCount}" style="vertical-align:middle; font-weight:bold; color:#2563eb;">${prod.modelName}</td>`;
                 }
-                r1 += `<td class="fix-sales-col-2" rowspan="2" style="vertical-align:middle; font-weight:bold; color:${isTotalRow ? '#1e293b' : '#475569'};">${m}</td>
-                    <td class="fix-sales-col-3" style="color:#2980b9; font-weight:bold;">수량</td>
-                    <td class="fix-sales-col-4" style="background:#e7f5ff !important; font-weight:bold; color:#1864ab;">${yearTotalQty.toLocaleString()}개</td>
+                r1 += `<td class="fix-sales-col-3" rowspan="2" style="vertical-align:middle; font-weight:bold; color:${isTotalRow ? '#1e293b' : '#475569'};">${m}</td>
+                    <td class="fix-sales-col-4" style="color:#2980b9; font-weight:bold;">수량</td>
+                    <td class="fix-sales-col-5" style="background:#e7f5ff !important; font-weight:bold; color:#1864ab;">${yearTotalQty.toLocaleString()}개</td>
                     <td style="background:#fffde7;">${formatDiff(diffQ, pctQ, '개')}</td>`;
 
                 for (var mo = 0; mo < 12; mo++) {
@@ -292,8 +290,8 @@
 
                 var borderBottom = (mIdx === subMalls.length - 1) ? 'border-bottom:3px solid #64748b;' : 'border-bottom:1px solid #cbd5e1;';
                 var r2 = `<tr style="${rowBg} ${borderBottom}">
-                    <td class="fix-sales-col-3" style="color:#27ae60; font-weight:bold;">매출액</td>
-                    <td class="fix-sales-col-4" style="background:#f4fce3 !important; font-weight:bold; color:#2b8a3e;">${yearTotalAmt.toLocaleString()}원</td>
+                    <td class="fix-sales-col-4" style="color:#27ae60; font-weight:bold;">매출액</td>
+                    <td class="fix-sales-col-5" style="background:#f4fce3 !important; font-weight:bold; color:#2b8a3e;">${yearTotalAmt.toLocaleString()}원</td>
                     <td style="background:#fffde7;">${formatDiff(diffS, pctS, '원')}</td>`;
 
                 for (var mo = 0; mo < 12; mo++) {
@@ -313,7 +311,7 @@
     function initColResize(e) {
         e.preventDefault();
         var startX = e.clientX;
-        var startWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--item-col-width')) || 250;
+        var startWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--item-col-width')) || 220;
         function onMouseMove(e) {
             var newWidth = Math.max(150, startWidth + (e.clientX - startX));
             document.documentElement.style.setProperty('--item-col-width', newWidth + 'px');

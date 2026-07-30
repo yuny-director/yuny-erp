@@ -24,15 +24,16 @@
         .sort-header { cursor: pointer; user-select: none; }
         .sort-header:hover { background-color: #dbeafe !important; color: #1d4ed8; }
 
-        :root { --item-col-width: 250px; }
+        :root { --item-col-width: 220px; }
 
         .table-container { width: 100%; max-height: 70vh; overflow: auto; border: 1px solid #ccc; border-radius: 6px; background: white; margin-bottom: 10px; }
         table { border-collapse: separate; border-spacing: 0; font-size: 12px; width: 100%; text-align: center; }
         .table-container th, .table-container td { padding: 8px 6px; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; white-space: nowrap; box-sizing: border-box; }
         .table-container th { background-color: #f8f9fa; font-weight: bold; position: sticky; top: 0; z-index: 10; }
 
-        .fix-item-col { position: sticky !important; left: 0px !important; width: var(--item-col-width) !important; min-width: var(--item-col-width) !important; max-width: var(--item-col-width) !important; background: #ffffff !important; z-index: 20; font-weight: bold; white-space: normal !important; word-break: break-all !important; text-align: left !important; padding-left: 12px !important; }
-        th.fix-item-col { z-index: 30 !important; background-color: #e8f4fd !important; text-align: center !important; }
+        .fix-sales-col-1 { position: sticky !important; left: 0px !important; width: var(--item-col-width) !important; min-width: var(--item-col-width) !important; max-width: var(--item-col-width) !important; background: #ffffff !important; z-index: 20; font-weight: bold; text-align: left !important; padding-left: 12px !important; white-space: normal !important; word-break: break-all !important; }
+        .fix-sales-col-2 { position: sticky !important; left: var(--item-col-width) !important; width: 130px !important; min-width: 130px !important; background: #f8fafc !important; z-index: 20; font-weight: bold; color: #2563eb; }
+        th.fix-sales-col-1, th.fix-sales-col-2 { z-index: 30 !important; background-color: #e8f4fd !important; text-align: center !important; }
 
         .resizer { position: absolute; right: 0; top: 0; width: 6px; cursor: col-resize; user-select: none; height: 100%; background-color: transparent; }
         .resizer:hover { background-color: #3498db; }
@@ -41,7 +42,7 @@
         .row-total td { color: #27ae60; }
 
         .modal-overlay { display: none; position: fixed; z-index: 1000000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
-        .modal-card { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 760px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
+        .modal-card { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 820px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
         .modal-tab-container { display: flex; gap: 4px; border-bottom: 2px solid #3b82f6; margin-bottom: 12px; }
         .modal-tab-btn { padding: 8px 16px; background-color: #f1f5f9; border: none; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: bold; font-size: 12px; color: #64748b; }
         .modal-tab-btn.active { background-color: #3b82f6; color: #ffffff; }
@@ -55,7 +56,7 @@
 <body>
 
 <div id="global-navbar"></div>
-<script>document.write('<script src="../navbar2.js?v=2026_sales_item_y_v2&t=' + Date.now() + '"><\/script>');</script>
+<script>document.write('<script src="../navbar2.js?v=2026_sales_item_y_v3&t=' + Date.now() + '"><\/script>');</script>
 
 <div class="content">
     <div class="card" style="background-color: #eef2f5; border: 1px solid #ced4da; padding: 12px 20px;">
@@ -83,9 +84,9 @@
 
 <!-- 매핑 & 업로드 공통 모달 -->
 <div id="salesUploadModal" class="modal-overlay"><div class="modal-card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #2c3e50; padding-bottom:8px;"><h3 style="margin:0; color:#2c3e50;">📥 쇼핑몰별 매출 파일 업로드</h3><span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeSalesUploadModal()">&times;</span></div><div class="form-group" style="margin-bottom:12px;"><label>1. 업로드할 쇼핑몰(양식) 선택</label><select id="uploadMallType" style="height:38px; font-weight:bold;"><option value="smartstore_confirmed">네이버 스마트스토어 - [구매확정 내역 파일]</option><option value="smartstore_dispatch">네이버 스마트스토어 - [전체주문 발주/발송 관리 파일]</option><option value="coupang">쿠팡 (Coupang)</option><option value="eleven">11번가</option><option value="gmarket">G마켓 / 옥션</option><option value="custom">기타 / 표준 양식</option></select></div><div class="form-group" style="margin-bottom:15px;"><label>2. 매출 데이터 파일 선택 (.xlsx, .xls, .csv)</label><input type="file" id="salesCsvFileInput" accept=".xlsx, .xls, .csv" style="height:auto; padding:8px;"></div><div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;"><button class="btn btn-gray" onclick="closeSalesUploadModal()">취소</button><button class="btn btn-orange" onclick="processSalesCsvUpload()">매출 데이터 파싱 & 업로드</button></div></div></div>
-<div id="editMappingModal" class="modal-overlay"><div class="modal-card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><h3 style="margin:0; color:#1e293b;">⚙️ 쇼핑몰-ERP 품목 연결 매핑 관리</h3><span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeEditMappingModal()">&times;</span></div><div class="modal-tab-container"><button class="modal-tab-btn active" id="modalSubTabUnmapped" onclick="switchModalSubTab('unmapped')">⚠️ 미매핑 수집 품목 매핑 (<span id="unmappedCountBadge">0</span>)</button><button class="modal-tab-btn" id="modalSubTabMapped" onclick="switchModalSubTab('mapped')">✅ 이미 매핑된 품목 관리 (<span id="mappedCountBadge">0</span>)</button></div><div id="modalSubViewUnmapped"><p style="font-size:12px; color:#64748b; margin-bottom:10px;">수집된 매출 데이터 중 아직 ERP 품목과 연결되지 않은 옵션명 목록입니다.</p><div class="modal-table-container" style="max-height:360px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:6px; padding:0; margin-bottom:15px;"><table style="width:100%; font-size:12px;"><thead><tr><th style="width:58%;">쇼핑몰 수집 옵션명</th><th style="width:42%;">연결할 ERP 품목 선택</th></tr></thead><tbody id="unmappedManagerTableBody"></tbody></table></div><div style="display:flex; justify-content:flex-end; gap:8px;"><button class="btn btn-gray" onclick="closeEditMappingModal()">취소</button><button class="btn btn-orange" onclick="saveUnmappedManagerList()">미매핑 연결 저장</button></div></div><div id="modalSubViewMapped" style="display:none;"><p style="font-size:12px; color:#64748b; margin-bottom:10px;">현재 구글 DB에 저장되어 자동으로 연결되는 쇼핑몰 옵션 매핑 목록입니다.</p><div class="modal-table-container" style="max-height:360px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:6px; padding:0; margin-bottom:15px;"><table style="width:100%; font-size:12px;"><thead><tr><th style="width:50%;">쇼핑몰 수집 옵션명</th><th style="width:40%;">매핑된 ERP 품목명</th><th style="width:10%;">삭제</th></tr></thead><tbody id="existingMappingsTableBody"></tbody></table></div><div style="display:flex; justify-content:flex-end; gap:8px;"><button class="btn btn-gray" onclick="closeEditMappingModal()">취소</button><button class="btn btn-blue" onclick="saveEditedMappings()">매핑 수정사항 저장</button></div></div></div></div>
+<div id="editMappingModal" class="modal-overlay"><div class="modal-card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><h3 style="margin:0; color:#1e293b;">⚙️ 쇼핑몰-ERP 품목/모델명 연결 매핑 관리</h3><span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeEditMappingModal()">&times;</span></div><div class="modal-tab-container"><button class="modal-tab-btn active" id="modalSubTabUnmapped" onclick="switchModalSubTab('unmapped')">⚠️ 미매핑 수집 품목 매핑 (<span id="unmappedCountBadge">0</span>)</button><button class="modal-tab-btn" id="modalSubTabMapped" onclick="switchModalSubTab('mapped')">✅ 이미 매핑된 품목 관리 (<span id="mappedCountBadge">0</span>)</button></div><div id="modalSubViewUnmapped"><p style="font-size:12px; color:#64748b; margin-bottom:10px;">수집된 매출 데이터 중 아직 ERP 품목 및 모델명과 연결되지 않은 옵션명 목록입니다.</p><div class="modal-table-container" style="max-height:360px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:6px; padding:0; margin-bottom:15px;"><table style="width:100%; font-size:12px;"><thead><tr><th style="width:40%;">쇼핑몰 수집 옵션명</th><th style="width:30%;">연결할 ERP 품목 선택</th><th style="width:30%;">연결할 모델명 선택</th></tr></thead><tbody id="unmappedManagerTableBody"></tbody></table></div><div style="display:flex; justify-content:flex-end; gap:8px;"><button class="btn btn-gray" onclick="closeEditMappingModal()">취소</button><button class="btn btn-orange" onclick="saveUnmappedManagerList()">미매핑 연결 저장</button></div></div><div id="modalSubViewMapped" style="display:none;"><p style="font-size:12px; color:#64748b; margin-bottom:10px;">현재 구글 DB에 저장되어 자동으로 연결되는 쇼핑몰 옵션 매핑 목록입니다.</p><div class="modal-table-container" style="max-height:360px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:6px; padding:0; margin-bottom:15px;"><table style="width:100%; font-size:12px;"><thead><tr><th style="width:38%;">쇼핑몰 수집 옵션명</th><th style="width:27%;">매핑된 ERP 품목명</th><th style="width:27%;">매핑된 모델명</th><th style="width:8%;">삭제</th></tr></thead><tbody id="existingMappingsTableBody"></tbody></table></div><div style="display:flex; justify-content:flex-end; gap:8px;"><button class="btn btn-gray" onclick="closeEditMappingModal()">취소</button><button class="btn btn-blue" onclick="saveEditedMappings()">매핑 수정사항 저장</button></div></div></div></div>
 
-<script src="sales_common.js?v=2026_1"></script>
+<script src="sales_common.js?v=2026_2"></script>
 <script>
     var itemSort = { col: 'amt', asc: false };
 
@@ -107,23 +108,36 @@
     function buildItemYearlyPivotTable(year) {
         var table = document.getElementById('itemYearlyPivotTable');
         var yearData = window.salesRawEntries.filter(e => getEntryDate(e).replace(/[^0-9]/g, '').startsWith(String(year)));
-        var allItems = Array.from(new Set(yearData.map(e => getEntryItem(e))));
 
-        allItems.sort((a, b) => {
+        var productKeySet = new Set();
+        yearData.forEach(e => {
+            var iName = e.itemName || "기타품목";
+            var mName = e.modelName || "-";
+            productKeySet.add(`${iName}|||${mName}`);
+        });
+
+        var productList = Array.from(productKeySet).map(key => {
+            var parts = key.split('|||');
+            return { itemName: parts[0], modelName: parts[1] };
+        });
+
+        productList.sort((a, b) => {
             var qA = 0, sA = 0, qB = 0, sB = 0;
-            yearData.filter(e => getEntryItem(e) === a).forEach(e => { qA += getEntryQty(e); sA += getEntryAmt(e); });
-            yearData.filter(e => getEntryItem(e) === b).forEach(e => { qB += getEntryQty(e); sB += getEntryAmt(e); });
+            yearData.filter(e => e.itemName === a.itemName && (e.modelName || "-") === a.modelName).forEach(e => { qA += getEntryQty(e); sA += getEntryAmt(e); });
+            yearData.filter(e => e.itemName === b.itemName && (e.modelName || "-") === b.modelName).forEach(e => { qB += getEntryQty(e); sB += getEntryAmt(e); });
 
-            if (itemSort.col === 'name') return itemSort.asc ? a.localeCompare(b) : b.localeCompare(a);
             if (itemSort.col === 'qty') return itemSort.asc ? qA - qB : qB - qA;
+            if (itemSort.col === 'name') return itemSort.asc ? a.itemName.localeCompare(b.itemName) : b.itemName.localeCompare(a.itemName);
+            if (itemSort.col === 'model') return itemSort.asc ? a.modelName.localeCompare(b.modelName) : b.modelName.localeCompare(a.modelName);
             return itemSort.asc ? sA - sB : sB - sA;
         });
 
         var headerHtml = `<thead><tr>
-            <th class="fix-item-col sort-header" onclick="toggleSort('name')" style="position:relative;">
+            <th class="fix-sales-col-1 sort-header" onclick="toggleSort('name')" style="position:relative;">
                 품목명 (마스터 연동) ↕️
                 <div class="resizer" onmousedown="initColResize(event)"></div>
             </th>
+            <th class="fix-sales-col-2 sort-header" onclick="toggleSort('model')">모델명 ↕️</th>
             <th style="min-width:75px;">구분</th>
             <th class="sort-header" onclick="toggleSort('amt')" style="min-width:130px; background:#e8f4fd;">${year}년 전체합계 ↕️</th>
             ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => `<th style="min-width:75px;">${m}월</th>`).join('')}
@@ -138,11 +152,11 @@
             if (m >= 0 && m < 12) { monthQty[m] += q; monthSales[m] += s; }
         });
 
-        bodyHtml += `<tr class="row-total"><td class="fix-item-col" rowspan="2" style="vertical-align:middle;"><b>전체 품목 통합</b></td><td>수량</td><td style="background:#e7f5ff;">${grandQty.toLocaleString()}개</td>${monthQty.map(q => `<td>${q > 0 ? q.toLocaleString()+'개' : '-'}</td>`).join('')}</tr>`;
-        bodyHtml += `<tr class="row-total" style="border-bottom:2px solid #a0aec0;"><td>매출액</td><td style="background:#d3f9d8;">${grandSales.toLocaleString()}원</td>${monthSales.map(s => `<td>${s > 0 ? s.toLocaleString()+'원' : '-'}</td>`).join('')}</tr>`;
+        bodyHtml += `<tr class="row-total"><td class="fix-sales-col-1" style="background:#eef9f1 !important;"><b>전체 품목 통합</b></td><td class="fix-sales-col-2" style="background:#eef9f1 !important;">-</td><td>수량</td><td style="background:#e7f5ff;">${grandQty.toLocaleString()}개</td>${monthQty.map(q => `<td>${q > 0 ? q.toLocaleString()+'개' : '-'}</td>`).join('')}</tr>`;
+        bodyHtml += `<tr class="row-total" style="border-bottom:2px solid #a0aec0;"><td class="fix-sales-col-1" style="background:#eef9f1 !important;">-</td><td class="fix-sales-col-2" style="background:#eef9f1 !important;">-</td><td>매출액</td><td style="background:#d3f9d8;">${grandSales.toLocaleString()}원</td>${monthSales.map(s => `<td>${s > 0 ? s.toLocaleString()+'원' : '-'}</td>`).join('')}</tr>`;
 
-        allItems.forEach(item => {
-            var iEntries = yearData.filter(e => getEntryItem(e) === item);
+        productList.forEach(prod => {
+            var iEntries = yearData.filter(e => e.itemName === prod.itemName && (e.modelName || "-") === prod.modelName);
             var iQty = 0, iSales = 0; var iMonthQ = Array(12).fill(0), iMonthS = Array(12).fill(0);
             iEntries.forEach(e => {
                 var q = getEntryQty(e), s = getEntryAmt(e);
@@ -151,7 +165,7 @@
                 if (m >= 0 && m < 12) { iMonthQ[m] += q; iMonthS[m] += s; }
             });
 
-            bodyHtml += `<tr><td class="fix-item-col" rowspan="2" style="vertical-align:middle; font-weight:bold; color:#2c3e50;">${item}</td><td style="color:#2980b9; font-weight:bold;">수량</td><td style="background:#e7f5ff; font-weight:bold;">${iQty.toLocaleString()}개</td>${iMonthQ.map(q => `<td>${q > 0 ? q.toLocaleString()+'개' : '-'}</td>`).join('')}</tr>`;
+            bodyHtml += `<tr><td class="fix-sales-col-1" rowspan="2" style="vertical-align:middle; font-weight:bold; color:#2c3e50;">${prod.itemName}</td><td class="fix-sales-col-2" rowspan="2" style="vertical-align:middle; font-weight:bold; color:#2563eb;">${prod.modelName}</td><td style="color:#2980b9; font-weight:bold;">수량</td><td style="background:#e7f5ff; font-weight:bold;">${iQty.toLocaleString()}개</td>${iMonthQ.map(q => `<td>${q > 0 ? q.toLocaleString()+'개' : '-'}</td>`).join('')}</tr>`;
             bodyHtml += `<tr style="border-bottom:2px solid #e2e8f0;"><td style="color:#27ae60; font-weight:bold;">매출액</td><td style="background:#f4fce3; color:#2b8a3e; font-weight:bold;">${iSales.toLocaleString()}원</td>${iMonthS.map(s => `<td>${s > 0 ? s.toLocaleString()+'원' : '-'}</td>`).join('')}</tr>`;
         });
 
@@ -161,9 +175,9 @@
     function initColResize(e) {
         e.preventDefault();
         var startX = e.clientX;
-        var startWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--item-col-width')) || 250;
+        var startWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--item-col-width')) || 220;
         function onMouseMove(e) {
-            var newWidth = Math.max(150, startWidth + (e.clientX - startX));
+            var newWidth = Math.max(120, startWidth + (e.clientX - startX));
             document.documentElement.style.setProperty('--item-col-width', newWidth + 'px');
         }
         function onMouseUp() {
