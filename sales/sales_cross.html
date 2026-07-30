@@ -21,6 +21,9 @@
         .btn-blue { background-color: #3498db !important; }
         .btn-red { background-color: #e74c3c !important; padding: 0 10px; height: 30px; font-size: 11px; }
 
+        .sort-header { cursor: pointer; user-select: none; transition: background 0.15s; }
+        .sort-header:hover { background-color: #dbeafe !important; color: #1d4ed8 !important; }
+
         :root { --item-col-width: 250px; }
         .table-container { width: 100%; max-height: 70vh; overflow: auto; border: 1px solid #ccc; border-radius: 6px; background: white; margin-bottom: 10px; }
         table { border-collapse: separate; border-spacing: 0; font-size: 12px; width: 100%; text-align: center; }
@@ -51,7 +54,7 @@
 <body>
 
 <div id="global-navbar"></div>
-<script>document.write('<script src="../navbar2.js?v=2026_sales_cross_v1&t=' + Date.now() + '"><\/script>');</script>
+<script>document.write('<script src="../navbar2.js?v=2026_sales_cross_v2&t=' + Date.now() + '"><\/script>');</script>
 
 <div class="content">
     <div class="card" style="background-color: #eef2f5; border: 1px solid #ced4da; padding: 12px 20px;">
@@ -73,25 +76,11 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <h3 style="margin:0; font-size:15px; color:#2c3e50;">🏆 쇼핑몰-품목 연간 월별(1~12월) 누적 & 당월 vs 전월 대비 증감 분석</h3>
             <div style="display:flex; align-items:center; gap:12px;">
-                <!-- 🎯 쇼핑몰 필터 -->
+                <!-- 🎯 쇼핑몰 선택 필터 -->
                 <div style="display:flex; align-items:center; gap:6px;">
-                    <label style="font-size:13px; font-weight:bold; color:#333;">쇼핑몰 선택 :</label>
-                    <select id="crossMallFilter" onchange="renderSalesTables()" style="height:32px; font-size:12px; font-weight:bold; padding:0 8px; border:1px solid #2563eb; background:#eff6ff; color:#1e40af;">
+                    <label style="font-size:13px; font-weight:bold; color:#333;">🏬 쇼핑몰 선택 :</label>
+                    <select id="crossMallFilter" onchange="renderSalesTables()" style="height:34px; font-size:12px; font-weight:bold; padding:0 10px; border:1px solid #2563eb; background:#eff6ff; color:#1e40af; border-radius:4px;">
                         <option value="ALL">🛍️ 전체 쇼핑몰 통합 보기</option>
-                    </select>
-                </div>
-                <!-- 🎯 쇼핑몰별 정렬 선택 -->
-                <div style="display:flex; align-items:center; gap:6px;">
-                    <label style="font-size:13px; font-weight:bold; color:#333;">정렬 기준 :</label>
-                    <select id="crossSortCriteria" onchange="renderSalesTables()" style="height:32px; font-size:12px; font-weight:bold; padding:0 8px;">
-                        <option value="curAmt_desc">선택월 매출액 높은순 (기본)</option>
-                        <option value="curAmt_asc">선택월 매출액 낮은순 ⬆️</option>
-                        <option value="curQty_desc">선택월 판매수량 많은순 🔥</option>
-                        <option value="curQty_asc">선택월 판매수량 적은순 ⬆️</option>
-                        <option value="growthAmt_desc">전월 대비 매출 증가순 📈</option>
-                        <option value="growthAmt_asc">전월 대비 매출 감소순 📉</option>
-                        <option value="growthQty_desc">전월 대비 수량 증가순 📈</option>
-                        <option value="growthQty_asc">전월 대비 수량 감소순 📉</option>
                     </select>
                 </div>
             </div>
@@ -108,6 +97,13 @@
 
 <script src="sales_common.js?v=2026_1"></script>
 <script>
+    // 🎯 헤더 텍스트 클릭 정렬 상태 (기본값: 선택한 당월 매출 내림차순)
+    var crossSortState = {
+        type: 'curMonth', // 'total', 'diff', 'curMonth', 'm1'~'m12'
+        monthTarget: 0,   // 특정 월 정렬 시 사용
+        asc: false        // false: 내림차순, true: 오름차순
+    };
+
     document.addEventListener("DOMContentLoaded", function() {
         initSalesPage(renderSalesTables);
     });
@@ -125,9 +121,27 @@
         filter.innerHTML = html;
     }
 
+    // 🎯 컬럼 헤더 텍스트 클릭 시 정렬 토글 함수
+    function toggleCrossSort(type, mTarget) {
+        if (crossSortState.type === type && crossSortState.monthTarget === (mTarget || 0)) {
+            crossSortState.asc = !crossSortState.asc; // 방향 전환
+        } else {
+            crossSortState.type = type;
+            crossSortState.monthTarget = mTarget || 0;
+            crossSortState.asc = false; // 기본 내림차순부터 시작
+        }
+        renderSalesTables();
+    }
+
     function renderSalesTables() {
         var year = parseInt(document.getElementById("filterYear").value);
         var month = parseInt(document.getElementById("filterMonth").value);
+        
+        // 당월 정렬이 기본일 때 월 변경에 따른 타겟 반영
+        if (crossSortState.type === 'curMonth') {
+            crossSortState.monthTarget = month;
+        }
+
         updateMallFilterOptions();
         buildCrossPivotTable(year, month);
     }
@@ -139,11 +153,7 @@
         var prevMonth = month - 1; var prevYear = year;
         if (prevMonth === 0) { prevMonth = 12; prevYear = year - 1; }
 
-        var curPrefix = `${year}${month < 10 ? "0" + month : month}`;
-        var prevPrefix = `${prevYear}${prevMonth < 10 ? "0" + prevMonth : prevMonth}`;
-
         var selectedMall = document.getElementById('crossMallFilter') ? document.getElementById('crossMallFilter').value : 'ALL';
-        var sortCriteria = document.getElementById('crossSortCriteria') ? document.getElementById('crossSortCriteria').value : 'curAmt_desc';
 
         var yearData = window.salesRawEntries.filter(e => {
             var dt = getEntryDate(e);
@@ -155,43 +165,75 @@
         var mallList = (selectedMall === 'ALL') ? Array.from(new Set(window.salesRawEntries.map(e => getEntryMall(e)))) : [selectedMall];
         var itemList = Array.from(new Set(yearData.map(e => getEntryItem(e)))).filter(Boolean);
 
+        // 정렬 화살표 표시용 도우미
+        var getSortIcon = (type, m) => {
+            if (crossSortState.type === type && (m === undefined || crossSortState.monthTarget === m)) {
+                return crossSortState.asc ? ' ⬆️' : ' ⬇️';
+            }
+            return ' ↕️';
+        };
+
+        // 🎯 클릭 가능한 헤더 생성
         var headerHtml = `<thead><tr>
-            <th class="fix-sales-col-1" style="text-align:left; padding-left:15px; position:relative;">
-                ERP / 수집 품목명
+            <th class="fix-sales-col-1 sort-header" onclick="toggleCrossSort('name')" style="text-align:left; padding-left:15px; position:relative;">
+                ERP / 수집 품목명 ${getSortIcon('name')}
                 <div class="resizer" onmousedown="initColResize(event)"></div>
             </th>
             <th class="fix-sales-col-2">쇼핑몰 구분</th>
             <th class="fix-sales-col-3">구분</th>
-            <th class="fix-sales-col-4">${year}년 전체합계</th>
-            <th style="min-width:140px; background:#fff3bf; color:#d9480f;">전월대비 증감<br>(${month}월 vs ${prevMonth}월)</th>
-            ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => `<th style="min-width:85px; ${m === month ? 'background:#d3f9d8; color:#2b8a3e; font-size:13px;' : ''}">${m}월</th>`).join('')}
+            <th class="fix-sales-col-4 sort-header" onclick="toggleCrossSort('total')">${year}년 전체합계 ${getSortIcon('total')}</th>
+            <th class="sort-header" onclick="toggleCrossSort('diff')" style="min-width:140px; background:#fff3bf; color:#d9480f;">전월대비 증감 ${getSortIcon('diff')}<br>(${month}월 vs ${prevMonth}월)</th>
+            ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => {
+                var isCur = (m === month);
+                return `<th class="sort-header" onclick="toggleCrossSort('month', ${m})" style="min-width:85px; ${isCur ? 'background:#d3f9d8; color:#2b8a3e; font-size:13px;' : ''}">${m}월 ${getSortIcon('month', m)}</th>`;
+            }).join('')}
         </tr></thead>`;
 
         var bodyHtml = "<tbody>";
 
-        // 🎯 정렬 엔진 (선택몰 수량/매출 오름/내림차순, 전월대비 증감순)
+        // 🎯 헤더 클릭 정렬 로직 (전체합계, 전월대비 증감, 특정 월 선택 정렬)
         itemList.sort((a, b) => {
-            var getStats = (itm, prefix) => {
-                var q = 0, s = 0;
+            var getStats = (itm) => {
+                var yearAmt = 0, yearQty = 0;
+                var monthAmt = Array(12).fill(0), monthQty = Array(12).fill(0);
+
                 window.salesRawEntries.filter(e => {
                     var matchMall = (selectedMall === 'ALL' || getEntryMall(e) === selectedMall);
-                    return matchMall && getEntryItem(e) === itm && getEntryDate(e).replace(/[^0-9]/g, '').startsWith(prefix);
-                }).forEach(e => { q += getEntryQty(e); s += getEntryAmt(e); });
-                return { q, s };
+                    var matchYear = getEntryDate(e).replace(/[^0-9]/g, '').startsWith(String(year));
+                    return matchMall && matchYear && getEntryItem(e) === itm;
+                }).forEach(e => {
+                    var q = getEntryQty(e), s = getEntryAmt(e);
+                    yearQty += q; yearAmt += s;
+                    var dt = getEntryDate(e).replace(/[^0-9]/g, '');
+                    if (dt.length >= 6) {
+                        var mo = parseInt(dt.substring(4, 6)) - 1;
+                        if (mo >= 0 && mo < 12) { monthQty[mo] += q; monthAmt[mo] += s; }
+                    }
+                });
+
+                return { yearAmt, yearQty, monthAmt, monthQty };
             };
 
-            var curA = getStats(a, curPrefix); var curB = getStats(b, curPrefix);
-            var prevA = getStats(a, prevPrefix); var prevB = getStats(b, prevPrefix);
+            var stA = getStats(a);
+            var stB = getStats(b);
 
-            if (sortCriteria === 'curAmt_desc') return curB.s - curA.s;
-            if (sortCriteria === 'curAmt_asc') return curA.s - curB.s;
-            if (sortCriteria === 'curQty_desc') return curB.q - curA.q;
-            if (sortCriteria === 'curQty_asc') return curA.q - curB.q;
-            if (sortCriteria === 'growthAmt_desc') return (curB.s - prevB.s) - (curA.s - prevA.s);
-            if (sortCriteria === 'growthAmt_asc') return (curA.s - prevA.s) - (curB.s - prevB.s);
-            if (sortCriteria === 'growthQty_desc') return (curB.q - prevB.q) - (curA.q - prevA.q);
-            if (sortCriteria === 'growthQty_asc') return (curA.q - prevA.q) - (curB.q - prevB.q);
-            return curB.s - curA.s;
+            var valA = 0, valB = 0;
+
+            if (crossSortState.type === 'name') {
+                return crossSortState.asc ? a.localeCompare(b) : b.localeCompare(a);
+            } else if (crossSortState.type === 'total') {
+                valA = stA.yearAmt; valB = stB.yearAmt;
+            } else if (crossSortState.type === 'diff') {
+                var diffA = stA.monthAmt[month - 1] - stA.monthAmt[prevMonth - 1];
+                var diffB = stB.monthAmt[month - 1] - stB.monthAmt[prevMonth - 1];
+                valA = diffA; valB = diffB;
+            } else { // 'curMonth' 또는 특정 'month'
+                var tM = crossSortState.monthTarget || month;
+                valA = stA.monthAmt[tM - 1];
+                valB = stB.monthAmt[tM - 1];
+            }
+
+            return crossSortState.asc ? valA - valB : valB - valA;
         });
 
         itemList.forEach((item, idx) => {
@@ -264,7 +306,8 @@
             });
         });
 
-        table.innerHTML = headerHtml + bodyHtml + "</tbody>";
+        bodyHtml += "</tbody>";
+        table.innerHTML = headerHtml + bodyHtml;
     }
 
     function initColResize(e) {
