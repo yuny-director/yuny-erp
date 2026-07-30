@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YUNY_ERP - 몰별-품목 교차 분석</title>
+    <style>
+        html { margin: 0; padding: 0; background-color: #f4f6f9; font-family: Arial, sans-serif; }
+        body { margin: 0; padding: 0; padding-top: 65px !important; background-color: #f4f6f9; font-family: Arial, sans-serif; }
+        .content { padding: 15px; }
+        .card { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .flex-form-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { margin-bottom: 6px; font-weight: bold; font-size: 13px; color: #333; }
+        .form-group input, .form-group select { padding: 0 10px; border: 1px solid #ccc; border-radius: 4px; height: 38px; box-sizing: border-box; font-size: 13px; background-color: #ffffff; }
+
+        .btn { padding: 0 16px; background-color: #1abc9c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; height: 38px; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s; box-sizing: border-box; }
+        .btn:hover { background-color: #16a085; }
+        .btn-orange { background-color: #e67e22 !important; }
+        .btn-gray { background-color: #7f8c8d !important; }
+        .btn-blue { background-color: #3498db !important; }
+        .btn-red { background-color: #e74c3c !important; padding: 0 10px; height: 30px; font-size: 11px; }
+
+        :root { --item-col-width: 250px; }
+        .table-container { width: 100%; max-height: 70vh; overflow: auto; border: 1px solid #ccc; border-radius: 6px; background: white; margin-bottom: 10px; }
+        table { border-collapse: separate; border-spacing: 0; font-size: 12px; width: 100%; text-align: center; }
+        .table-container th, .table-container td { padding: 8px 6px; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; white-space: nowrap; box-sizing: border-box; }
+        .table-container th { background-color: #f8f9fa; font-weight: bold; position: sticky; top: 0; z-index: 10; }
+
+        .fix-sales-col-1 { position: sticky !important; left: 0px !important; width: var(--item-col-width) !important; min-width: var(--item-col-width) !important; max-width: var(--item-col-width) !important; background: #ffffff !important; z-index: 20; font-weight: bold; white-space: normal !important; word-break: break-all !important; line-height: 1.3; }
+        .fix-sales-col-2 { position: sticky !important; left: var(--item-col-width) !important; width: 100px !important; min-width: 100px !important; max-width: 100px !important; background: #ffffff !important; z-index: 20; font-weight: bold; }
+        .fix-sales-col-3 { position: sticky !important; left: calc(var(--item-col-width) + 100px) !important; width: 65px !important; min-width: 65px !important; max-width: 65px !important; background: #ffffff !important; z-index: 20; font-weight: bold; }
+        .fix-sales-col-4 { position: sticky !important; left: calc(var(--item-col-width) + 165px) !important; width: 110px !important; min-width: 110px !important; max-width: 110px !important; background: #f4fce3 !important; z-index: 20; font-weight: bold; color: #2b8a3e; border-right: 2px solid #2b8a3e !important; }
+        th.fix-sales-col-1, th.fix-sales-col-2, th.fix-sales-col-3, th.fix-sales-col-4 { z-index: 30 !important; background-color: #e8f4fd !important; text-align: center !important; }
+
+        .resizer { position: absolute; right: 0; top: 0; width: 6px; cursor: col-resize; user-select: none; height: 100%; background-color: transparent; }
+        .resizer:hover { background-color: #3498db; }
+
+        .modal-overlay { display: none; position: fixed; z-index: 1000000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        .modal-card { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 760px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
+        .modal-tab-container { display: flex; gap: 4px; border-bottom: 2px solid #3b82f6; margin-bottom: 12px; }
+        .modal-tab-btn { padding: 8px 16px; background-color: #f1f5f9; border: none; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: bold; font-size: 12px; color: #64748b; }
+        .modal-tab-btn.active { background-color: #3b82f6; color: #ffffff; }
+        .modal-table-container table { border-collapse: collapse; }
+        .modal-table-container th, .modal-table-container td { position: static !important; padding: 8px; border: 1px solid #cbd5e1; }
+        .modal-table-container th { background-color: #f1f5f9 !important; font-weight: bold; color: #1e293b; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');</script>
+</head>
+<body>
+
+<div id="global-navbar"></div>
+<script>document.write('<script src="../navbar2.js?v=2026_sales_cross_v1&t=' + Date.now() + '"><\/script>');</script>
+
+<div class="content">
+    <div class="card" style="background-color: #eef2f5; border: 1px solid #ced4da; padding: 12px 20px;">
+        <div class="flex-form-row" style="margin-bottom: 0; align-items: center; justify-content: space-between;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <label style="color: #2c3e50; font-size: 14px; font-weight: bold;">📅 매출 기준 연월 :</label>
+                <select id="filterYear" style="width: 95px; height:36px;"></select>
+                <select id="filterMonth" style="width: 75px; height:36px;"></select>
+                <span id="loadingStatus" style="font-weight: bold; color: #27ae60; font-size:13px; margin-left:10px;">🔄 실시간 동기화 완료</span>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <button class="btn btn-blue" onclick="openEditMappingModal()">⚙️ 상품 매핑 관리</button>
+                <button class="btn btn-orange" onclick="openSalesUploadModal()">📥 쇼핑몰별 매출 파일 업로드</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 style="margin:0; font-size:15px; color:#2c3e50;">🏆 쇼핑몰-품목 연간 월별(1~12월) 누적 & 당월 vs 전월 대비 증감 분석</h3>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <!-- 🎯 쇼핑몰 필터 -->
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <label style="font-size:13px; font-weight:bold; color:#333;">쇼핑몰 선택 :</label>
+                    <select id="crossMallFilter" onchange="renderSalesTables()" style="height:32px; font-size:12px; font-weight:bold; padding:0 8px; border:1px solid #2563eb; background:#eff6ff; color:#1e40af;">
+                        <option value="ALL">🛍️ 전체 쇼핑몰 통합 보기</option>
+                    </select>
+                </div>
+                <!-- 🎯 쇼핑몰별 정렬 선택 -->
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <label style="font-size:13px; font-weight:bold; color:#333;">정렬 기준 :</label>
+                    <select id="crossSortCriteria" onchange="renderSalesTables()" style="height:32px; font-size:12px; font-weight:bold; padding:0 8px;">
+                        <option value="curAmt_desc">선택월 매출액 높은순 (기본)</option>
+                        <option value="curAmt_asc">선택월 매출액 낮은순 ⬆️</option>
+                        <option value="curQty_desc">선택월 판매수량 많은순 🔥</option>
+                        <option value="curQty_asc">선택월 판매수량 적은순 ⬆️</option>
+                        <option value="growthAmt_desc">전월 대비 매출 증가순 📈</option>
+                        <option value="growthAmt_asc">전월 대비 매출 감소순 📉</option>
+                        <option value="growthQty_desc">전월 대비 수량 증가순 📈</option>
+                        <option value="growthQty_asc">전월 대비 수량 감소순 📉</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="table-container">
+            <table id="crossPivotTable"></table>
+        </div>
+    </div>
+</div>
+
+<!-- 매핑 & 업로드 공통 모달 -->
+<div id="salesUploadModal" class="modal-overlay"><div class="modal-card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #2c3e50; padding-bottom:8px;"><h3 style="margin:0; color:#2c3e50;">📥 쇼핑몰별 매출 파일 업로드</h3><span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeSalesUploadModal()">&times;</span></div><div class="form-group" style="margin-bottom:12px;"><label>1. 업로드할 쇼핑몰(양식) 선택</label><select id="uploadMallType" style="height:38px; font-weight:bold;"><option value="smartstore_confirmed">네이버 스마트스토어 - [구매확정 내역 파일]</option><option value="smartstore_dispatch">네이버 스마트스토어 - [전체주문 발주/발송 관리 파일]</option><option value="coupang">쿠팡 (Coupang)</option><option value="eleven">11번가</option><option value="gmarket">G마켓 / 옥션</option><option value="custom">기타 / 표준 양식</option></select></div><div class="form-group" style="margin-bottom:15px;"><label>2. 매출 데이터 파일 선택 (.xlsx, .xls, .csv)</label><input type="file" id="salesCsvFileInput" accept=".xlsx, .xls, .csv" style="height:auto; padding:8px;"></div><div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;"><button class="btn btn-gray" onclick="closeSalesUploadModal()">취소</button><button class="btn btn-orange" onclick="processSalesCsvUpload()">매출 데이터 파싱 & 업로드</button></div></div></div>
+<div id="editMappingModal" class="modal-overlay"><div class="modal-card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><h3 style="margin:0; color:#1e293b;">⚙️ 쇼핑몰-ERP 품목 연결 매핑 관리</h3><span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeEditMappingModal()">&times;</span></div><div class="modal-tab-container"><button class="modal-tab-btn active" id="modalSubTabUnmapped" onclick="switchModalSubTab('unmapped')">⚠️ 미매핑 수집 품목 매핑 (<span id="unmappedCountBadge">0</span>)</button><button class="modal-tab-btn" id="modalSubTabMapped" onclick="switchModalSubTab('mapped')">✅ 이미 매핑된 품목 관리 (<span id="mappedCountBadge">0</span>)</button></div><div id="modalSubViewUnmapped"><p style="font-size:12px; color:#64748b; margin-bottom:10px;">수집된 매출 데이터 중 아직 ERP 품목과 연결되지 않은 옵션명 목록입니다.</p><div class="modal-table-container" style="max-height:360px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:6px; padding:0; margin-bottom:15px;"><table style="width:100%; font-size:12px;"><thead><tr><th style="width:58%;">쇼핑몰 수집 옵션명</th><th style="width:42%;">연결할 ERP 품목 선택</th></tr></thead><tbody id="unmappedManagerTableBody"></tbody></table></div><div style="display:flex; justify-content:flex-end; gap:8px;"><button class="btn btn-gray" onclick="closeEditMappingModal()">취소</button><button class="btn btn-orange" onclick="saveUnmappedManagerList()">미매핑 연결 저장</button></div></div><div id="modalSubViewMapped" style="display:none;"><p style="font-size:12px; color:#64748b; margin-bottom:10px;">현재 구글 DB에 저장되어 자동으로 연결되는 쇼핑몰 옵션 매핑 목록입니다.</p><div class="modal-table-container" style="max-height:360px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:6px; padding:0; margin-bottom:15px;"><table style="width:100%; font-size:12px;"><thead><tr><th style="width:50%;">쇼핑몰 수집 옵션명</th><th style="width:40%;">매핑된 ERP 품목명</th><th style="width:10%;">삭제</th></tr></thead><tbody id="existingMappingsTableBody"></tbody></table></div><div style="display:flex; justify-content:flex-end; gap:8px;"><button class="btn btn-gray" onclick="closeEditMappingModal()">취소</button><button class="btn btn-blue" onclick="saveEditedMappings()">매핑 수정사항 저장</button></div></div></div></div>
+
+<script src="sales_common.js?v=2026_1"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        initSalesPage(renderSalesTables);
+    });
+
+    function updateMallFilterOptions() {
+        var filter = document.getElementById('crossMallFilter');
+        if (!filter) return;
+        var currentVal = filter.value;
+        var mallList = Array.from(new Set(window.salesRawEntries.map(e => getEntryMall(e)))).filter(Boolean);
+
+        var html = `<option value="ALL">🛍️ 전체 쇼핑몰 통합 보기</option>`;
+        mallList.forEach(m => {
+            html += `<option value="${m}" ${currentVal === m ? 'selected' : ''}>🏬 ${m}</option>`;
+        });
+        filter.innerHTML = html;
+    }
+
+    function renderSalesTables() {
+        var year = parseInt(document.getElementById("filterYear").value);
+        var month = parseInt(document.getElementById("filterMonth").value);
+        updateMallFilterOptions();
+        buildCrossPivotTable(year, month);
+    }
+
+    function buildCrossPivotTable(year, month) {
+        var table = document.getElementById('crossPivotTable');
+        table.innerHTML = "";
+
+        var prevMonth = month - 1; var prevYear = year;
+        if (prevMonth === 0) { prevMonth = 12; prevYear = year - 1; }
+
+        var curPrefix = `${year}${month < 10 ? "0" + month : month}`;
+        var prevPrefix = `${prevYear}${prevMonth < 10 ? "0" + prevMonth : prevMonth}`;
+
+        var selectedMall = document.getElementById('crossMallFilter') ? document.getElementById('crossMallFilter').value : 'ALL';
+        var sortCriteria = document.getElementById('crossSortCriteria') ? document.getElementById('crossSortCriteria').value : 'curAmt_desc';
+
+        var yearData = window.salesRawEntries.filter(e => {
+            var dt = getEntryDate(e);
+            if (!dt) return false;
+            var isYr = dt.replace(/[^0-9]/g, '').startsWith(String(year));
+            return isYr && (selectedMall === 'ALL' || getEntryMall(e) === selectedMall);
+        });
+
+        var mallList = (selectedMall === 'ALL') ? Array.from(new Set(window.salesRawEntries.map(e => getEntryMall(e)))) : [selectedMall];
+        var itemList = Array.from(new Set(yearData.map(e => getEntryItem(e)))).filter(Boolean);
+
+        var headerHtml = `<thead><tr>
+            <th class="fix-sales-col-1" style="text-align:left; padding-left:15px; position:relative;">
+                ERP / 수집 품목명
+                <div class="resizer" onmousedown="initColResize(event)"></div>
+            </th>
+            <th class="fix-sales-col-2">쇼핑몰 구분</th>
+            <th class="fix-sales-col-3">구분</th>
+            <th class="fix-sales-col-4">${year}년 전체합계</th>
+            <th style="min-width:140px; background:#fff3bf; color:#d9480f;">전월대비 증감<br>(${month}월 vs ${prevMonth}월)</th>
+            ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => `<th style="min-width:85px; ${m === month ? 'background:#d3f9d8; color:#2b8a3e; font-size:13px;' : ''}">${m}월</th>`).join('')}
+        </tr></thead>`;
+
+        var bodyHtml = "<tbody>";
+
+        // 🎯 정렬 엔진 (선택몰 수량/매출 오름/내림차순, 전월대비 증감순)
+        itemList.sort((a, b) => {
+            var getStats = (itm, prefix) => {
+                var q = 0, s = 0;
+                window.salesRawEntries.filter(e => {
+                    var matchMall = (selectedMall === 'ALL' || getEntryMall(e) === selectedMall);
+                    return matchMall && getEntryItem(e) === itm && getEntryDate(e).replace(/[^0-9]/g, '').startsWith(prefix);
+                }).forEach(e => { q += getEntryQty(e); s += getEntryAmt(e); });
+                return { q, s };
+            };
+
+            var curA = getStats(a, curPrefix); var curB = getStats(b, curPrefix);
+            var prevA = getStats(a, prevPrefix); var prevB = getStats(b, prevPrefix);
+
+            if (sortCriteria === 'curAmt_desc') return curB.s - curA.s;
+            if (sortCriteria === 'curAmt_asc') return curA.s - curB.s;
+            if (sortCriteria === 'curQty_desc') return curB.q - curA.q;
+            if (sortCriteria === 'curQty_asc') return curA.q - curB.q;
+            if (sortCriteria === 'growthAmt_desc') return (curB.s - prevB.s) - (curA.s - prevA.s);
+            if (sortCriteria === 'growthAmt_asc') return (curA.s - prevA.s) - (curB.s - prevB.s);
+            if (sortCriteria === 'growthQty_desc') return (curB.q - prevB.q) - (curA.q - prevA.q);
+            if (sortCriteria === 'growthQty_asc') return (curA.q - prevA.q) - (curB.q - prevB.q);
+            return curB.s - curA.s;
+        });
+
+        itemList.forEach((item, idx) => {
+            var itemAllEntries = yearData.filter(e => getEntryItem(e) === item);
+            var badge = idx < 3 ? ` <span style="background:#e67e22; color:white; border-radius:10px; padding:1px 6px; font-size:10px;">TOP ${idx+1}</span>` : '';
+
+            var subMalls = (selectedMall === 'ALL') ? ["전체 몰 통합"].concat(mallList) : [selectedMall];
+            var rowCount = subMalls.length * 2;
+
+            subMalls.forEach((m, mIdx) => {
+                var mEntries = (m === "전체 몰 통합") ? itemAllEntries : itemAllEntries.filter(e => getEntryMall(e) === m);
+
+                var yearTotalQty = 0, yearTotalAmt = 0;
+                var monthQtyArr = Array(12).fill(0); var monthAmtArr = Array(12).fill(0);
+
+                mEntries.forEach(e => {
+                    var q = getEntryQty(e), s = getEntryAmt(e);
+                    yearTotalQty += q; yearTotalAmt += s;
+                    var dt = getEntryDate(e);
+                    var cleanDate = dt.replace(/[^0-9]/g, '');
+                    if (cleanDate.length >= 6) {
+                        var mo = parseInt(cleanDate.substring(4, 6)) - 1;
+                        if (mo >= 0 && mo < 12) { monthQtyArr[mo] += q; monthAmtArr[mo] += s; }
+                    }
+                });
+
+                var curQ = monthQtyArr[month - 1]; var prevQ = monthQtyArr[prevMonth - 1];
+                var diffQ = curQ - prevQ; var pctQ = prevQ > 0 ? ((diffQ / prevQ) * 100).toFixed(1) : (curQ > 0 ? '100' : '0');
+
+                var curS = monthAmtArr[month - 1]; var prevS = monthAmtArr[prevMonth - 1];
+                var diffS = curS - prevS; var pctS = prevS > 0 ? ((diffS / prevS) * 100).toFixed(1) : (curS > 0 ? '100' : '0');
+
+                var formatDiff = (diff, pct, unit) => {
+                    if (diff > 0) return `<span style="color:#e74c3c; font-weight:bold;">📈 +${diff.toLocaleString()}${unit} (+${pct}%)</span>`;
+                    if (diff < 0) return `<span style="color:#2980b9; font-weight:bold;">📉 ${diff.toLocaleString()}${unit} (${pct}%)</span>`;
+                    return `<span style="color:#95a5a6;">-</span>`;
+                };
+
+                var isTotalRow = (m === "전체 몰 통합");
+                var rowBg = isTotalRow ? 'background:#f8f9fa;' : '';
+
+                var r1 = `<tr style="${rowBg}">`;
+                if (mIdx === 0) {
+                    r1 += `<td class="fix-sales-col-1" rowspan="${rowCount}" style="text-align:left; padding-left:15px; font-weight:bold; color:#2c3e50; vertical-align:middle;">${item}${badge}</td>`;
+                }
+                r1 += `<td class="fix-sales-col-2" rowspan="2" style="vertical-align:middle; font-weight:bold; color:${isTotalRow ? '#1e293b' : '#475569'};">${m}</td>
+                    <td class="fix-sales-col-3" style="color:#2980b9; font-weight:bold;">수량</td>
+                    <td class="fix-sales-col-4" style="background:#e7f5ff !important; font-weight:bold; color:#1864ab;">${yearTotalQty.toLocaleString()}개</td>
+                    <td style="background:#fffde7;">${formatDiff(diffQ, pctQ, '개')}</td>`;
+
+                for (var mo = 0; mo < 12; mo++) {
+                    var qVal = monthQtyArr[mo]; var isCur = (mo === month - 1);
+                    r1 += `<td style="${isCur ? 'background:#e7f5ff; font-weight:bold; color:#1864ab;' : ''}">${qVal > 0 ? qVal.toLocaleString() + '개' : '-'}</td>`;
+                }
+                r1 += `</tr>`;
+
+                var borderBottom = (mIdx === subMalls.length - 1) ? 'border-bottom:3px solid #64748b;' : 'border-bottom:1px solid #cbd5e1;';
+                var r2 = `<tr style="${rowBg} ${borderBottom}">
+                    <td class="fix-sales-col-3" style="color:#27ae60; font-weight:bold;">매출액</td>
+                    <td class="fix-sales-col-4" style="background:#f4fce3 !important; font-weight:bold; color:#2b8a3e;">${yearTotalAmt.toLocaleString()}원</td>
+                    <td style="background:#fffde7;">${formatDiff(diffS, pctS, '원')}</td>`;
+
+                for (var mo = 0; mo < 12; mo++) {
+                    var sVal = monthAmtArr[mo]; var isCur = (mo === month - 1);
+                    r2 += `<td style="${isCur ? 'background:#f4fce3; font-weight:bold; color:#2b8a3e;' : ''}">${sVal > 0 ? sVal.toLocaleString() + '원' : '-'}</td>`;
+                }
+                r2 += `</tr>`;
+
+                bodyHtml += r1 + r2;
+            });
+        });
+
+        table.innerHTML = headerHtml + bodyHtml + "</tbody>";
+    }
+
+    function initColResize(e) {
+        e.preventDefault();
+        var startX = e.clientX;
+        var startWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--item-col-width')) || 250;
+        function onMouseMove(e) {
+            var newWidth = Math.max(150, startWidth + (e.clientX - startX));
+            document.documentElement.style.setProperty('--item-col-width', newWidth + 'px');
+        }
+        function onMouseUp() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    }
+</script>
+</body>
+</html>

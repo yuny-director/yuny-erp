@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YUNY_ERP - 몰별 매출 리포트</title>
+    <style>
+        html { margin: 0; padding: 0; background-color: #f4f6f9; font-family: Arial, sans-serif; }
+        body { margin: 0; padding: 0; padding-top: 65px !important; background-color: #f4f6f9; font-family: Arial, sans-serif; }
+        .content { padding: 15px; }
+        .card { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .flex-form-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { margin-bottom: 6px; font-weight: bold; font-size: 13px; color: #333; }
+        .form-group input, .form-group select { padding: 0 10px; border: 1px solid #ccc; border-radius: 4px; height: 38px; box-sizing: border-box; font-size: 13px; background-color: #ffffff; }
+
+        .btn { padding: 0 16px; background-color: #1abc9c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; height: 38px; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s; box-sizing: border-box; }
+        .btn:hover { background-color: #16a085; }
+        .btn-orange { background-color: #e67e22 !important; }
+        .btn-gray { background-color: #7f8c8d !important; }
+        .btn-blue { background-color: #3498db !important; }
+        .btn-red { background-color: #e74c3c !important; padding: 0 10px; height: 30px; font-size: 11px; }
+
+        .sort-header { cursor: pointer; user-select: none; }
+        .sort-header:hover { background-color: #dbeafe !important; color: #1d4ed8; }
+
+        .table-container { width: 100%; max-height: 55vh; overflow: auto; border: 1px solid #ccc; border-radius: 6px; background: white; margin-bottom: 10px; }
+        table { border-collapse: separate; border-spacing: 0; font-size: 12px; width: 100%; text-align: center; }
+        .table-container th, .table-container td { padding: 8px 6px; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; white-space: nowrap; box-sizing: border-box; }
+        .table-container th { background-color: #f8f9fa; font-weight: bold; position: sticky; top: 0; z-index: 10; }
+
+        .fix-sales-col-1 { position: sticky !important; left: 0px !important; width: 160px !important; min-width: 160px !important; background: #ffffff !important; z-index: 20; font-weight: bold; }
+        .fix-sales-col-2 { position: sticky !important; left: 160px !important; width: 70px !important; min-width: 70px !important; background: #ffffff !important; z-index: 20; font-weight: bold; }
+        .fix-sales-col-3 { position: sticky !important; left: 230px !important; width: 120px !important; min-width: 120px !important; background: #f4fce3 !important; z-index: 20; font-weight: bold; color: #2b8a3e; border-right: 2px solid #2b8a3e !important; }
+        th.fix-sales-col-1, th.fix-sales-col-2, th.fix-sales-col-3 { z-index: 30 !important; background-color: #e8f4fd !important; text-align: center !important; }
+
+        .modal-overlay { display: none; position: fixed; z-index: 1000000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        .modal-card { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 760px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
+        .modal-tab-container { display: flex; gap: 4px; border-bottom: 2px solid #3b82f6; margin-bottom: 12px; }
+        .modal-tab-btn { padding: 8px 16px; background-color: #f1f5f9; border: none; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: bold; font-size: 12px; color: #64748b; }
+        .modal-tab-btn.active { background-color: #3b82f6; color: #ffffff; }
+        .modal-table-container table { border-collapse: collapse; }
+        .modal-table-container th, .modal-table-container td { position: static !important; padding: 8px; border: 1px solid #cbd5e1; }
+        .modal-table-container th { background-color: #f1f5f9 !important; font-weight: bold; color: #1e293b; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');</script>
+</head>
+<body>
+
+<div id="global-navbar"></div>
+<script>document.write('<script src="../navbar2.js?v=2026_sales_mall_v1&t=' + Date.now() + '"><\/script>');</script>
+
+<div class="content">
+    <div class="card" style="background-color: #eef2f5; border: 1px solid #ced4da; padding: 12px 20px;">
+        <div class="flex-form-row" style="margin-bottom: 0; align-items: center; justify-content: space-between;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <label style="color: #2c3e50; font-size: 14px; font-weight: bold;">📅 매출 기준 연월 :</label>
+                <select id="filterYear" style="width: 95px; height:36px;"></select>
+                <select id="filterMonth" style="width: 75px; height:36px;"></select>
+                <span id="loadingStatus" style="font-weight: bold; color: #27ae60; font-size:13px; margin-left:10px;">🔄 실시간 동기화 완료</span>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <button class="btn btn-blue" onclick="openEditMappingModal()">⚙️ 상품 매핑 관리</button>
+                <button class="btn btn-orange" onclick="openSalesUploadModal()">📥 쇼핑몰별 매출 파일 업로드</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0; margin-bottom:12px; font-size:15px; color:#2c3e50;">📊 1. 연간 전체 통합 & 몰별 월별(1~12월) 누적 매출 현황</h3>
+        <div class="table-container">
+            <table id="mallYearlyPivotTable"></table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0; margin-bottom:12px; font-size:15px; color:#2c3e50;">📅 2. 당월 몰별 누적 합계 & 일별 상세 매출 현황</h3>
+        <div class="table-container">
+            <table id="mallDailyPivotTable"></table>
+        </div>
+    </div>
+</div>
+
+<!-- 매핑 & 업로드 공통 모달 -->
+<div id="salesUploadModal" class="modal-overlay"><div class="modal-card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #2c3e50; padding-bottom:8px;"><h3 style="margin:0; color:#2c3e50;">📥 쇼핑몰별 매출 파일 업로드</h3><span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeSalesUploadModal()">&times;</span></div><div class="form-group" style="margin-bottom:12px;"><label>1. 업로드할 쇼핑몰(양식) 선택</label><select id="uploadMallType" style="height:38px; font-weight:bold;"><option value="smartstore_confirmed">네이버 스마트스토어 - [구매확정 내역 파일]</option><option value="smartstore_dispatch">네이버 스마트스토어 - [전체주문 발주/발송 관리 파일]</option><option value="coupang">쿠팡 (Coupang)</option><option value="eleven">11번가</option><option value="gmarket">G마켓 / 옥션</option><option value="custom">기타 / 표준 양식</option></select></div><div class="form-group" style="margin-bottom:15px;"><label>2. 매출 데이터 파일 선택 (.xlsx, .xls, .csv)</label><input type="file" id="salesCsvFileInput" accept=".xlsx, .xls, .csv" style="height:auto; padding:8px;"></div><div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;"><button class="btn btn-gray" onclick="closeSalesUploadModal()">취소</button><button class="btn btn-orange" onclick="processSalesCsvUpload()">매출 데이터 파싱 & 업로드</button></div></div></div>
+<div id="editMappingModal" class="modal-overlay"><div class="modal-card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><h3 style="margin:0; color:#1e293b;">⚙️ 쇼핑몰-ERP 품목 연결 매핑 관리</h3><span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeEditMappingModal()">&times;</span></div><div class="modal-tab-container"><button class="modal-tab-btn active" id="modalSubTabUnmapped" onclick="switchModalSubTab('unmapped')">⚠️ 미매핑 수집 품목 매핑 (<span id="unmappedCountBadge">0</span>)</button><button class="modal-tab-btn" id="modalSubTabMapped" onclick="switchModalSubTab('mapped')">✅ 이미 매핑된 품목 관리 (<span id="mappedCountBadge">0</span>)</button></div><div id="modalSubViewUnmapped"><p style="font-size:12px; color:#64748b; margin-bottom:10px;">수집된 매출 데이터 중 아직 ERP 품목과 연결되지 않은 옵션명 목록입니다.</p><div class="modal-table-container" style="max-height:360px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:6px; padding:0; margin-bottom:15px;"><table style="width:100%; font-size:12px;"><thead><tr><th style="width:58%;">쇼핑몰 수집 옵션명</th><th style="width:42%;">연결할 ERP 품목 선택</th></tr></thead><tbody id="unmappedManagerTableBody"></tbody></table></div><div style="display:flex; justify-content:flex-end; gap:8px;"><button class="btn btn-gray" onclick="closeEditMappingModal()">취소</button><button class="btn btn-orange" onclick="saveUnmappedManagerList()">미매핑 연결 저장</button></div></div><div id="modalSubViewMapped" style="display:none;"><p style="font-size:12px; color:#64748b; margin-bottom:10px;">현재 구글 DB에 저장되어 자동으로 연결되는 쇼핑몰 옵션 매핑 목록입니다.</p><div class="modal-table-container" style="max-height:360px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:6px; padding:0; margin-bottom:15px;"><table style="width:100%; font-size:12px;"><thead><tr><th style="width:50%;">쇼핑몰 수집 옵션명</th><th style="width:40%;">매핑된 ERP 품목명</th><th style="width:10%;">삭제</th></tr></thead><tbody id="existingMappingsTableBody"></tbody></table></div><div style="display:flex; justify-content:flex-end; gap:8px;"><button class="btn btn-gray" onclick="closeEditMappingModal()">취소</button><button class="btn btn-blue" onclick="saveEditedMappings()">매핑 수정사항 저장</button></div></div></div></div>
+
+<script src="sales_common.js?v=2026_1"></script>
+<script>
+    var yearlyMallSort = { col: 'total', asc: false };
+    var dailyMallSort = { col: 'total', asc: false };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        initSalesPage(renderSalesTables);
+    });
+
+    function toggleSort(type, col) {
+        var sortObj = (type === 'yearly') ? yearlyMallSort : dailyMallSort;
+        if (sortObj.col === col) sortObj.asc = !sortObj.asc;
+        else { sortObj.col = col; sortObj.asc = false; }
+        renderSalesTables();
+    }
+
+    function renderSalesTables() {
+        var year = parseInt(document.getElementById("filterYear").value);
+        var month = parseInt(document.getElementById("filterMonth").value);
+        buildMallYearlyPivotTable(year);
+        buildMallDailyPivotTable(year, month);
+    }
+
+    function buildMallYearlyPivotTable(year) {
+        var table = document.getElementById('mallYearlyPivotTable');
+        var yearData = window.salesRawEntries.filter(e => getEntryDate(e).replace(/[^0-9]/g, '').startsWith(String(year)));
+        var mallSet = Array.from(new Set(window.salesRawEntries.map(e => getEntryMall(e))));
+
+        // 정렬 지원
+        mallSet.sort((a, b) => {
+            if (yearlyMallSort.col === 'name') return yearlyMallSort.asc ? a.localeCompare(b) : b.localeCompare(a);
+            var sumA = 0, sumB = 0;
+            yearData.filter(e => getEntryMall(e) === a).forEach(e => sumA += getEntryAmt(e));
+            yearData.filter(e => getEntryMall(e) === b).forEach(e => sumB += getEntryAmt(e));
+            return yearlyMallSort.asc ? sumA - sumB : sumB - sumA;
+        });
+
+        var headerHtml = `<thead><tr>
+            <th class="sort-header" onclick="toggleSort('yearly', 'name')">쇼핑몰 구분 ↕️</th>
+            <th class="sort-header" onclick="toggleSort('yearly', 'total')" style="background:#e8f4fd;">${year}년 전체합계 매출 ↕️</th>
+            ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => `<th>${m}월</th>`).join('')}
+        </tr></thead>`;
+
+        var bodyHtml = "<tbody>";
+        var grandTotal = 0; var monthTotals = Array(12).fill(0);
+        yearData.forEach(e => {
+            var amt = getEntryAmt(e); grandTotal += amt;
+            var m = parseInt(getEntryDate(e).replace(/[^0-9]/g, '').substring(4, 6)) - 1;
+            if (m >= 0 && m < 12) monthTotals[m] += amt;
+        });
+
+        bodyHtml += `<tr class="row-total"><td><b>전체 몰 통합</b></td><td style="background:#d3f9d8;">${grandTotal.toLocaleString()}원</td>${monthTotals.map(a => `<td>${a > 0 ? a.toLocaleString()+'원' : '-'}</td>`).join('')}</tr>`;
+
+        mallSet.forEach(mall => {
+            var mEntries = yearData.filter(e => getEntryMall(e) === mall);
+            var mTotal = 0; var mMonths = Array(12).fill(0);
+            mEntries.forEach(e => {
+                var amt = getEntryAmt(e); mTotal += amt;
+                var m = parseInt(getEntryDate(e).replace(/[^0-9]/g, '').substring(4, 6)) - 1;
+                if (m >= 0 && m < 12) mMonths[m] += amt;
+            });
+            bodyHtml += `<tr><td style="font-weight:bold; color:#2c3e50;">${mall}</td><td style="background:#f4fce3; color:#2b8a3e; font-weight:bold;">${mTotal.toLocaleString()}원</td>${mMonths.map(a => `<td>${a > 0 ? a.toLocaleString()+'원' : '-'}</td>`).join('')}</tr>`;
+        });
+
+        table.innerHTML = headerHtml + bodyHtml + "</tbody>";
+    }
+
+    function buildMallDailyPivotTable(year, month) {
+        var table = document.getElementById('mallDailyPivotTable');
+        var strM = month < 10 ? "0" + month : String(month);
+        var targetPrefix = `${year}${strM}`;
+        var monthData = window.salesRawEntries.filter(e => getEntryDate(e).replace(/[^0-9]/g, '').startsWith(targetPrefix));
+        var lastDay = new Date(year, month, 0).getDate();
+        var dateList = []; for (var d = 1; d <= lastDay; d++) dateList.push(`${year}-${strM}-${d < 10 ? '0'+d : d}`);
+        var mallSet = Array.from(new Set(window.salesRawEntries.map(e => getEntryMall(e))));
+
+        mallSet.sort((a, b) => {
+            if (dailyMallSort.col === 'name') return dailyMallSort.asc ? a.localeCompare(b) : b.localeCompare(a);
+            var sumA = 0, sumB = 0;
+            monthData.filter(e => getEntryMall(e) === a).forEach(e => sumA += getEntryAmt(e));
+            monthData.filter(e => getEntryMall(e) === b).forEach(e => sumB += getEntryAmt(e));
+            return dailyMallSort.asc ? sumA - sumB : sumB - sumA;
+        });
+
+        var headerHtml = `<thead><tr>
+            <th class="fix-sales-col-1 sort-header" onclick="toggleSort('daily', 'name')">쇼핑몰명 ↕️</th>
+            <th class="fix-sales-col-2">구분</th>
+            <th class="fix-sales-col-3 sort-header" onclick="toggleSort('daily', 'total')">${month}월 누적 합계 ↕️</th>
+            ${dateList.map(d => `<th>${d.substring(8)}일</th>`).join('')}
+        </tr></thead>`;
+
+        var bodyHtml = "<tbody>";
+        mallSet.forEach(mall => {
+            var mEntries = monthData.filter(e => getEntryMall(e) === mall);
+            var sum = 0; mEntries.forEach(e => sum += getEntryAmt(e));
+            var row = `<tr><td class="fix-sales-col-1">${mall}</td><td class="fix-sales-col-2" style="color:#27ae60;">매출액</td><td class="fix-sales-col-3">${sum.toLocaleString()}원</td>`;
+            dateList.forEach(d => {
+                var dSum = 0; var cleanD = d.replace(/[^0-9]/g, '');
+                mEntries.filter(e => getEntryDate(e).replace(/[^0-9]/g, '') === cleanD).forEach(e => dSum += getEntryAmt(e));
+                row += `<td>${dSum > 0 ? dSum.toLocaleString()+'원' : '-'}</td>`;
+            });
+            bodyHtml += row + `</tr>`;
+        });
+
+        table.innerHTML = headerHtml + bodyHtml + "</tbody>";
+    }
+</script>
+</body>
+</html>
