@@ -127,7 +127,7 @@ function syncSalesWithGoogle(msg, renderCallback) {
 function openSalesUploadModal() { document.getElementById('salesUploadModal').style.display = 'flex'; }
 function closeSalesUploadModal() { document.getElementById('salesUploadModal').style.display = 'none'; }
 
-// 🎯 [핵심 1] 종속 드롭다운 매핑 관리 팝업 생성
+// 🎯 [핵심 1] 종속 드롭다운 매핑 관리 팝업 생성 (팝업 전체 너비 확장 & 비율 정밀 조정 적용)
 function openEditMappingModal() {
     var unmappedSet = new Set();
     var masterNames = window.stockItems.map(i => i.itemName || i.name || i.item).filter(Boolean);
@@ -144,25 +144,32 @@ function openEditMappingModal() {
     document.getElementById('unmappedCountBadge').innerText = unmappedList.length;
     document.getElementById('mappedCountBadge').innerText = Object.keys(window.itemMappings).length;
 
+    // 🎯 [핵심 수정] 팝업 카드의 전체 너비를 1100px로 대폭 확장하여 3번째 모델명 드롭다운 짤림 현상 완벽 방지
+    var modalCard = document.querySelector('#editMappingModal .modal-card');
+    if (modalCard) {
+        modalCard.style.maxWidth = '1100px';
+        modalCard.style.width = '90%';
+    }
+
     // A. 미매핑 목록 생성
     var unmappedTbody = document.getElementById('unmappedManagerTableBody');
     unmappedTbody.innerHTML = "";
 
     if (unmappedList.length === 0) {
-        unmappedTbody.innerHTML = `<tr><td colspan="3" style="padding:15px; color:#27ae60; font-weight:bold;">🎉 현재 미매핑된 수집 옵션이 없습니다!</td></tr>`;
+        unmappedTbody.innerHTML = `<tr><td colspan="3" style="padding:15px; color:#27ae60; font-weight:bold; text-align:center;">🎉 현재 미매핑된 수집 옵션이 없습니다!</td></tr>`;
     } else {
         unmappedList.forEach((rawOpt, idx) => {
             var tr = document.createElement('tr');
             tr.setAttribute('data-key', rawOpt);
             tr.innerHTML = `
-                <td style="padding:8px; border:1px solid #cbd5e1; font-weight:bold; text-align:left;">${rawOpt}</td>
+                <td style="padding:8px; border:1px solid #cbd5e1; font-weight:bold; text-align:left; white-space:normal; word-break:break-all; font-size:12px;">${rawOpt}</td>
                 <td style="padding:8px; border:1px solid #cbd5e1;">
-                    <select id="unmapItemSelect_${idx}" style="width:100%; height:32px;" onchange="onMappingItemChange(this, 'unmapModelSelect_${idx}')">
+                    <select id="unmapItemSelect_${idx}" style="width:100%; height:34px; font-size:12px;" onchange="onMappingItemChange(this, 'unmapModelSelect_${idx}')">
                         ${getUniqueItemOptionsHtml("")}
                     </select>
                 </td>
                 <td style="padding:8px; border:1px solid #cbd5e1;">
-                    <select id="unmapModelSelect_${idx}" style="width:100%; height:32px;">
+                    <select id="unmapModelSelect_${idx}" style="width:100%; height:34px; font-size:12px;">
                         <option value="">-- 모델명 선택 --</option>
                     </select>
                 </td>
@@ -177,7 +184,7 @@ function openEditMappingModal() {
     var keys = Object.keys(window.itemMappings);
 
     if (keys.length === 0) {
-        mappedTbody.innerHTML = `<tr><td colspan="4" style="padding:15px; color:#94a3b8;">등록된 매핑 정보가 없습니다.</td></tr>`;
+        mappedTbody.innerHTML = `<tr><td colspan="4" style="padding:15px; color:#94a3b8; text-align:center;">등록된 매핑 정보가 없습니다.</td></tr>`;
     } else {
         keys.forEach((rawOpt, idx) => {
             var mapObj = window.itemMappings[rawOpt];
@@ -187,18 +194,18 @@ function openEditMappingModal() {
             var tr = document.createElement('tr');
             tr.setAttribute('data-key', rawOpt);
             tr.innerHTML = `
-                <td style="padding:6px; font-weight:bold; text-align:left;">${rawOpt}</td>
+                <td style="padding:6px; font-weight:bold; text-align:left; white-space:normal; word-break:break-all; font-size:12px;">${rawOpt}</td>
                 <td style="padding:6px;">
-                    <select id="mapItemSelect_${idx}" style="width:100%; height:30px;" onchange="onMappingItemChange(this, 'mapModelSelect_${idx}')">
+                    <select id="mapItemSelect_${idx}" style="width:100%; height:32px; font-size:12px;" onchange="onMappingItemChange(this, 'mapModelSelect_${idx}')">
                         ${getUniqueItemOptionsHtml(curItem)}
                     </select>
                 </td>
                 <td style="padding:6px;">
-                    <select id="mapModelSelect_${idx}" style="width:100%; height:30px;">
+                    <select id="mapModelSelect_${idx}" style="width:100%; height:32px; font-size:12px;">
                         ${getModelOptionsHtml(curItem, curModel)}
                     </select>
                 </td>
-                <td style="padding:6px;"><button class="btn btn-red" onclick="deleteMappingRow(this)">삭제</button></td>
+                <td style="padding:6px; text-align:center;"><button class="btn btn-red" onclick="deleteMappingRow(this)">삭제</button></td>
             `;
             mappedTbody.appendChild(tr);
         });
