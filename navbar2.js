@@ -1,4 +1,4 @@
-// 🚨 YUNY_ERP 전역 네비게이션바 (어느 페이지에서나 계정목록 무조건 로드 보장 완본)
+// 🚨 YUNY_ERP 전역 네비게이션바 (매출관리 서브메뉴 4개 개편 완본)
 (function() {
     // 🎯 [핵심] GOOGLE_SCRIPT_URL 전역 안전장치 (config.js 누락 대비)
     if (!window.GOOGLE_SCRIPT_URL || window.GOOGLE_SCRIPT_URL === "") {
@@ -64,7 +64,7 @@
             .custom-navbar a.active-menu { background-color: #1abc9c !important; color: #ffffff !important; }
             
             .nav-dropdown { position: relative; display: inline-block; }
-            .nav-dropdown-content { display: none; position: absolute; top: 100%; left: 0; background-color: #34495e; min-width: 140px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); border-radius: 0 0 6px 6px; z-index: 1000; padding: 5px 0; }
+            .nav-dropdown-content { display: none; position: absolute; top: 100%; left: 0; background-color: #34495e; min-width: 170px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); border-radius: 0 0 6px 6px; z-index: 1000; padding: 5px 0; }
             .nav-dropdown-content a { color: #ecf0f1; padding: 10px 14px; text-decoration: none; display: block; border-radius: 0; font-size: 12px; }
             .nav-dropdown-content a:hover { background-color: #1abc9c; color: white; }
             .nav-dropdown:hover .nav-dropdown-content { display: block; }
@@ -90,7 +90,6 @@
             .account-modal-close { cursor: pointer; font-size: 24px; font-weight: bold; color: #94a3b8; transition: color 0.15s; }
             .account-modal-close:hover { color: #ef4444; }
 
-            /* 🎯 깨짐 현상 완전 방지 전용 폼 스타일 */
             .account-form-container {
                 display: flex;
                 align-items: flex-end;
@@ -148,18 +147,15 @@
                 background-color: #1e293b;
             }
 
-            /* 🎯 계정 입력 폼 영역 세련되게 수정 */
             .account-form-row { display: flex; gap: 10px; align-items: flex-end; background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #e2e8f0; }
             .account-form-row label { font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; display: block; }
             .account-form-row input, .account-form-row select { width: 100%; height: 36px; font-size: 12px; padding: 0 10px; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; box-sizing: border-box; transition: all 0.15s; }
             .account-form-row input:focus, .account-form-row select:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
 
-            /* 🥷 8개 세부 메뉴 권한 그리드 커스텀 */
             .perm-grid-box { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #f1f5f9; padding: 14px; border-radius: 10px; margin-top: 12px; font-size: 11px; text-align: left; border: 1px solid #e2e8f0; }
             .perm-grid-box label { font-weight: 700; color: #334155; display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
             .perm-grid-box select { height: 32px; font-size: 11px; padding: 0 6px; border-radius: 6px; border: 1px solid #cbd5e1; width: 100%; background: #ffffff; font-weight: 600; color: #1e293b; }
 
-            /* 📋 계정 목록 테이블 정돈 */
             .account-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; margin-top: 16px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
             .account-table th, .account-table td { padding: 10px 8px; text-align: center; border-bottom: 1px solid #f1f5f9; }
             .account-table th { background-color: #f8fafc; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0; }
@@ -180,7 +176,19 @@
                             <a href="../cost/cost-monthly.html">📉 품목별 원가관리</a>
                         </div>
                     </div>` : ''}
-                ${canSales ? `<a href="../sales/sales.html" class="${isSales ? 'active-menu' : ''}">💰 매출관리</a>` : ''}
+                
+                <!-- 🎯 [수정된 매출관리 4개 서브메뉴 드롭다운] -->
+                ${canSales ? `
+                    <div class="nav-dropdown">
+                        <a href="../sales/sales_mall.html" class="${isSales ? 'active-menu' : ''}">💰 매출관리 ▾</a>
+                        <div class="nav-dropdown-content">
+                            <a href="../sales/sales_mall.html">🛍️ 몰별 매출 리포트</a>
+                            <a href="../sales/sales_item_yearly.html">📦 품목별 연간 통합 리포트</a>
+                            <a href="../sales/sales_item_daily.html">📅 당월 품목별 일별 상세</a>
+                            <a href="../sales/sales_cross.html">📊 몰별-품목 교차 분석</a>
+                        </div>
+                    </div>` : ''}
+
                 ${canMargin ? `<a href="../margin/margin.html" class="${isMargin ? 'active-menu' : ''}">📝 마진관리</a>` : ''}
                 ${canStock ? `
                     <div class="nav-dropdown">
