@@ -37,6 +37,9 @@
         th, td { padding: 8px 6px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; transition: background-color 0.15s ease; }
         th { background-color: #f8f9fa !important; font-weight: bold; position: sticky !important; top: 0 !important; z-index: 30 !important; }
 
+        .sort-header { cursor: pointer; user-select: none; transition: background 0.15s; }
+        .sort-header:hover { background-color: #dbeafe !important; color: #1d4ed8 !important; }
+
         .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 180px; max-width: 240px; background: #ffffff !important; z-index: 10; font-weight: bold; text-align: left !important; padding-left: 8px !important; white-space: normal !important; word-break: break-all; }
         .fix-col-2 { position: sticky !important; left: 180px !important; min-width: 110px; max-width: 140px; background: #ffffff !important; z-index: 10; font-weight: bold; color:#2980b9; white-space: normal !important; word-break: break-all; }
         .fix-col-3 { position: sticky !important; left: 290px !important; min-width: 55px; max-width: 65px; background: #fafafa !important; z-index: 10; }
@@ -124,22 +127,7 @@
 
     <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <h3 style="margin:0; color:#2c3e50;">📦 품목 마스터 연동 실시간 재고 대장표</h3>
-            
-            <div style="display:flex; align-items:center; gap:6px;">
-                <label style="font-weight:bold; font-size:13px; color:#2c3e50;">🔀 대장 정렬 기준 :</label>
-                <select id="sortOptionSelect" style="height:36px; font-weight:bold;" onchange="buildStockPivotTable()">
-                    <option value="custom">지정된 표시순서 (기본)</option>
-                    <option value="name_asc">품목명 오름차순 (가~하)</option>
-                    <option value="name_desc">품목명 내림차순 (하~가)</option>
-                    <option value="model_asc">모델명 오름차순 (가~하)</option>
-                    <option value="model_desc">모델명 내림차순 (하~가)</option>
-                    <option value="stock_desc">현재고 높은순 ⬇</option>
-                    <option value="stock_asc">현재고 낮은순 ⬆</option>
-                    <option value="out_desc">당월 출고 높은순 ⬇</option>
-                    <option value="out_asc">당월 출고 낮은순 ⬆</option>
-                </select>
-            </div>
+            <h3 style="margin:0; color:#2c3e50;">📦 품목 마스터 연동 실시간 재고 대장표 (헤더 클릭 시 정렬)</h3>
         </div>
 
         <div class="table-container">
@@ -192,6 +180,9 @@
     window.currentCatLevelTab = 'large';
     window.isStockReadOnly = false;
 
+    // 🎯 [정렬 관리 변수] 입고발주표와 동일하게 헤더 클릭 시 오름차순/내림차순 토글
+    var stockTableSortState = { type: 'custom', dateTarget: 0, asc: true };
+
     document.addEventListener("DOMContentLoaded", function() {
         checkStockPermissionGuard();
 
@@ -214,6 +205,18 @@
 
         loadStockData();
     });
+
+    // 🎯 [헤더 클릭 정렬 함수]
+    function toggleStockHeaderSort(type, dateTarget) {
+        if (stockTableSortState.type === type && stockTableSortState.dateTarget === (dateTarget || 0)) {
+            stockTableSortState.asc = !stockTableSortState.asc;
+        } else {
+            stockTableSortState.type = type;
+            stockTableSortState.dateTarget = dateTarget || 0;
+            stockTableSortState.asc = (type === 'name' || type === 'model');
+        }
+        buildStockPivotTable();
+    }
 
     function checkStockPermissionGuard() {
         var userRole = localStorage.getItem('login_user_role') || "admin";
@@ -292,42 +295,59 @@
         return window.stockEntries.filter(e => (e.item === itemName || e.itemName === itemName));
     }
 
+    // 🎯 [정렬 로직 처리] 헤더 클릭 상태에 따른 정렬
     function getSortedStockItems() {
         var items = window.stockItems.slice();
-        var sortOpt = document.getElementById('sortOptionSelect') ? document.getElementById('sortOptionSelect').value : 'custom';
 
         var selYear = parseInt(document.getElementById("filterYear").value);
         var selMonth = parseInt(document.getElementById("filterMonth").value);
         var strMonth = selMonth < 10 ? "0" + selMonth : String(selMonth);
         var monthPrefix = `${selYear}-${strMonth}`;
 
-        if (sortOpt === 'name_asc') {
-            items.sort((a, b) => getItemName(a).localeCompare(getItemName(b)));
-        } else if (sortOpt === 'name_desc') {
-            items.sort((a, b) => getItemName(b).localeCompare(getItemName(a)));
-        } else if (sortOpt === 'model_asc') {
-            items.sort((a, b) => getItemModel(a).localeCompare(getItemModel(b)));
-        } else if (sortOpt === 'model_desc') {
-            items.sort((a, b) => getItemModel(b).localeCompare(getItemModel(a)));
-        } else if (sortOpt === 'stock_desc') {
-            items.sort((a, b) => calcTotalStock(getItemName(b)) - calcTotalStock(getItemName(a)));
-        } else if (sortOpt === 'stock_asc') {
-            items.sort((a, b) => calcTotalStock(getItemName(a)) - calcTotalStock(getItemName(b)));
-        } else if (sortOpt === 'out_desc') {
-            items.sort((a, b) => calcMonthOut(getItemName(b), monthPrefix) - calcMonthOut(getItemName(a), monthPrefix));
-        } else if (sortOpt === 'out_asc') {
-            items.sort((a, b) => calcMonthOut(getItemName(a), monthPrefix) - calcMonthOut(getItemName(b), monthPrefix));
-        } else {
-            items.sort((a, b) => {
-                var nameA = getItemName(a);
-                var nameB = getItemName(b);
+        items.sort((a, b) => {
+            var nameA = getItemName(a);
+            var nameB = getItemName(b);
+            var modelA = getItemModel(a);
+            var modelB = getItemModel(b);
+
+            if (stockTableSortState.type === 'name') {
+                return stockTableSortState.asc ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+            } else if (stockTableSortState.type === 'model') {
+                return stockTableSortState.asc ? modelA.localeCompare(modelB) : modelB.localeCompare(modelA);
+            } else if (stockTableSortState.type === 'monthSum') {
+                var sumA = calcMonthInOutSum(nameA, monthPrefix);
+                var sumB = calcMonthInOutSum(nameB, monthPrefix);
+                return stockTableSortState.asc ? sumA - sumB : sumB - sumA;
+            } else if (stockTableSortState.type === 'stock') {
+                var stockA = calcTotalStock(nameA);
+                var stockB = calcTotalStock(nameB);
+                return stockTableSortState.asc ? stockA - stockB : stockB - stockA;
+            } else if (stockTableSortState.type === 'date') {
+                var dTarget = stockTableSortState.dateTarget;
+                var strD = dTarget < 10 ? '0' + dTarget : String(dTarget);
+                var targetDate = `${monthPrefix}-${strD}`;
+
+                var getDaySum = (itemName) => {
+                    var sum = 0;
+                    filterEntriesByItem(itemName).filter(e => e.date === targetDate).forEach(e => {
+                        sum += Number(e.qty || 0);
+                    });
+                    return sum;
+                };
+
+                var dSumA = getDaySum(nameA);
+                var dSumB = getDaySum(nameB);
+                return stockTableSortState.asc ? dSumA - dSumB : dSumB - dSumA;
+            } else {
+                // 지정된 표시순서 (기본)
                 var idxA = window.itemOrder.indexOf(nameA);
                 var idxB = window.itemOrder.indexOf(nameB);
                 if (idxA === -1) idxA = 999;
                 if (idxB === -1) idxB = 999;
                 return idxA - idxB;
-            });
-        }
+            }
+        });
+
         return items;
     }
 
@@ -341,8 +361,8 @@
         return inSum - outSum;
     }
 
-    function calcMonthOut(itemName, monthPrefix) {
-        var entries = filterEntriesByItem(itemName).filter(e => e.type === 'out' && e.date && e.date.startsWith(monthPrefix));
+    function calcMonthInOutSum(itemName, monthPrefix) {
+        var entries = filterEntriesByItem(itemName).filter(e => e.date && e.date.startsWith(monthPrefix));
         var sum = 0;
         entries.forEach(e => { sum += Number(e.qty || 0); });
         return sum;
@@ -429,6 +449,7 @@
         });
     }
 
+    // 🎯 [실시간 재고 대장표 헤더 생성 및 빌드]
     function buildStockPivotTable() {
         var table = document.getElementById('stockPivotTable');
         if (!table) return;
@@ -445,7 +466,27 @@
             dateSet.push(selYear + "-" + strMonth + "-" + strDay);
         }
 
-        var headerHtml = `<thead><tr><th class="fix-col-1">품목명</th><th class="fix-col-2">모델명</th><th class="fix-col-3">구분</th><th class="fix-col-4">당월 입/출고</th><th class="fix-col-5">현재 총재고</th>${dateSet.map((d, i) => `<th style="min-width:55px;" data-col-idx="${i + 6}">${d.substring(5).replace("-","/")}</th>`).join('')}</tr></thead>`;
+        var getSortIcon = (type, d) => {
+            if (stockTableSortState.type === type && (d === undefined || stockTableSortState.dateTarget === d)) {
+                return stockTableSortState.asc ? ' ⬆️' : ' ⬇️';
+            }
+            return ' ↕️';
+        };
+
+        // 🎯 [헤더 HTML] 품목명, 모델명, 당월 입/출고, 현재 총재고 및 날짜 헤더(08/01 형태 보존) 클릭 시 정렬 토글
+        var headerHtml = `<thead><tr>
+            <th class="fix-col-1 sort-header" onclick="toggleStockHeaderSort('name')">품목명 ${getSortIcon('name')}</th>
+            <th class="fix-col-2 sort-header" onclick="toggleStockHeaderSort('model')">모델명 ${getSortIcon('model')}</th>
+            <th class="fix-col-3">구분</th>
+            <th class="fix-col-4 sort-header" onclick="toggleStockHeaderSort('monthSum')">당월 입/출고 ${getSortIcon('monthSum')}</th>
+            <th class="fix-col-5 sort-header" onclick="toggleStockHeaderSort('stock')">현재 총재고 ${getSortIcon('stock')}</th>
+            ${dateSet.map((d, i) => {
+                var dayNum = i + 1;
+                var displayDateStr = d.substring(5).replace("-","/"); // 08/01 형태 보존
+                return `<th class="sort-header" style="min-width:55px;" data-col-idx="${i + 6}" onclick="toggleStockHeaderSort('date', ${dayNum})">${displayDateStr} ${getSortIcon('date', dayNum)}</th>`;
+            }).join('')}
+        </tr></thead>`;
+
         var bodyHtml = "<tbody>";
 
         var sortedItems = getSortedStockItems();
