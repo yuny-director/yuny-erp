@@ -43,19 +43,26 @@ function getEntryAmt(e) { return Number(e.salesAmt || e.s || 0); }
 function parseExcelDate(val) {
     if (!val) return "";
     var valStr = String(val).trim();
-    var num = Number(valStr);
-    if (!isNaN(num) && num > 30000 && num < 60000) {
-        var jsDate = new Date(Math.round((num - 25569) * 86400 * 1000));
-        var y = jsDate.getFullYear();
-        var m = String(jsDate.getMonth() + 1).padStart(2, '0');
-        var d = String(jsDate.getDate()).padStart(2, '0');
-        return `${y}-${m}-${d}`;
-    }
-    var dateMatch = valStr.match(/\d{4}[-\/\.]?\d{2}[-\/\.]?\d{2}/);
+    
+    var dateMatch = valStr.match(/(202[0-9]|203[0-9])[-\/\.]?(0[1-9]|1[0-2])[-\/\.]?(0[1-9]|[12][0-9]|3[01])/);
     if (dateMatch) {
         var cleanDate = dateMatch[0].replace(/[-\/\.]/g, '');
-        return `${cleanDate.substring(0,4)}-${cleanDate.substring(4,6)}-${cleanDate.substring(6,8)}`;
+        if (cleanDate.length === 8) {
+            return `${cleanDate.substring(0,4)}-${cleanDate.substring(4,6)}-${cleanDate.substring(6,8)}`;
+        }
     }
+
+    var num = Number(valStr);
+    if (!isNaN(num) && num > 40000 && num < 60000) {
+        var jsDate = new Date(Math.round((num - 25569) * 86400 * 1000));
+        var y = jsDate.getUTCFullYear();
+        var m = String(jsDate.getUTCMonth() + 1).padStart(2, '0');
+        var d = String(jsDate.getUTCDate()).padStart(2, '0');
+        if (y >= 2020 && y <= 2030) {
+            return `${y}-${m}-${d}`;
+        }
+    }
+
     return "";
 }
 
@@ -127,7 +134,6 @@ function syncSalesWithGoogle(msg, renderCallback) {
 function openSalesUploadModal() { document.getElementById('salesUploadModal').style.display = 'flex'; }
 function closeSalesUploadModal() { document.getElementById('salesUploadModal').style.display = 'none'; }
 
-// 🎯 [핵심 1] 종속 드롭다운 매핑 관리 팝업 생성 (팝업 전체 너비 확장 & 비율 정밀 조정 적용)
 function openEditMappingModal() {
     var unmappedSet = new Set();
     var masterNames = window.stockItems.map(i => i.itemName || i.name || i.item).filter(Boolean);
@@ -144,14 +150,12 @@ function openEditMappingModal() {
     document.getElementById('unmappedCountBadge').innerText = unmappedList.length;
     document.getElementById('mappedCountBadge').innerText = Object.keys(window.itemMappings).length;
 
-    // 🎯 [핵심 수정] 팝업 카드의 전체 너비를 1100px로 대폭 확장하여 3번째 모델명 드롭다운 짤림 현상 완벽 방지
     var modalCard = document.querySelector('#editMappingModal .modal-card');
     if (modalCard) {
         modalCard.style.maxWidth = '1100px';
         modalCard.style.width = '90%';
     }
 
-    // A. 미매핑 목록 생성
     var unmappedTbody = document.getElementById('unmappedManagerTableBody');
     unmappedTbody.innerHTML = "";
 
@@ -178,7 +182,6 @@ function openEditMappingModal() {
         });
     }
 
-    // B. 기존 매핑된 목록 생성
     var mappedTbody = document.getElementById('existingMappingsTableBody');
     mappedTbody.innerHTML = "";
     var keys = Object.keys(window.itemMappings);
@@ -215,7 +218,6 @@ function openEditMappingModal() {
     document.getElementById('editMappingModal').style.display = 'flex';
 }
 
-// 중복 제거된 품목명 드롭다운 HTML 생성
 function getUniqueItemOptionsHtml(selectedItem) {
     var items = Array.from(new Set(window.stockItems.map(i => i.itemName || i.name || i.item).filter(Boolean)));
     var html = `<option value="">-- ERP 품목 선택 --</option>`;
@@ -226,7 +228,6 @@ function getUniqueItemOptionsHtml(selectedItem) {
     return html;
 }
 
-// 품목 선택 시 해당 품목에 속한 모델명만 드롭다운으로 업데이트 (종속 드롭다운)
 function onMappingItemChange(itemSelectElem, targetModelSelectId) {
     var selectedItem = itemSelectElem.value;
     var modelSelectElem = document.getElementById(targetModelSelectId);
@@ -235,7 +236,6 @@ function onMappingItemChange(itemSelectElem, targetModelSelectId) {
     }
 }
 
-// 특정 품목명에 속한 모델명 목록 추출
 function getModelOptionsHtml(itemName, selectedModel) {
     if (!itemName) return `<option value="">-- 모델명 선택 --</option>`;
 
@@ -328,6 +328,7 @@ function saveEditedMappings() {
     syncSalesWithGoogle("쇼핑몰 품목 매핑 수정", function() { location.reload(); });
 }
 
+// 🎯 스마트스토어 파싱: '결제일' 및 '최종 총 주문금액(AG열)' 정밀 인식
 function processSalesCsvUpload() {
     var fileInput = document.getElementById('salesCsvFileInput');
     var mallTypeSel = document.getElementById('uploadMallType').value;
@@ -344,18 +345,31 @@ function processSalesCsvUpload() {
             if (!rows[r]) continue;
             var rawCols = rows[r].map(c => String(c || '').trim());
             var rowStr = rawCols.join(',');
+
             if (rowStr.includes('주문일') || rowStr.includes('결제일') || rowStr.includes('일자')) {
                 headerIdx = r;
+
                 rawCols.forEach((colText, cIdx) => {
                     var cleanCol = colText.replace(/\s+/g, '');
-                    if (cleanCol.includes('결제일') || cleanCol.includes('구매확정일') || cleanCol.includes('주문일')) if (dateColIdx === -1) dateColIdx = cIdx;
+                    
+                    if (cleanCol === '결제일' || cleanCol === '결제일시') {
+                        dateColIdx = cIdx;
+                    } else if (dateColIdx === -1 && cleanCol.includes('주문일시')) {
+                        dateColIdx = cIdx;
+                    }
+
                     if (cleanCol === '상품명' || cleanCol.includes('등록상품명') || cleanCol.includes('노출상품명')) if (prodNameColIdx === -1 || cleanCol === '상품명') prodNameColIdx = cIdx;
                     if (cleanCol.includes('옵션정보') || cleanCol.includes('등록옵션명') || cleanCol === '옵션명') if (optInfoColIdx === -1 || cleanCol.includes('옵션정보')) optInfoColIdx = cIdx;
                     if (cleanCol === '수량' || cleanCol.includes('구매수')) if (qtyColIdx === -1) qtyColIdx = cIdx;
+                    
+                    // 🎯 금액 컬럼 정밀 우대: '최종상품별총주문금액' 및 '결제금액' 우선 지정
                     if (cleanCol.includes('금액') || cleanCol.includes('결제액') || cleanCol.includes('매출액')) {
                         allAmtColIdxes.push(cIdx);
-                        if (cleanCol.includes('결제금액') || cleanCol.includes('결제액')) amtColIdx = cIdx;
-                        else if (amtColIdx === -1 && (cleanCol.includes('총주문금액') || cleanCol.includes('상품주문금액') || cleanCol.includes('주문금액'))) amtColIdx = cIdx;
+                        if (cleanCol.includes('최종') || cleanCol.includes('결제금액') || cleanCol.includes('결제액')) {
+                            amtColIdx = cIdx;
+                        } else if (amtColIdx === -1) {
+                            amtColIdx = cIdx;
+                        }
                     }
                 });
                 break;
@@ -395,7 +409,7 @@ function processSalesCsvUpload() {
                 }
             }
 
-            if (dateVal) {
+            if (dateVal && dateVal.length === 10) {
                 var mapObj = window.itemMappings[rawOptionName];
                 var itemName = "";
                 var modelName = "";
@@ -449,16 +463,27 @@ function processSalesCsvUpload() {
     }
 }
 
+// 🎯 업로드 시 중복 방지 로직: 업로드 세션 내부 중복만 필터링하여 오누적 방지
 function finalizeSalesUpload() {
     if (window.pendingParsedEntries.length > 0) {
         var currentMall = window.pendingParsedEntries[0].mallName;
-        var existingKeys = new Set(window.salesRawEntries.map(e => `${getEntryDate(e)}|${getEntryMall(e)}|${e.rawOptionName || e.r}|${getEntryQty(e)}|${getEntryAmt(e)}`));
+        
         var added = 0;
+        var sessionKeys = new Set();
+
         window.pendingParsedEntries.forEach(newEntry => {
-            var key = `${getEntryDate(newEntry)}|${getEntryMall(newEntry)}|${newEntry.rawOptionName}|${getEntryQty(newEntry)}|${getEntryAmt(newEntry)}`;
-            if (!existingKeys.has(key)) { window.salesRawEntries.push(newEntry); existingKeys.add(key); added++; }
+            var rawOpt = String(newEntry.rawOptionName || newEntry.r || '').trim();
+            var key = `${getEntryDate(newEntry)}|${getEntryMall(newEntry)}|${rawOpt}|${getEntryQty(newEntry)}|${getEntryAmt(newEntry)}`;
+            
+            // 동일 파일 내 완전 중복 행만 걸러내고 무조건 추가
+            if (!sessionKeys.has(key)) {
+                window.salesRawEntries.push(newEntry);
+                sessionKeys.add(key);
+                added++;
+            }
         });
-        alert(`✅ [${currentMall}] 신규/추가 매출 데이터 ${added}건이 완벽하게 누적합산 되었습니다!`);
+        
+        alert(`✅ [${currentMall}] 매출 데이터 ${added}건이 정상 등록 되었습니다!`);
         closeSalesUploadModal();
         syncSalesWithGoogle("매출 데이터 누적 업데이트", function() { location.reload(); });
         window.pendingParsedEntries = [];
