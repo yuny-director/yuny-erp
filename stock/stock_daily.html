@@ -23,6 +23,14 @@
         .btn-orange:hover { background-color: #d35400 !important; }
         .btn-gray { background-color: #7f8c8d !important; }
 
+        /* 🎯 [신규] 매핑 상태 필터 탭 스타일 */
+        .filter-tab-bar { display: flex; gap: 6px; margin-bottom: 12px; }
+        .filter-tab-btn { padding: 6px 14px; font-weight: bold; font-size: 12px; border-radius: 20px; cursor: pointer; border: 1px solid #cbd5e1; background: #ffffff; color: #475569; transition: all 0.2s; }
+        .filter-tab-btn:hover { background: #f1f5f9; }
+        .filter-tab-btn.active { background: #2c3e50; color: #ffffff; border-color: #2c3e50; }
+        .filter-tab-btn.active-mapped { background: #27ae60; color: #ffffff; border-color: #27ae60; }
+        .filter-tab-btn.active-unmapped { background: #e74c3c; color: #ffffff; border-color: #e74c3c; }
+
         .cat-tab-bar { display: flex; gap: 6px; margin-bottom: 15px; border-bottom: 2px solid #2c3e50; padding-bottom: 5px; }
         .cat-tab-btn { padding: 8px 16px; font-weight: bold; font-size: 13px; border-radius: 6px 6px 0 0; cursor: pointer; border: 1px solid #ccc; border-bottom: none; background: #e9ecef; color: #495057; }
         .cat-tab-btn.active { background: #2c3e50; color: #fff; border-color: #2c3e50; }
@@ -68,6 +76,7 @@
     <script>
         document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -88,7 +97,7 @@
             </div>
             <div style="display:flex; gap:8px;" id="stockControlBtnGroup">
                 <button class="btn btn-purple" onclick="openSortModal()">📊 품목 표시 순서 정렬</button>
-                <button class="btn btn-orange" onclick="openStockCsvModal()">📥 입/출고 CSV 대량 업로드</button>
+                <button class="btn btn-orange" onclick="openStockCsvModal()">📥 입/출고 엑셀(CSV) 대량 업로드</button>
             </div>
         </div>
     </div>
@@ -126,8 +135,15 @@
     </div>
 
     <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <h3 style="margin:0; color:#2c3e50;">📦 품목 마스터 연동 실시간 재고 대장표 (헤더 클릭 시 정렬)</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 style="margin:0; color:#2c3e50;">📦 품목 마스터 연동 실시간 재고 대장표</h3>
+            
+            <!-- 🎯 [신규] 매핑 상태 필터 버튼 그룹 -->
+            <div class="filter-tab-bar">
+                <div class="filter-tab-btn active" id="btnFilterAll" onclick="setMappingFilter('all')">🌐 전체보기</div>
+                <div class="filter-tab-btn" id="btnFilterMapped" onclick="setMappingFilter('mapped')">✅ 매핑 완료 상품만 보기</div>
+                <div class="filter-tab-btn" id="btnFilterUnmapped" onclick="setMappingFilter('unmapped')">🚨 미매핑 상품만 보기</div>
+            </div>
         </div>
 
         <div class="table-container">
@@ -156,18 +172,19 @@
 <div id="stockCsvModal" class="modal-overlay">
     <div class="modal-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:2px solid #2c3e50; padding-bottom:8px;">
-            <h3 style="margin:0; color:#2c3e50;">📥 입 / 출고 내역 CSV 대량 업로드</h3>
+            <h3 style="margin:0; color:#2c3e50;">📥 입 / 출고 내역 엑셀(CSV) 대량 업로드</h3>
             <span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeStockCsvModal()">&times;</span>
         </div>
-        <p style="font-size:12px; color:#666; margin-bottom:15px;">
-            CSV 파일 서식: <b>[날짜(YYYY-MM-DD), 구분(in/out), 품목명, 수량]</b> 순서 (첫 줄 헤더 포함)
+        <p style="font-size:12px; color:#666; margin-bottom:15px; line-height:1.5;">
+            * <b>집하 엑셀</b>: D열(집하일자), Z열(물품명), AA열(물품옵션), AC열(내품수량) 기준<br>
+            * <b>표준 CSV</b>: [날짜(YYYY-MM-DD), 구분(in/out), 품목명, 수량] 순서
         </p>
         <div class="form-group" style="margin-bottom:15px;">
-            <input type="file" id="stockCsvFileInput" accept=".csv" style="height:auto; padding:8px;">
+            <input type="file" id="stockCsvFileInput" accept=".xlsx, .xls, .csv" style="height:auto; padding:8px;">
         </div>
         <div style="display:flex; justify-content:flex-end; gap:8px;">
             <button class="btn btn-gray" onclick="closeStockCsvModal()">취소</button>
-            <button class="btn btn-orange" onclick="processStockCsvUpload()">CSV 입출고 업로드 실행</button>
+            <button class="btn btn-orange" onclick="processStockCsvUpload()">엑셀/CSV 업로드 실행</button>
         </div>
     </div>
 </div>
@@ -177,10 +194,11 @@
     window.stockEntries = [];
     window.categories = [];
     window.itemOrder = [];
+    window.itemMappings = {};
     window.currentCatLevelTab = 'large';
     window.isStockReadOnly = false;
+    window.currentMappingFilter = 'all'; // 🎯 매핑 상태 필터 상태 변수 (all / mapped / unmapped)
 
-    // 🎯 [정렬 관리 변수] 입고발주표와 동일하게 헤더 클릭 시 오름차순/내림차순 토글
     var stockTableSortState = { type: 'custom', dateTarget: 0, asc: true };
 
     document.addEventListener("DOMContentLoaded", function() {
@@ -206,7 +224,17 @@
         loadStockData();
     });
 
-    // 🎯 [헤더 클릭 정렬 함수]
+    // 🎯 [신규] 매핑 상태 필터 스위치 함수
+    function setMappingFilter(filterType) {
+        window.currentMappingFilter = filterType;
+        
+        document.getElementById('btnFilterAll').className = 'filter-tab-btn' + (filterType === 'all' ? ' active' : '');
+        document.getElementById('btnFilterMapped').className = 'filter-tab-btn' + (filterType === 'mapped' ? ' active-mapped' : '');
+        document.getElementById('btnFilterUnmapped').className = 'filter-tab-btn' + (filterType === 'unmapped' ? ' active-unmapped' : '');
+
+        buildStockPivotTable();
+    }
+
     function toggleStockHeaderSort(type, dateTarget) {
         if (stockTableSortState.type === type && stockTableSortState.dateTarget === (dateTarget || 0)) {
             stockTableSortState.asc = !stockTableSortState.asc;
@@ -245,6 +273,7 @@
             window.stockEntries = Array.isArray(data.stockEntries) ? data.stockEntries : [];
             window.categories = Array.isArray(data.categories) ? data.categories : [];
             window.itemOrder = Array.isArray(data.itemOrder) ? data.itemOrder : [];
+            window.itemMappings = (data.itemMappings && typeof data.itemMappings === 'object') ? data.itemMappings : {};
 
             renderStockDropdowns();
             buildStockPivotTable();
@@ -292,19 +321,67 @@
     }
 
     function filterEntriesByItem(itemName) {
-        return window.stockEntries.filter(e => (e.item === itemName || e.itemName === itemName));
+        return window.stockEntries.filter(e => {
+            var rawOpt = e.item || e.itemName || "";
+            var mappedObj = window.itemMappings[rawOpt];
+            var mappedName = "";
+            if (mappedObj) {
+                mappedName = typeof mappedObj === 'object' ? mappedObj.itemName : mappedObj;
+            }
+            return (rawOpt === itemName || e.itemName === itemName || mappedName === itemName);
+        });
     }
 
-    // 🎯 [정렬 로직 처리] 헤더 클릭 상태에 따른 정렬
+    // 🎯 [필터링 엔진 추가] 매핑 상태(전체/매핑완료/미매핑)에 맞춰 표에 그릴 품목 수집
     function getSortedStockItems() {
-        var items = window.stockItems.slice();
+        var masterItems = window.stockItems.slice();
+        var masterNames = masterItems.map(i => getItemName(i));
+
+        // 미매핑 출고 수집옵션 추출
+        var unmappedSet = new Set();
+        window.stockEntries.forEach(e => {
+            var rawOpt = e.item || e.itemName || "";
+            var mappedObj = window.itemMappings[rawOpt];
+            var mappedName = mappedObj ? (typeof mappedObj === 'object' ? mappedObj.itemName : mappedObj) : "";
+            if (!mappedName && !masterNames.includes(rawOpt) && rawOpt) {
+                unmappedSet.add(rawOpt);
+            }
+        });
+
+        var displayItems = [];
+
+        // 1. 전체보기 (all)
+        if (window.currentMappingFilter === 'all') {
+            displayItems = masterItems.slice();
+            unmappedSet.forEach(unmappedOpt => {
+                displayItems.push({ itemName: unmappedOpt, modelName: "미매핑" });
+            });
+        } 
+        // 2. 매핑 완료 상품만 보기 (mapped)
+        else if (window.currentMappingFilter === 'mapped') {
+            displayItems = masterItems.filter(i => {
+                var name = getItemName(i);
+                // 매핑원장(itemMappings)의 값 중에서 이 원가 품목으로 매핑된 내역이 있는지 확인
+                var isMapped = Object.values(window.itemMappings).some(val => {
+                    var mName = typeof val === 'object' ? val.itemName : val;
+                    return mName === name;
+                });
+                return isMapped;
+            });
+        } 
+        // 3. 미매핑 상품만 보기 (unmapped)
+        else if (window.currentMappingFilter === 'unmapped') {
+            unmappedSet.forEach(unmappedOpt => {
+                displayItems.push({ itemName: unmappedOpt, modelName: "미매핑" });
+            });
+        }
 
         var selYear = parseInt(document.getElementById("filterYear").value);
         var selMonth = parseInt(document.getElementById("filterMonth").value);
         var strMonth = selMonth < 10 ? "0" + selMonth : String(selMonth);
         var monthPrefix = `${selYear}-${strMonth}`;
 
-        items.sort((a, b) => {
+        displayItems.sort((a, b) => {
             var nameA = getItemName(a);
             var nameB = getItemName(b);
             var modelA = getItemModel(a);
@@ -339,7 +416,6 @@
                 var dSumB = getDaySum(nameB);
                 return stockTableSortState.asc ? dSumA - dSumB : dSumB - dSumA;
             } else {
-                // 지정된 표시순서 (기본)
                 var idxA = window.itemOrder.indexOf(nameA);
                 var idxB = window.itemOrder.indexOf(nameB);
                 if (idxA === -1) idxA = 999;
@@ -348,7 +424,7 @@
             }
         });
 
-        return items;
+        return displayItems;
     }
 
     function calcTotalStock(itemName) {
@@ -449,7 +525,6 @@
         });
     }
 
-    // 🎯 [실시간 재고 대장표 헤더 생성 및 빌드]
     function buildStockPivotTable() {
         var table = document.getElementById('stockPivotTable');
         if (!table) return;
@@ -473,7 +548,6 @@
             return ' ↕️';
         };
 
-        // 🎯 [헤더 HTML] 품목명, 모델명, 당월 입/출고, 현재 총재고 및 날짜 헤더(08/01 형태 보존) 클릭 시 정렬 토글
         var headerHtml = `<thead><tr>
             <th class="fix-col-1 sort-header" onclick="toggleStockHeaderSort('name')">품목명 ${getSortIcon('name')}</th>
             <th class="fix-col-2 sort-header" onclick="toggleStockHeaderSort('model')">모델명 ${getSortIcon('model')}</th>
@@ -482,7 +556,7 @@
             <th class="fix-col-5 sort-header" onclick="toggleStockHeaderSort('stock')">현재 총재고 ${getSortIcon('stock')}</th>
             ${dateSet.map((d, i) => {
                 var dayNum = i + 1;
-                var displayDateStr = d.substring(5).replace("-","/"); // 08/01 형태 보존
+                var displayDateStr = d.substring(5).replace("-","/");
                 return `<th class="sort-header" style="min-width:55px;" data-col-idx="${i + 6}" onclick="toggleStockHeaderSort('date', ${dayNum})">${displayDateStr} ${getSortIcon('date', dayNum)}</th>`;
             }).join('')}
         </tr></thead>`;
@@ -490,6 +564,10 @@
         var bodyHtml = "<tbody>";
 
         var sortedItems = getSortedStockItems();
+
+        if (sortedItems.length === 0) {
+            bodyHtml += `<tr><td colspan="${dateSet.length + 5}" style="padding:20px; color:#888; text-align:center;">선택하신 조건에 해당하는 상품이 없습니다.</td></tr>`;
+        }
 
         sortedItems.forEach((item, itemIdx) => {
             var name = getItemName(item);
@@ -681,43 +759,167 @@
     function openStockCsvModal() { if (window.isStockReadOnly) return; document.getElementById('stockCsvModal').style.display = 'flex'; }
     function closeStockCsvModal() { document.getElementById('stockCsvModal').style.display = 'none'; }
 
+    function parseExcelStockDate(val) {
+        if (!val) return "";
+        var valStr = String(val).trim();
+        
+        var dateMatch = valStr.match(/(202[0-9]|203[0-9])[-\/\.]?(0[1-9]|1[0-2])[-\/\.]?(0[1-9]|[12][0-9]|3[01])/);
+        if (dateMatch) {
+            var cleanDate = dateMatch[0].replace(/[-\/\.]/g, '');
+            if (cleanDate.length === 8) {
+                return `${cleanDate.substring(0,4)}-${cleanDate.substring(4,6)}-${cleanDate.substring(6,8)}`;
+            }
+        }
+
+        var num = Number(valStr);
+        if (!isNaN(num) && num > 40000 && num < 60000) {
+            var jsDate = new Date(Math.round((num - 25569) * 86400 * 1000));
+            var y = jsDate.getUTCFullYear();
+            var m = String(jsDate.getUTCMonth() + 1).padStart(2, '0');
+            var d = String(jsDate.getUTCDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+        return "";
+    }
+
     function processStockCsvUpload() {
         if (window.isStockReadOnly) return;
         var fileInput = document.getElementById('stockCsvFileInput');
-        if (!fileInput.files || fileInput.files.length === 0) { alert("CSV 파일을 선택해 주세요!"); return; }
+        if (!fileInput.files || fileInput.files.length === 0) { alert("업로드할 엑셀 또는 CSV 파일을 선택해 주세요!"); return; }
 
         var file = fileInput.files[0];
-        var reader = new FileReader();
-        reader.onload = function(e) {
-            var text = e.target.result;
-            var lines = text.split('\n');
+        var fileName = file.name.toLowerCase();
+
+        var processParsedRows = function(rows) {
+            if (!rows || rows.length < 2) { alert("파일에 데이터가 없습니다."); return; }
+            
             var addCount = 0;
+            window.lastUploadedRawOptions = [];
 
-            for (var i = 1; i < lines.length; i++) {
-                var line = lines[i].trim();
-                if (!line) continue;
-                var parts = line.split(',');
-                if (parts.length >= 4) {
-                    var date = parts[0] ? parts[0].trim() : "";
-                    var type = parts[1] ? parts[1].trim() : "in";
-                    var name = parts[2] ? parts[2].trim() : "";
-                    var qty = parts[3] ? parseInt(parts[3].trim()) || 0 : 0;
+            var headerIdx = -1;
+            for (var r = 0; r < Math.min(10, rows.length); r++) {
+                if (!rows[r]) continue;
+                var rStr = rows[r].map(c => String(c || '').trim()).join(',');
+                if (rStr.includes('집하일자') || rStr.includes('물품명') || rStr.includes('운송장')) {
+                    headerIdx = r;
+                    break;
+                }
+            }
 
-                    if (date && name && qty > 0) {
-                        var idx = window.stockEntries.findIndex(x => (x.item === name || x.itemName === name) && x.date === date && x.type === type);
-                        var entry = { date: date, type: type, item: name, itemName: name, qty: qty };
-                        if (idx > -1) window.stockEntries[idx] = entry;
+            var isShippingFormat = (headerIdx !== -1) || (rows[0] && rows[0].length >= 26);
+
+            if (isShippingFormat) {
+                var startDataRow = headerIdx !== -1 ? headerIdx + 1 : 1;
+
+                var datesInExcel = new Set();
+                for (var k = startDataRow; k < rows.length; k++) {
+                    if (rows[k] && rows[k][3]) {
+                        var dStr = parseExcelStockDate(String(rows[k][3]).trim());
+                        if (dStr) datesInExcel.add(dStr);
+                    }
+                }
+
+                if (datesInExcel.size > 0) {
+                    window.stockEntries = window.stockEntries.filter(e => !(e.type === 'out' && datesInExcel.has(e.date)));
+                }
+
+                for (var i = startDataRow; i < rows.length; i++) {
+                    var cols = rows[i];
+                    if (!cols || cols.length < 4) continue;
+
+                    var rawDate = cols[3] ? String(cols[3]).trim() : "";
+                    var dateStr = parseExcelStockDate(rawDate);
+
+                    var prodName = cols[25] ? String(cols[25]).trim() : "";
+                    var optName = cols[26] ? String(cols[26]).trim() : "";
+
+                    var rawQtyVal = cols[28] !== undefined ? String(cols[28]).trim() : "1";
+                    var qtyVal = Number(rawQtyVal.replace(/[^0-9]/g, '')) || 1;
+
+                    var rawOptionName = "";
+                    if (prodName && optName && optName.toLowerCase() !== "nan") {
+                        rawOptionName = `${prodName} [옵션: ${optName}]`;
+                    } else if (prodName) {
+                        rawOptionName = prodName;
+                    }
+
+                    if (dateStr && rawOptionName) {
+                        var cleanOptName = rawOptionName.trim();
+                        window.lastUploadedRawOptions.push(cleanOptName);
+
+                        var existingIdx = window.stockEntries.findIndex(e => e.date === dateStr && (e.item === cleanOptName || e.itemName === cleanOptName) && e.type === 'out');
+                        
+                        if (existingIdx > -1) {
+                            window.stockEntries[existingIdx].qty = Number(window.stockEntries[existingIdx].qty || 0) + qtyVal;
+                        } else {
+                            window.stockEntries.push({
+                                date: dateStr,
+                                type: 'out',
+                                item: cleanOptName,
+                                itemName: cleanOptName,
+                                qty: qtyVal
+                            });
+                        }
+                        addCount++;
+                    }
+                }
+            } else {
+                for (var j = 1; j < rows.length; j++) {
+                    var lineCols = rows[j];
+                    if (!lineCols || lineCols.length < 4) continue;
+
+                    var stdDate = parseExcelStockDate(lineCols[0]);
+                    var stdType = String(lineCols[1] || 'in').trim().toLowerCase();
+                    var stdName = String(lineCols[2] || '').trim();
+                    var stdQty = parseInt(String(lineCols[3]).replace(/[^0-9]/g, '')) || 0;
+
+                    if (stdDate && stdName && stdQty > 0) {
+                        var sIdx = window.stockEntries.findIndex(x => (x.item === stdName || x.itemName === stdName) && x.date === stdDate && x.type === stdType);
+                        var entry = { date: stdDate, type: stdType, item: stdName, itemName: stdName, qty: stdQty };
+                        
+                        if (sIdx > -1) window.stockEntries[sIdx] = entry;
                         else window.stockEntries.push(entry);
                         addCount++;
                     }
                 }
             }
 
-            alert(`${addCount}건의 입출고 내역이 대량 등록되었습니다.`);
+            alert(`✅ 총 ${addCount}건의 엑셀 출고 내역이 정밀 덮어쓰기 방식으로 반영되었습니다!`);
             closeStockCsvModal();
-            syncStockWithGoogle("CSV 대량 입출고 등록");
+            syncStockWithGoogle("집하일자 엑셀 대량 출고 등록");
         };
-        reader.readAsText(file, "EUC-KR");
+
+        if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+            if (typeof XLSX === 'undefined') {
+                alert("⚠️ 엑셀 파싱 라이브러리를 로딩 중입니다. 잠시 후 다시 업로드를 실행해 주세요.");
+                return;
+            }
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var data = new Uint8Array(e.target.result);
+                    var workbook = XLSX.read(data, { type: 'array' });
+                    var firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    var rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                    processParsedRows(rows);
+                } catch (err) {
+                    alert("⚠️ 보안 엑셀 파일이거나 형식이 잘못되었습니다. 엑셀에서 연 뒤 다른 이름으로 저장(.xlsx) 후 업로드해 주세요.");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var text = "";
+                try { text = new TextDecoder('utf-8', { fatal: true }).decode(e.target.result); } 
+                catch (err) { text = new TextDecoder('euc-kr').decode(e.target.result); }
+                
+                var rows = text.split(/\r\n|\n/).map(line => line.trim().split(',').map(c => c.replace(/"/g, '')));
+                processParsedRows(rows);
+            };
+            reader.readAsArrayBuffer(file);
+        }
     }
 </script>
 </body>
