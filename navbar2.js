@@ -1,4 +1,4 @@
-// 🚨 YUNY_ERP 전역 네비게이션바 (매출관리 서브메뉴 4개 개편 완본)
+// 🚨 YUNY_ERP 전역 네비게이션바 (매출관리 및 재고표 서브메뉴 개편 완본)
 (function() {
     // 🎯 [핵심] GOOGLE_SCRIPT_URL 전역 안전장치 (config.js 누락 대비)
     if (!window.GOOGLE_SCRIPT_URL || window.GOOGLE_SCRIPT_URL === "") {
@@ -45,7 +45,9 @@
         var isSales = currentPath.indexOf('sales') > -1;
         var isMargin = currentPath.indexOf('margin') > -1;
         var isTotal = currentPath.indexOf('admin-total') > -1 || currentPath.indexOf('worker-input') > -1;
-        var isStock = currentPath.indexOf('admin-stock') > -1 || currentPath.indexOf('admin-order') > -1;
+        
+        // 🎯 [수정] 새 stock 폴더 및 레거시 경로 공통 감지
+        var isStock = currentPath.indexOf('stock') > -1 || currentPath.indexOf('admin-stock') > -1 || currentPath.indexOf('admin-order') > -1;
 
         var navHtml = `
         <style>
@@ -177,7 +179,6 @@
                         </div>
                     </div>` : ''}
                 
-                <!-- 🎯 [수정된 매출관리 4개 서브메뉴 드롭다운] -->
                 ${canSales ? `
                     <div class="nav-dropdown">
                         <a href="../sales/sales_mall.html" class="${isSales ? 'active-menu' : ''}">💰 매출관리 ▾</a>
@@ -190,14 +191,17 @@
                     </div>` : ''}
 
                 ${canMargin ? `<a href="../margin/margin.html" class="${isMargin ? 'active-menu' : ''}">📝 마진관리</a>` : ''}
+                
+                <!-- 🎯 [수정된 stock 독립 폴더 경로 반영] -->
                 ${canStock ? `
                     <div class="nav-dropdown">
-                        <a href="../uni-work/admin-stock.html" class="${isStock ? 'active-menu' : ''}">📦 재고표 ▾</a>
+                        <a href="../stock/stock_daily.html" class="${isStock ? 'active-menu' : ''}">📦 재고표 ▾</a>
                         <div class="nav-dropdown-content">
-                            <a href="../uni-work/admin-stock.html">📅 일별입출고</a>
-                            <a href="../uni-work/admin-order.html">📊 입고발주표</a>
+                            <a href="../stock/stock_daily.html">📅 일별입출고</a>
+                            <a href="../stock/stock_order.html">📊 입고발주표</a>
                         </div>
                     </div>` : ''}
+                
                 ${canUniwork ? `<a href="${uniworkLink}" class="${isTotal ? 'active-menu' : ''}">🛠️ 유니워크</a>` : ''}
             </div>
             <div class="navbar-user-info">
