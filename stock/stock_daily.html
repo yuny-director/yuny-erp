@@ -1,1 +1,724 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YUNY_ERP - 통합 재고 및 입출고 관리표</title>
+    <style>
+        html { margin: 0; padding: 0; background-color: #f4f6f9; font-family: Arial, sans-serif; }
+        body { margin: 0; padding: 0; padding-top: 65px !important; background-color: #f4f6f9; font-family: Arial, sans-serif; }
 
+        .content { padding: 15px; }
+        .card { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .flex-form-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { margin-bottom: 6px; font-weight: bold; font-size: 13px; color: #333; }
+        .form-group input, .form-group select { padding: 0 10px; border: 1px solid #ccc; border-radius: 4px; height: 38px; box-sizing: border-box; font-size: 13px; background-color: #ffffff; }
+
+        .btn { padding: 0 16px; background-color: #1abc9c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; height: 38px; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s; box-sizing: border-box; }
+        .btn:hover { background-color: #16a085; }
+        .btn-purple { background-color: #9b59b6 !important; }
+        .btn-purple:hover { background-color: #8e44ad !important; }
+        .btn-orange { background-color: #e67e22 !important; }
+        .btn-orange:hover { background-color: #d35400 !important; }
+        .btn-gray { background-color: #7f8c8d !important; }
+
+        .cat-tab-bar { display: flex; gap: 6px; margin-bottom: 15px; border-bottom: 2px solid #2c3e50; padding-bottom: 5px; }
+        .cat-tab-btn { padding: 8px 16px; font-weight: bold; font-size: 13px; border-radius: 6px 6px 0 0; cursor: pointer; border: 1px solid #ccc; border-bottom: none; background: #e9ecef; color: #495057; }
+        .cat-tab-btn.active { background: #2c3e50; color: #fff; border-color: #2c3e50; }
+
+        .cat-summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; max-height: 220px; overflow-y: auto; padding: 5px; }
+        .cat-summary-card { background: #f8f9fa; border: 1px solid #ced4da; border-radius: 6px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .cat-summary-title { font-weight: bold; font-size: 14px; color: #2c3e50; margin-bottom: 8px; border-bottom: 1px solid #dee2e6; padding-bottom: 4px; }
+        .cat-summary-val { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
+
+        .table-container { width: 100%; max-height: 65vh; overflow: auto !important; border: 1px solid #ccc; border-radius: 6px; background: white; -webkit-overflow-scrolling: touch; }
+        table { border-collapse: separate !important; border-spacing: 0 !important; font-size: 12px; width: auto; min-width: 100%; table-layout: fixed; }
+        th, td { padding: 8px 6px; text-align: center; white-space: nowrap; box-sizing: border-box; border-right: 1px solid #ccc !important; border-bottom: 1px solid #ccc !important; transition: background-color 0.15s ease; }
+        th { background-color: #f8f9fa !important; font-weight: bold; position: sticky !important; top: 0 !important; z-index: 30 !important; }
+
+        .sort-header { cursor: pointer; user-select: none; transition: background 0.15s; }
+        .sort-header:hover { background-color: #dbeafe !important; color: #1d4ed8 !important; }
+
+        .fix-col-1 { position: sticky !important; left: 0px !important; min-width: 180px; max-width: 240px; background: #ffffff !important; z-index: 10; font-weight: bold; text-align: left !important; padding-left: 8px !important; white-space: normal !important; word-break: break-all; }
+        .fix-col-2 { position: sticky !important; left: 180px !important; min-width: 110px; max-width: 140px; background: #ffffff !important; z-index: 10; font-weight: bold; color:#2980b9; white-space: normal !important; word-break: break-all; }
+        .fix-col-3 { position: sticky !important; left: 290px !important; min-width: 55px; max-width: 65px; background: #fafafa !important; z-index: 10; }
+        .fix-col-4 { position: sticky !important; left: 345px !important; min-width: 85px; max-width: 100px; background: #eef2f5 !important; z-index: 10; font-weight: bold; }
+        .fix-col-5 { position: sticky !important; left: 430px !important; min-width: 85px; max-width: 95px; background: #e6fcf5 !important; z-index: 10; font-weight: bold; color: #099268; border-right: 2px solid #999 !important; }
+
+        th.fix-col-1, th.fix-col-2, th.fix-col-3, th.fix-col-4, th.fix-col-5 { z-index: 40 !important; text-align: center !important; }
+
+        .row-in { color: #1971c2; font-weight: bold; }
+        .row-out { color: #e03131; font-weight: bold; }
+        .inline-edit-input { width: 90%; height: 24px; text-align: center; border: 2px solid #2980b9; border-radius: 4px; box-sizing: border-box; font-weight: bold; }
+        .editable-cell { cursor: pointer; min-width: 45px; }
+
+        .hover-row-group { background-color: #e8f4fd !important; }
+        .hover-col { background-color: #fff3bf !important; }
+        .hover-target { background-color: #ffe066 !important; font-weight: bold; }
+        th.hover-col { background-color: #ffd8a8 !important; color: #d9480f !important; }
+
+        .sortable-list { list-style: none; padding: 0; margin: 0; }
+        .sortable-item { padding: 10px 14px; margin-bottom: 8px; background-color: #f8f9fa; border: 1px solid #ced4da; border-radius: 6px; cursor: grab; font-weight: bold; font-size: 13px; color: #2c3e50; display: flex; align-items: center; justify-content: space-between; }
+        .sortable-item.dragging { opacity: 0.5; background-color: #e8f4fd; border: 2px dashed #2980b9; }
+
+        .modal-overlay { display: none; position: fixed; z-index: 1000000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        .modal-card { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 580px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
+    </style>
+    <script>
+        document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');
+    </script>
+</head>
+<body>
+
+<div id="global-navbar"></div>
+<script>
+    document.write('<script src="../navbar2.js?v=2026_admin_stock_merged_col_v4&t=' + Date.now() + '"><\/script>');
+</script>
+
+<div class="content">
+    <div class="card" style="background-color: #eef2f5; border: 1px solid #ced4da; padding: 12px 20px;">
+        <div class="flex-form-row" style="margin-bottom: 0; align-items: center; justify-content: space-between;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <label style="color: #2c3e50; font-size: 14px; font-weight: bold;">📅 재고 조회 연월 :</label>
+                <select id="filterYear" style="width: 95px; height:36px;"></select>
+                <select id="filterMonth" style="width: 75px; height:36px;"></select>
+                <input type="date" id="globalStockDate" style="width: 140px; height:36px; margin-left:10px;">
+                <span id="loadingStatus" style="font-weight: bold; color: #27ae60; font-size:13px; margin-left:10px;">🔄 데이터 로드 중...</span>
+            </div>
+            <div style="display:flex; gap:8px;" id="stockControlBtnGroup">
+                <button class="btn btn-purple" onclick="openSortModal()">📊 품목 표시 순서 정렬</button>
+                <button class="btn btn-orange" onclick="openStockCsvModal()">📥 입/출고 CSV 대량 업로드</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0; margin-bottom:12px; font-size:16px; color:#2c3e50;">📊 대 / 중 / 소 카테고리별 실시간 재고 & 출고 분석</h3>
+        <div class="cat-tab-bar">
+            <div class="cat-tab-btn active" id="tabCatLarge" onclick="switchCategoryLevelTab('large')">🏷️ 대카테고리 분석</div>
+            <div class="cat-tab-btn" id="tabCatMedium" onclick="switchCategoryLevelTab('medium')">🏷️ 중카테고리 분석</div>
+            <div class="cat-tab-btn" id="tabCatSmall" onclick="switchCategoryLevelTab('small')">🏷️ 소카테고리 분석</div>
+        </div>
+        <div id="catSummaryGrid" class="cat-summary-grid"></div>
+    </div>
+
+    <div class="card" id="stockEntryFormCard">
+        <h4 style="margin-top:0; margin-bottom:12px; color:#2c3e50;">🛠️ 일일 입고 / 출고 수량 즉시 등록</h4>
+        <div class="flex-form-row">
+            <div class="form-group">
+                <label>구분 선택</label>
+                <select id="stockTypeSelect" style="width:100px;">
+                    <option value="in">📦 입고</option>
+                    <option value="out">🚀 출고</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>품목 선택</label>
+                <select id="stockItemSelect" style="width:240px;"></select>
+            </div>
+            <div class="form-group">
+                <label>수량 (개)</label>
+                <input type="number" id="stockQtyInput" value="100" style="width:110px;">
+            </div>
+            <button class="btn" onclick="addStockDailyEntry()">입출고 기록 저장</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 style="margin:0; color:#2c3e50;">📦 품목 마스터 연동 실시간 재고 대장표 (헤더 클릭 시 정렬)</h3>
+        </div>
+
+        <div class="table-container">
+            <table id="stockPivotTable"></table>
+        </div>
+    </div>
+</div>
+
+<div id="sortModal" class="modal-overlay">
+    <div class="modal-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:2px solid #2c3e50; padding-bottom:8px;">
+            <h3 style="margin:0; color:#2c3e50;">↕️ 재고표 품목 표시 순서 조정</h3>
+            <span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeSortModal()">&times;</span>
+        </div>
+        <p style="font-size:12px; color:#666; margin-bottom:15px;">드래그하여 원하시는 순서대로 배치하신 후 [순서 저장]을 누르세요.</p>
+        <div style="max-height:320px; overflow-y:auto; margin-bottom:15px; border:1px solid #e9ecef; border-radius:6px; padding:10px; background:#f8f9fa;">
+            <ul class="sortable-list" id="sortableList"></ul>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button class="btn btn-gray" onclick="closeSortModal()">취소</button>
+            <button class="btn btn-purple" onclick="saveStockItemOrder()">순서 저장</button>
+        </div>
+    </div>
+</div>
+
+<div id="stockCsvModal" class="modal-overlay">
+    <div class="modal-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:2px solid #2c3e50; padding-bottom:8px;">
+            <h3 style="margin:0; color:#2c3e50;">📥 입 / 출고 내역 CSV 대량 업로드</h3>
+            <span style="cursor:pointer; font-size:20px; font-weight:bold;" onclick="closeStockCsvModal()">&times;</span>
+        </div>
+        <p style="font-size:12px; color:#666; margin-bottom:15px;">
+            CSV 파일 서식: <b>[날짜(YYYY-MM-DD), 구분(in/out), 품목명, 수량]</b> 순서 (첫 줄 헤더 포함)
+        </p>
+        <div class="form-group" style="margin-bottom:15px;">
+            <input type="file" id="stockCsvFileInput" accept=".csv" style="height:auto; padding:8px;">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button class="btn btn-gray" onclick="closeStockCsvModal()">취소</button>
+            <button class="btn btn-orange" onclick="processStockCsvUpload()">CSV 입출고 업로드 실행</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.stockItems = [];
+    window.stockEntries = [];
+    window.categories = [];
+    window.itemOrder = [];
+    window.currentCatLevelTab = 'large';
+    window.isStockReadOnly = false;
+
+    // 🎯 [정렬 관리 변수] 입고발주표와 동일하게 헤더 클릭 시 오름차순/내림차순 토글
+    var stockTableSortState = { type: 'custom', dateTarget: 0, asc: true };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        checkStockPermissionGuard();
+
+        var now = new Date();
+        var currentYear = now.getFullYear();
+        var currentMonth = now.getMonth() + 1;
+
+        var ySel = document.getElementById("filterYear");
+        for (var y = currentYear - 2; y <= currentYear + 1; y++) {
+            ySel.innerHTML += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}년</option>`;
+        }
+        var mSel = document.getElementById("filterMonth");
+        for (var m = 1; m <= 12; m++) {
+            mSel.innerHTML += `<option value="${m}" ${m === currentMonth ? 'selected' : ''}>${m}월</option>`;
+        }
+        document.getElementById('globalStockDate').value = now.toISOString().split('T')[0];
+
+        ySel.onchange = buildStockPivotTable;
+        mSel.onchange = buildStockPivotTable;
+
+        loadStockData();
+    });
+
+    // 🎯 [헤더 클릭 정렬 함수]
+    function toggleStockHeaderSort(type, dateTarget) {
+        if (stockTableSortState.type === type && stockTableSortState.dateTarget === (dateTarget || 0)) {
+            stockTableSortState.asc = !stockTableSortState.asc;
+        } else {
+            stockTableSortState.type = type;
+            stockTableSortState.dateTarget = dateTarget || 0;
+            stockTableSortState.asc = (type === 'name' || type === 'model');
+        }
+        buildStockPivotTable();
+    }
+
+    function checkStockPermissionGuard() {
+        var userRole = localStorage.getItem('login_user_role') || "admin";
+        var userPermissions = {};
+        try { userPermissions = JSON.parse(localStorage.getItem('login_user_permissions') || "{}"); } catch(e) {}
+
+        if (userRole !== "admin") {
+            var stockPerm = userPermissions.stock || 'read';
+            if (stockPerm === 'read') {
+                window.isStockReadOnly = true;
+                var formCard = document.getElementById('stockEntryFormCard');
+                if (formCard) formCard.style.display = 'none';
+                var btnGroup = document.getElementById('stockControlBtnGroup');
+                if (btnGroup) btnGroup.style.display = 'none';
+            }
+        }
+    }
+
+    function loadStockData() {
+        document.getElementById('loadingStatus').innerText = "🔄 DB 로드 중...";
+        var scriptUrl = window.GOOGLE_SCRIPT_URL + (window.GOOGLE_SCRIPT_URL.indexOf('?') > -1 ? '&' : '?') + 't=' + Date.now();
+        fetch(scriptUrl)
+        .then(r => r.json())
+        .then(data => {
+            window.stockItems = Array.isArray(data.stockItems) ? data.stockItems : [];
+            window.stockEntries = Array.isArray(data.stockEntries) ? data.stockEntries : [];
+            window.categories = Array.isArray(data.categories) ? data.categories : [];
+            window.itemOrder = Array.isArray(data.itemOrder) ? data.itemOrder : [];
+
+            renderStockDropdowns();
+            buildStockPivotTable();
+            document.getElementById('loadingStatus').innerText = "✅ 실시간 동기화 완료";
+        })
+        .catch(err => {
+            document.getElementById('loadingStatus').innerText = "❌ 데이터 로드 지연";
+        });
+    }
+
+    function syncStockWithGoogle(msg) {
+        if (window.isStockReadOnly) { alert("보기 전용 권한 계정은 입출고 완수 및 수정을할 수 없습니다."); return; }
+        document.getElementById('loadingStatus').innerText = "📤 구글 DB 업데이트 중...";
+        var payload = {
+            action: "syncStock",
+            stockEntries: window.stockEntries,
+            stockItems: window.stockItems,
+            categories: window.categories
+        };
+
+        fetch(window.GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(() => {
+            document.getElementById('loadingStatus').innerText = "✅ DB 저장 완료!";
+            buildStockPivotTable();
+        })
+        .catch(() => {
+            document.getElementById('loadingStatus').innerText = "✅ 저장 완료";
+            buildStockPivotTable();
+        });
+    }
+
+    function getItemName(item) {
+        if (!item) return "이름없음";
+        return item.itemName || item.name || item.item || "이름없음";
+    }
+
+    function getItemModel(item) {
+        if (!item) return "-";
+        return item.modelName || item.model || item.spec || "-";
+    }
+
+    function filterEntriesByItem(itemName) {
+        return window.stockEntries.filter(e => (e.item === itemName || e.itemName === itemName));
+    }
+
+    // 🎯 [정렬 로직 처리] 헤더 클릭 상태에 따른 정렬
+    function getSortedStockItems() {
+        var items = window.stockItems.slice();
+
+        var selYear = parseInt(document.getElementById("filterYear").value);
+        var selMonth = parseInt(document.getElementById("filterMonth").value);
+        var strMonth = selMonth < 10 ? "0" + selMonth : String(selMonth);
+        var monthPrefix = `${selYear}-${strMonth}`;
+
+        items.sort((a, b) => {
+            var nameA = getItemName(a);
+            var nameB = getItemName(b);
+            var modelA = getItemModel(a);
+            var modelB = getItemModel(b);
+
+            if (stockTableSortState.type === 'name') {
+                return stockTableSortState.asc ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+            } else if (stockTableSortState.type === 'model') {
+                return stockTableSortState.asc ? modelA.localeCompare(modelB) : modelB.localeCompare(modelA);
+            } else if (stockTableSortState.type === 'monthSum') {
+                var sumA = calcMonthInOutSum(nameA, monthPrefix);
+                var sumB = calcMonthInOutSum(nameB, monthPrefix);
+                return stockTableSortState.asc ? sumA - sumB : sumB - sumA;
+            } else if (stockTableSortState.type === 'stock') {
+                var stockA = calcTotalStock(nameA);
+                var stockB = calcTotalStock(nameB);
+                return stockTableSortState.asc ? stockA - stockB : stockB - stockA;
+            } else if (stockTableSortState.type === 'date') {
+                var dTarget = stockTableSortState.dateTarget;
+                var strD = dTarget < 10 ? '0' + dTarget : String(dTarget);
+                var targetDate = `${monthPrefix}-${strD}`;
+
+                var getDaySum = (itemName) => {
+                    var sum = 0;
+                    filterEntriesByItem(itemName).filter(e => e.date === targetDate).forEach(e => {
+                        sum += Number(e.qty || 0);
+                    });
+                    return sum;
+                };
+
+                var dSumA = getDaySum(nameA);
+                var dSumB = getDaySum(nameB);
+                return stockTableSortState.asc ? dSumA - dSumB : dSumB - dSumA;
+            } else {
+                // 지정된 표시순서 (기본)
+                var idxA = window.itemOrder.indexOf(nameA);
+                var idxB = window.itemOrder.indexOf(nameB);
+                if (idxA === -1) idxA = 999;
+                if (idxB === -1) idxB = 999;
+                return idxA - idxB;
+            }
+        });
+
+        return items;
+    }
+
+    function calcTotalStock(itemName) {
+        var entries = filterEntriesByItem(itemName);
+        var inSum = 0, outSum = 0;
+        entries.forEach(e => {
+            if (e.type === 'in') inSum += Number(e.qty || 0);
+            if (e.type === 'out') outSum += Number(e.qty || 0);
+        });
+        return inSum - outSum;
+    }
+
+    function calcMonthInOutSum(itemName, monthPrefix) {
+        var entries = filterEntriesByItem(itemName).filter(e => e.date && e.date.startsWith(monthPrefix));
+        var sum = 0;
+        entries.forEach(e => { sum += Number(e.qty || 0); });
+        return sum;
+    }
+
+    function renderStockDropdowns() {
+        var sel = document.getElementById('stockItemSelect');
+        if (!sel) return;
+        sel.innerHTML = "";
+
+        if (window.stockItems.length === 0) {
+            sel.innerHTML = '<option value="">원가관리에서 상품을 등록해 주세요</option>';
+            return;
+        }
+
+        var sorted = getSortedStockItems();
+        sorted.forEach(i => {
+            var nameStr = getItemName(i);
+            var modelStr = getItemModel(i);
+            var modelText = modelStr !== "-" ? ` [${modelStr}]` : "";
+            sel.innerHTML += `<option value="${nameStr}">${nameStr}${modelText}</option>`;
+        });
+    }
+
+    function switchCategoryLevelTab(level) {
+        window.currentCatLevelTab = level;
+        document.getElementById('tabCatLarge').classList.toggle('active', level === 'large');
+        document.getElementById('tabCatMedium').classList.toggle('active', level === 'medium');
+        document.getElementById('tabCatSmall').classList.toggle('active', level === 'small');
+        renderCategorySummaryReport();
+    }
+
+    function renderCategorySummaryReport() {
+        var grid = document.getElementById('catSummaryGrid');
+        grid.innerHTML = "";
+
+        var selYear = parseInt(document.getElementById("filterYear").value);
+        var selMonth = parseInt(document.getElementById("filterMonth").value);
+        var strMonth = selMonth < 10 ? "0" + selMonth : String(selMonth);
+        var monthPrefix = `${selYear}-${strMonth}`;
+
+        var catMap = {};
+
+        window.stockItems.forEach(item => {
+            var itemName = getItemName(item);
+            var catName = "미분류";
+            if (window.currentCatLevelTab === 'large') catName = item.catLarge || "미분류";
+            else if (window.currentCatLevelTab === 'medium') catName = item.catMedium || "미분류";
+            else if (window.currentCatLevelTab === 'small') catName = item.catSmall || "미분류";
+
+            if (!catMap[catName]) {
+                catMap[catName] = { totalStock: 0, monthIn: 0, monthOut: 0 };
+            }
+
+            filterEntriesByItem(itemName).forEach(e => {
+                var q = Number(e.qty || 0);
+                if (e.type === 'in') catMap[catName].totalStock += q;
+                else if (e.type === 'out') catMap[catName].totalStock -= q;
+
+                if (e.date && e.date.startsWith(monthPrefix)) {
+                    if (e.type === 'in') catMap[catName].monthIn += q;
+                    else if (e.type === 'out') catMap[catName].monthOut += q;
+                }
+            });
+        });
+
+        var keys = Object.keys(catMap);
+        if (keys.length === 0) {
+            grid.innerHTML = '<div style="color:#888; padding:10px;">카테고리 분석 데이터가 없습니다.</div>';
+            return;
+        }
+
+        keys.forEach(cat => {
+            var info = catMap[cat];
+            var card = document.createElement('div');
+            card.className = 'cat-summary-card';
+            card.innerHTML = `
+                <div class="cat-summary-title">📂 ${cat}</div>
+                <div class="cat-summary-val"><span>현재 총재고:</span><b style="color:#099268;">${info.totalStock.toLocaleString()} 개</b></div>
+                <div class="cat-summary-val"><span>당월 입고합계:</span><b style="color:#1971c2;">${info.monthIn.toLocaleString()} 개</b></div>
+                <div class="cat-summary-val"><span>당월 출고합계:</span><b style="color:#e03131;">${info.monthOut.toLocaleString()} 개</b></div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    // 🎯 [실시간 재고 대장표 헤더 생성 및 빌드]
+    function buildStockPivotTable() {
+        var table = document.getElementById('stockPivotTable');
+        if (!table) return;
+        table.innerHTML = "";
+
+        var selYear = parseInt(document.getElementById("filterYear").value);
+        var selMonth = parseInt(document.getElementById("filterMonth").value);
+        var lastDay = new Date(selYear, selMonth, 0).getDate();
+
+        var dateSet = [];
+        var strMonth = selMonth < 10 ? "0" + selMonth : String(selMonth);
+        for (var d = 1; d <= lastDay; d++) {
+            var strDay = d < 10 ? "0" + d : String(d);
+            dateSet.push(selYear + "-" + strMonth + "-" + strDay);
+        }
+
+        var getSortIcon = (type, d) => {
+            if (stockTableSortState.type === type && (d === undefined || stockTableSortState.dateTarget === d)) {
+                return stockTableSortState.asc ? ' ⬆️' : ' ⬇️';
+            }
+            return ' ↕️';
+        };
+
+        // 🎯 [헤더 HTML] 품목명, 모델명, 당월 입/출고, 현재 총재고 및 날짜 헤더(08/01 형태 보존) 클릭 시 정렬 토글
+        var headerHtml = `<thead><tr>
+            <th class="fix-col-1 sort-header" onclick="toggleStockHeaderSort('name')">품목명 ${getSortIcon('name')}</th>
+            <th class="fix-col-2 sort-header" onclick="toggleStockHeaderSort('model')">모델명 ${getSortIcon('model')}</th>
+            <th class="fix-col-3">구분</th>
+            <th class="fix-col-4 sort-header" onclick="toggleStockHeaderSort('monthSum')">당월 입/출고 ${getSortIcon('monthSum')}</th>
+            <th class="fix-col-5 sort-header" onclick="toggleStockHeaderSort('stock')">현재 총재고 ${getSortIcon('stock')}</th>
+            ${dateSet.map((d, i) => {
+                var dayNum = i + 1;
+                var displayDateStr = d.substring(5).replace("-","/"); // 08/01 형태 보존
+                return `<th class="sort-header" style="min-width:55px;" data-col-idx="${i + 6}" onclick="toggleStockHeaderSort('date', ${dayNum})">${displayDateStr} ${getSortIcon('date', dayNum)}</th>`;
+            }).join('')}
+        </tr></thead>`;
+
+        var bodyHtml = "<tbody>";
+
+        var sortedItems = getSortedStockItems();
+
+        sortedItems.forEach((item, itemIdx) => {
+            var name = getItemName(item);
+            var model = getItemModel(item);
+            var groupClass = `item-group-${itemIdx}`;
+
+            var itemEntries = filterEntriesByItem(name);
+
+            var totalInAll = 0, totalOutAll = 0;
+            itemEntries.forEach(e => {
+                if (e.type === 'in') totalInAll += Number(e.qty || 0);
+                if (e.type === 'out') totalOutAll += Number(e.qty || 0);
+            });
+            var currentTotalStock = totalInAll - totalOutAll;
+
+            var monthInSum = 0, monthOutSum = 0;
+            dateSet.forEach(d => {
+                var inE = itemEntries.find(e => e.type === 'in' && e.date === d);
+                var outE = itemEntries.find(e => e.type === 'out' && e.date === d);
+                if (inE) monthInSum += Number(inE.qty || 0);
+                if (outE) monthOutSum += Number(outE.qty || 0);
+            });
+
+            var inRow = `<tr class="${groupClass}" data-group="${groupClass}">
+                <td class="fix-col-1" rowspan="2" style="vertical-align:middle;">${name}</td>
+                <td class="fix-col-2" rowspan="2" style="vertical-align:middle;">${model}</td>
+                <td class="fix-col-3 row-in">입고</td>
+                <td class="fix-col-4 row-in" style="background:#e7f5ff !important;">${monthInSum > 0 ? monthInSum.toLocaleString() + '개' : '0개'}</td>
+                <td class="fix-col-5" rowspan="2" style="vertical-align:middle; font-size:13px;">${currentTotalStock.toLocaleString()}개</td>`;
+            
+            dateSet.forEach((d, cIdx) => {
+                var e = itemEntries.find(x => x.type === 'in' && x.date === d);
+                var q = e ? e.qty : 0;
+                inRow += `<td class="editable-cell" data-col-idx="${cIdx + 6}" onclick="makeStockCellEditable(this, '${d}', '${name}', 'in')">${q || '-'}</td>`;
+            });
+            inRow += `</tr>`;
+
+            var outRow = `<tr class="${groupClass}" data-group="${groupClass}">
+                <td class="fix-col-3 row-out">출고</td>
+                <td class="fix-col-4 row-out" style="background:#fff5f5 !important;">${monthOutSum > 0 ? monthOutSum.toLocaleString() + '개' : '0개'}</td>`;
+            
+            dateSet.forEach((d, cIdx) => {
+                var e = itemEntries.find(x => x.type === 'out' && x.date === d);
+                var q = e ? e.qty : 0;
+                outRow += `<td class="editable-cell" data-col-idx="${cIdx + 6}" onclick="makeStockCellEditable(this, '${d}', '${name}', 'out')">${q || '-'}</td>`;
+            });
+            outRow += `</tr>`;
+
+            bodyHtml += inRow + outRow;
+        });
+
+        bodyHtml += "</tbody>";
+        table.innerHTML = headerHtml + bodyHtml;
+
+        renderCategorySummaryReport();
+        initTableHoverEffects();
+    }
+
+    function initTableHoverEffects() {
+        var table = document.getElementById('stockPivotTable');
+        if (!table) return;
+
+        table.addEventListener('mouseover', function(e) {
+            var td = e.target.closest('td, th');
+            if (!td) return;
+
+            clearTableHoverEffects();
+
+            var tr = td.parentElement;
+            var groupName = tr.getAttribute('data-group');
+            var colIdx = td.getAttribute('data-col-idx');
+
+            if (groupName) {
+                var groupRows = table.querySelectorAll(`tr[data-group="${groupName}"]`);
+                groupRows.forEach(r => {
+                    r.querySelectorAll('td').forEach(c => c.classList.add('hover-row-group'));
+                });
+            }
+
+            if (colIdx) {
+                var colCells = table.querySelectorAll(`[data-col-idx="${colIdx}"]`);
+                colCells.forEach(c => c.classList.add('hover-col'));
+            }
+
+            if (td.tagName === 'TD' && colIdx) {
+                td.classList.add('hover-target');
+            }
+        });
+
+        table.addEventListener('mouseleave', function() {
+            clearTableHoverEffects();
+        });
+    }
+
+    function clearTableHoverEffects() {
+        var table = document.getElementById('stockPivotTable');
+        if (!table) return;
+        table.querySelectorAll('.hover-row-group, .hover-col, .hover-target').forEach(el => {
+            el.classList.remove('hover-row-group', 'hover-col', 'hover-target');
+        });
+    }
+
+    function makeStockCellEditable(cell, dateFull, name, type) {
+        if (window.isStockReadOnly) {
+            alert("보기 전용 권한 계정은 입출고 수량을 수정할 수 없습니다.");
+            return;
+        }
+        if (cell.querySelector('input')) return;
+        var oldVal = cell.innerText === '-' ? '0' : cell.innerText.replace('개', '');
+        cell.innerHTML = `<input type="number" class="inline-edit-input" value="${oldVal}" onblur="saveStockInlineQty(this, '${dateFull}', '${name}', '${type}')" onkeydown="if(event.key==='Enter') this.blur();">`;
+        var input = cell.querySelector('input');
+        if (input) { input.focus(); input.select(); }
+    }
+
+    function saveStockInlineQty(input, dateFull, name, type) {
+        if (window.isStockReadOnly) return;
+        var newVal = parseInt(input.value) || 0;
+        var idx = window.stockEntries.findIndex(e => e.date === dateFull && (e.item === name || e.itemName === name) && e.type === type);
+
+        if (newVal === 0) {
+            if (idx > -1) window.stockEntries.splice(idx, 1);
+        } else {
+            var entry = { date: dateFull, item: name, itemName: name, type: type, qty: newVal };
+            if (idx > -1) window.stockEntries[idx] = entry;
+            else window.stockEntries.push(entry);
+        }
+
+        syncStockWithGoogle(`인라인 수정: ${name} [${type}] ${newVal}개`);
+    }
+
+    function addStockDailyEntry() {
+        if (window.isStockReadOnly) return;
+        var date = document.getElementById('globalStockDate').value;
+        var type = document.getElementById('stockTypeSelect').value;
+        var item = document.getElementById('stockItemSelect').value;
+        var qty = parseInt(document.getElementById('stockQtyInput').value) || 0;
+
+        if (!date || !item || qty <= 0) { alert("올바른 입출고 데이터를 입력해 주세요."); return; }
+
+        var idx = window.stockEntries.findIndex(e => e.date === date && (e.item === item || e.itemName === item) && e.type === type);
+        var entry = { date: date, item: item, itemName: item, type: type, qty: qty };
+
+        if (idx > -1) window.stockEntries[idx] = entry;
+        else window.stockEntries.push(entry);
+
+        syncStockWithGoogle(`입출고 수량 등록: ${item} (${type === 'in' ? '입고' : '출고'} ${qty}개)`);
+    }
+
+    function openSortModal() {
+        if (window.isStockReadOnly) return;
+        var list = document.getElementById('sortableList');
+        list.innerHTML = "";
+        var sorted = getSortedStockItems();
+
+        sorted.forEach(i => {
+            var nameStr = getItemName(i);
+            var li = document.createElement('li');
+            li.className = 'sortable-item';
+            li.draggable = true;
+            li.setAttribute('data-name', nameStr);
+            li.innerHTML = `<span>📦 ${nameStr}</span> <span>☰</span>`;
+
+            li.addEventListener('dragstart', () => li.classList.add('dragging'));
+            li.addEventListener('dragend', () => li.classList.remove('dragging'));
+            list.appendChild(li);
+        });
+
+        list.addEventListener('dragover', e => {
+            e.preventDefault();
+            var dragging = list.querySelector('.dragging');
+            var siblings = Array.from(list.querySelectorAll('.sortable-item:not(.dragging)'));
+            var next = siblings.find(s => e.clientY <= s.getBoundingClientRect().top + s.getBoundingClientRect().height / 2);
+            list.insertBefore(dragging, next);
+        });
+
+        document.getElementById('sortModal').style.display = 'flex';
+    }
+
+    function closeSortModal() { document.getElementById('sortModal').style.display = 'none'; }
+
+    function saveStockItemOrder() {
+        if (window.isStockReadOnly) return;
+        var items = Array.from(document.querySelectorAll('#sortableList .sortable-item'));
+        window.itemOrder = items.map(li => li.getAttribute('data-name')).filter(Boolean);
+        closeSortModal();
+        syncStockWithGoogle("재고표 품목 순서 변경 저장");
+    }
+
+    function openStockCsvModal() { if (window.isStockReadOnly) return; document.getElementById('stockCsvModal').style.display = 'flex'; }
+    function closeStockCsvModal() { document.getElementById('stockCsvModal').style.display = 'none'; }
+
+    function processStockCsvUpload() {
+        if (window.isStockReadOnly) return;
+        var fileInput = document.getElementById('stockCsvFileInput');
+        if (!fileInput.files || fileInput.files.length === 0) { alert("CSV 파일을 선택해 주세요!"); return; }
+
+        var file = fileInput.files[0];
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var text = e.target.result;
+            var lines = text.split('\n');
+            var addCount = 0;
+
+            for (var i = 1; i < lines.length; i++) {
+                var line = lines[i].trim();
+                if (!line) continue;
+                var parts = line.split(',');
+                if (parts.length >= 4) {
+                    var date = parts[0] ? parts[0].trim() : "";
+                    var type = parts[1] ? parts[1].trim() : "in";
+                    var name = parts[2] ? parts[2].trim() : "";
+                    var qty = parts[3] ? parseInt(parts[3].trim()) || 0 : 0;
+
+                    if (date && name && qty > 0) {
+                        var idx = window.stockEntries.findIndex(x => (x.item === name || x.itemName === name) && x.date === date && x.type === type);
+                        var entry = { date: date, type: type, item: name, itemName: name, qty: qty };
+                        if (idx > -1) window.stockEntries[idx] = entry;
+                        else window.stockEntries.push(entry);
+                        addCount++;
+                    }
+                }
+            }
+
+            alert(`${addCount}건의 입출고 내역이 대량 등록되었습니다.`);
+            closeStockCsvModal();
+            syncStockWithGoogle("CSV 대량 입출고 등록");
+        };
+        reader.readAsText(file, "EUC-KR");
+    }
+</script>
+</body>
+</html>
